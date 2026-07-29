@@ -6,6 +6,7 @@ singleton Notifs 1.0 Notifs.qml
 singleton Markup 1.0 Markup.qml
 
 Bar 1.0 Bar.qml
+Workspaces 1.0 Workspaces.qml
 Btn 1.0 Btn.qml
 ConcaveCorner 1.0 ConcaveCorner.qml
 Graph 1.0 Graph.qml

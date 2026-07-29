@@ -67,21 +67,7 @@ ShellRoot {
 
                     Item { implicitHeight: 8 }
 
-                    Repeater {
-                        model: Hyprland.workspaces
-                        Rectangle {
-                            required property var modelData
-                            readonly property bool here: Hyprland.focusedWorkspace?.id === modelData.id
-                            Layout.alignment: Qt.AlignHCenter
-                            Layout.topMargin: 5
-                            implicitWidth: 6
-                            implicitHeight: here ? 22 : 6
-                            radius: 3
-                            color: here ? Theme.accent : Theme.line
-                            Behavior on implicitHeight { NumberAnimation { duration: 130 } }
-                            MouseArea { anchors.fill: parent; onClicked: parent.modelData.activate() }
-                        }
-                    }
+                    Workspaces { Layout.alignment: Qt.AlignHCenter }
 
                     Item { Layout.fillHeight: true }
 

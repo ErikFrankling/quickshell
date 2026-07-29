@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quickshell taste guide</title>
+<style>
+:root{
+  --ink:#0b0e12; --surface:#141a21; --line:#28313c; --text:#c8d1dc; --muted:#79848f;
+  --accent:#57c8b8;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: light){
+  :root{ --ink:#f5f7f8; --surface:#fff; --line:#d7dde3; --text:#1a212a; --muted:#5f6a76; --accent:#17867a; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);line-height:1.6}
+.wrap{max-width:1500px;margin:0 auto;padding:40px clamp(14px,3vw,32px) 100px}
+a{color:var(--accent)}
+h1{font-family:var(--mono);font-size:clamp(24px,4vw,34px);margin:0 0 8px;letter-spacing:-.02em}
+.lede{color:var(--muted);max-width:70ch;margin:0 0 8px}
+.count{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin:0 0 30px}
+.proj{margin:0 0 40px;border-top:1px solid var(--line);padding-top:18px}
+.proj h2{font-family:var(--mono);font-size:15px;font-weight:600;margin:0 0 10px}
+.proj h2 a{text-decoration:none}.proj h2 a:hover{text-decoration:underline}
+.row{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+figure img{width:100%;display:block;background:var(--surface)}
+figcaption{font-size:11.5px;color:var(--muted);padding:7px 10px;line-height:1.45}
+.toc{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 34px;padding:0;list-style:none}
+.toc a{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:999px;
+  padding:3px 10px;text-decoration:none;color:var(--muted)}
+.toc a:hover{border-color:var(--accent);color:var(--accent)}
+footer{margin-top:40px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:13px;max-width:70ch}
+</style></head><body><div class="wrap">
+<h1>Quickshell taste guide</h1>
+<p class="lede">Every screenshot found while surveying the Quickshell ecosystem, grouped by
+project. Scroll it for design inspiration; click a heading to read that project's source.
+Companion to <code>catalogue.md</code>, which says what each one is worth reading for.</p>
+<p class="count">181 images &middot; 58 projects</p>
+<ul class="toc">
+<li><a href="#AhmedSaadi0-NibrasShell-">NibrasShell</a></li>
+<li><a href="#AvengeMedia-DankMaterialShell-">DankMaterialShell</a></li>
+<li><a href="#Axenide-Ambxst-">Ambxst</a></li>
+<li><a href="#AxOS-project-Sleex-">Sleex</a></li>
+<li><a href="#AymanLyesri-ArchEclipse-">ArchEclipse</a></li>
+<li><a href="#bgibson72-yahr-quickshell-">yahr-quickshell</a></li>
+<li><a href="#Brainitech-Brain-Shell-">Brain_Shell</a></li>
+<li><a href="#caelestia-dots-shell--PR-1748--">shell (PR 1748)</a></li>
+<li><a href="#caioax-lyne-dots-">lyne-dots</a></li>
+<li><a href="#catdeal3r-fibreglass-">fibreglass</a></li>
+<li><a href="#CooperGTe-nullframe-shell-">nullframe-shell</a></li>
+<li><a href="#corecathx-whisker-">whisker</a></li>
+<li><a href="#dhrruvsharma-shell-">shell</a></li>
+<li><a href="#end-4-dots-hyprland-">dots-hyprland</a></li>
+<li><a href="#end-4-dots-hyprland--ii-docs--">dots-hyprland (ii docs)</a></li>
+<li><a href="#enhaoswen-Tide-island-">Tide-island</a></li>
+<li><a href="#eq-desktop-eqsh-">eqsh</a></li>
+<li><a href="#Gakuseei-Ricelin-">Ricelin</a></li>
+<li><a href="#HANCORE-linux-quickshell-dots-">quickshell-dots</a></li>
+<li><a href="#hayyaoe-zenities-">zenities</a></li>
+<li><a href="#iamhrigved-Hyprdots-">Hyprdots</a></li>
+<li><a href="#koeqaife-hyprland-material-you-">hyprland-material-you</a></li>
+<li><a href="#kotontrion-kompass-">kompass</a></li>
+<li><a href="#liixini-skwd-">skwd</a></li>
+<li><a href="#luyu-wu-Config-">Config</a></li>
+<li><a href="#mailong2401-cartoon-shell-">cartoon-shell</a></li>
+<li><a href="#MannuVilasara-xenon-shell-">xenon-shell</a></li>
+<li><a href="#matteogini-dotfiles-">dotfiles</a></li>
+<li><a href="#mika2go-dotfiles-">dotfiles</a></li>
+<li><a href="#myamusashi-vast-shell-">vast-shell</a></li>
+<li><a href="#na-ive-nandoroid-shell-">nandoroid-shell</a></li>
+<li><a href="#Neurarian-matshell-">matshell</a></li>
+<li><a href="#nine7nine-n7n-AGS-Shell-">n7n-AGS-Shell</a></li>
+<li><a href="#noctalia-dev-noctalia-shell-">noctalia-shell</a></li>
+<li><a href="#nucleus-hq-nucleus-shell-">nucleus-shell</a></li>
+<li><a href="#Nurysso-Hecate-">Hecate</a></li>
+<li><a href="#Nytril-ark-rumda-">rumda</a></li>
+<li><a href="#octagonemusic-octashell-">octashell</a></li>
+<li><a href="#R7rainz-dotfiles-">dotfiles</a></li>
+<li><a href="#r-unixporn-AwesomeWM-sidebar-">unixporn AwesomeWM sidebar</a></li>
+<li><a href="#r-unixporn-bspwm-eww-sidebar-">unixporn bspwm eww sidebar</a></li>
+<li><a href="#r-unixporn-BSPWM-Sidebar-">unixporn BSPWM Sidebar</a></li>
+<li><a href="#r-unixporn-Herbstluftwm-sidebar-">unixporn Herbstluftwm sidebar</a></li>
+<li><a href="#r-unixporn-Hyprland-HyprPanel-SideBar-">unixporn Hyprland HyprPanel SideBar</a></li>
+<li><a href="#r-unixporn-i3-eww-Sidebar-">unixporn i3 eww Sidebar</a></li>
+<li><a href="#r-unixporn-KDE-sidebar-panel-">unixporn KDE sidebar panel</a></li>
+<li><a href="#r-unixporn-KDE-sidebars-underrated-">unixporn KDE sidebars underrated</a></li>
+<li><a href="#saimoomedits-eww-widgets-">eww-widgets</a></li>
+<li><a href="#snowarch-iNiR-">iNiR</a></li>
+<li><a href="#StatIndet-quickshell-">quickshell</a></li>
+<li><a href="#stormy-soul-sshell-">sshell</a></li>
+<li><a href="#tripathiji1312-quickshell-">quickshell</a></li>
+<li><a href="#tuxdotrs-tpanel-">tpanel</a></li>
+<li><a href="#Ubuntu-Unity-7--reference--">Ubuntu Unity 7 (reference)</a></li>
+<li><a href="#unfaiyted-faiyt-ags-">faiyt-ags</a></li>
+<li><a href="#VS-Code--reference--">VS Code (reference)</a></li>
+<li><a href="#Youwes09-Ateon-">Ateon</a></li>
+<li><a href="#zepyxunderscore-hyprzepyx-">hyprzepyx</a></li>
+</ul>
+<section class="proj" id="AhmedSaadi0-NibrasShell-"><h2><a href="https://github.com/AhmedSaadi0/NibrasShell">AhmedSaadi0/NibrasShell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://nibras-shell.ahmedsaadi0.workers.dev/assets/app_launcher.png" alt="App launcher with left rail visible"><figcaption>App launcher with left rail visible</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AhmedSaadi0/NibrasShell/quickshell/docs/assets/network.png" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AhmedSaadi0/NibrasShell/quickshell/docs/assets/ai_system_monitor.png" alt="dashboard"><figcaption>dashboard</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AhmedSaadi0/NibrasShell/quickshell/docs/assets/material-dark.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AhmedSaadi0/NibrasShell/quickshell/docs/assets/material-light.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AhmedSaadi0/NibrasShell/quickshell/docs/assets/tokyonight-dark.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AhmedSaadi0/NibrasShell/quickshell/docs/assets/app_launcher.png" alt="launcher"><figcaption>launcher</figcaption></figure>
+<figure><img loading="lazy" src="https://nibras-shell.ahmedsaadi0.workers.dev/assets/material-light.png" alt="Light theme variant of the same left-rail layout"><figcaption>Light theme variant of the same left-rail layout</figcaption></figure>
+<figure><img loading="lazy" src="https://nibras-shell.ahmedsaadi0.workers.dev/assets/network.png" alt="Network panel detail"><figcaption>Network panel detail</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AhmedSaadi0/NibrasShell/quickshell/docs/assets/settings1.png" alt="picker"><figcaption>picker</figcaption></figure>
+<figure><img loading="lazy" src="https://nibras-shell.ahmedsaadi0.workers.dev/assets/settings1.png" alt="Settings app - grouped label nav rail with attached content pane, plus the shell's thin left icon rail"><figcaption>Settings app - grouped label nav rail with attached content pane, plus the shell's thin left icon rail</figcaption></figure>
+<figure><img loading="lazy" src="https://nibras-shell.ahmedsaadi0.workers.dev/assets/material-dark.png" alt="Thin full-height left icon rail (~40px) plus top bar and bottom dock, Material dark theme"><figcaption>Thin full-height left icon rail (~40px) plus top bar and bottom dock, Material dark theme</figcaption></figure>
+</div></section>
+<section class="proj" id="AvengeMedia-DankMaterialShell-"><h2><a href="https://github.com/AvengeMedia/DankMaterialShell">AvengeMedia/DankMaterialShell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/732c30de-5f4a-4a2b-a995-c8ab656cecd5" alt="Control centre - one panel, sectioned, drag-and-drop widget grid"><figcaption>Control centre - one panel, sectioned, drag-and-drop widget grid</figcaption></figure>
+<figure><img loading="lazy" src="https://danklinux.com/img/homepage/controlcenter_dark.png" alt="Control centre panel, dark - connected-surface treatment at the bar seam"><figcaption>Control centre panel, dark - connected-surface treatment at the bar seam</figcaption></figure>
+<figure><img loading="lazy" src="https://danklinux.com/img/homepage/dankdash_dark.png" alt="Dank Dash drawer, dark"><figcaption>Dank Dash drawer, dark</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/a937cf35-a43b-4558-8c39-5694ff5fcac4" alt="Dashboard drawer flush against the bar, tabbed (Overview/Media/Weather/Settings), rounded only on the exposed edge"><figcaption>Dashboard drawer flush against the bar, tabbed (Overview/Media/Weather/Settings), rounded only on the exposed edge</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/203a9678-c3b7-4720-bb97-853a511ac5c8" alt="Full desktop showing bar plus dock"><figcaption>Full desktop showing bar plus dock</figcaption></figure>
+<figure><img loading="lazy" src="https://danklinux.com/img/desktop.png" alt="Marketing desktop shot from danklinux.com"><figcaption>Marketing desktop shot from danklinux.com</figcaption></figure>
+<figure><img loading="lazy" src="https://danklinux.com/img/homepage/widget_dark.png" alt="Widget/pill customisation showing bar widget vocabulary"><figcaption>Widget/pill customisation showing bar widget vocabulary</figcaption></figure>
+</div></section>
+<section class="proj" id="Axenide-Ambxst-"><h2><a href="https://github.com/Axenide/Ambxst">Axenide/Ambxst</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Axenide/Ambxst/main/assets/screenshots/1.png" alt="Main desktop shot - vertical bar composition"><figcaption>Main desktop shot - vertical bar composition</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Axenide/Ambxst/main/assets/screenshots/2.png" alt="Panel/drawer detail 2"><figcaption>Panel/drawer detail 2</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Axenide/Ambxst/main/assets/screenshots/3.png" alt="Panel/drawer detail 3"><figcaption>Panel/drawer detail 3</figcaption></figure>
+</div></section>
+<section class="proj" id="AxOS-project-Sleex-"><h2><a href="https://github.com/AxOS-project/Sleex">AxOS-project/Sleex</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/0bbad8a4-ae13-483b-bb4b-2dca7290348b" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/9da579d2-d5b7-4450-92a7-f14856b47250" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AxOS-project/Sleex/main/.github/sleex1.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+</div></section>
+<section class="proj" id="AymanLyesri-ArchEclipse-"><h2><a href="https://github.com/AymanLyesri/ArchEclipse">AymanLyesri/ArchEclipse</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AymanLyesri/ArchEclipse/HEAD/.github/assets/left-panel-settings.png" alt="Left rail + settings panel with the panel widget-layout editor"><figcaption>Left rail + settings panel with the panel widget-layout editor</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AymanLyesri/ArchEclipse/HEAD/.github/assets/right-panel-layout-1.png" alt="Right rail + right panel widget-column layout 1"><figcaption>Right rail + right panel widget-column layout 1</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AymanLyesri/ArchEclipse/HEAD/.github/assets/right-panel-layout-2.png" alt="Right rail + right panel widget-column layout 2"><figcaption>Right rail + right panel widget-column layout 2</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AymanLyesri/ArchEclipse/HEAD/.github/assets/overview.png" alt="Thin icon rails on BOTH screen edges with full-height panels butted flush against each rail"><figcaption>Thin icon rails on BOTH screen edges with full-height panels butted flush against each rail</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/AymanLyesri/ArchEclipse/HEAD/.github/assets/user-panel.png" alt="User panel with both rails and both panels visible"><figcaption>User panel with both rails and both panels visible</figcaption></figure>
+</div></section>
+<section class="proj" id="bgibson72-yahr-quickshell-"><h2><a href="https://github.com/bgibson72/yahr-quickshell">bgibson72/yahr-quickshell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/bgibson72/yahr-quickshell/main/previews/bar01.png" alt="bar"><figcaption>bar</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/bgibson72/yahr-quickshell/main/previews/control_center.png" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/bgibson72/yahr-quickshell/main/previews/catppuccin.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/bgibson72/yahr-quickshell/main/previews/app_menu.png" alt="launcher"><figcaption>launcher</figcaption></figure>
+</div></section>
+<section class="proj" id="Brainitech-Brain-Shell-"><h2><a href="https://github.com/Brainitech/Brain_Shell">Brainitech/Brain_Shell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/04f6c3a6-b74f-4d1d-a9ab-bd57cc42ab26" alt="bar"><figcaption>bar</figcaption></figure>
+</div></section>
+<section class="proj" id="caelestia-dots-shell--PR-1748--"><h2><a href="https://github.com/caelestia-dots/shell (PR 1748)">caelestia-dots/shell (PR 1748)</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/6de93605-199f-429f-816b-292c0ae56aa7" alt="Configurable bar position and dashboard edge - bar flush at the screen edge with the dashboard growing out of the frame"><figcaption>Configurable bar position and dashboard edge - bar flush at the screen edge with the dashboard growing out of the frame</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/e67ef1a3-4065-442d-a6dc-6d7cf119766a" alt="Fourth bar-position variant"><figcaption>Fourth bar-position variant</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/710cf429-13a8-4f3f-a3bb-c884c1c4180c" alt="Second bar-position variant"><figcaption>Second bar-position variant</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/784d9c8e-bb74-4ebb-8a14-2b21427f364c" alt="Third bar-position variant"><figcaption>Third bar-position variant</figcaption></figure>
+</div></section>
+<section class="proj" id="caioax-lyne-dots-"><h2><a href="https://github.com/caioax/lyne-dots">caioax/lyne-dots</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/caioax/lyne-dots/main/.data/assets/catppuccin-mocha.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/caioax/lyne-dots/main/.data/assets/dracula.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/caioax/lyne-dots/main/.data/assets/gruvbox-dark.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/caioax/lyne-dots/main/.data/assets/nord.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/caioax/lyne-dots/main/.data/assets/rosepine.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/caioax/lyne-dots/main/.data/assets/tokyonight.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+</div></section>
+<section class="proj" id="catdeal3r-fibreglass-"><h2><a href="https://github.com/catdeal3r/fibreglass">catdeal3r/fibreglass</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/catdeal3r/fibreglass/main/.github/setup3.png" alt="Default layout (the undocumented 'oneb' module is a 40px rail that DRAGS out to a 450px dashboard as one rectangle)"><figcaption>Default layout (the undocumented 'oneb' module is a 40px rail that DRAGS out to a 450px dashboard as one rectangle)</figcaption></figure>
+</div></section>
+<section class="proj" id="CooperGTe-nullframe-shell-"><h2><a href="https://github.com/CooperGTe/nullframe-shell">CooperGTe/nullframe-shell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/CooperGTe/nullframe-shell/main/.github/images/1.png" alt="BEST QUICKSHELL MATCH: 40px left icon rail and control panel share ONE dark slab separated only by a 3px hairline; panel rounded on outer corners only, full height"><figcaption>BEST QUICKSHELL MATCH: 40px left icon rail and control panel share ONE dark slab separated only by a 3px hairline; panel rounded on outer corners only, full height</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/CooperGTe/nullframe-shell/main/.github/images/2.png" alt="Same shell with a horizontal bottom bar for comparison"><figcaption>Same shell with a horizontal bottom bar for comparison</figcaption></figure>
+</div></section>
+<section class="proj" id="corecathx-whisker-"><h2><a href="https://github.com/corecathx/whisker">corecathx/whisker</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/corecathx/whisker/main/.github/images/previews/preview-leftbar.png" alt="bar"><figcaption>bar</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/corecathx/whisker/main/previews/preview2.png" alt="bar"><figcaption>bar</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/corecathx/whisker/main/previews/preview0.png" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/corecathx/whisker/main/.github/images/previews/preview-default.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/corecathx/whisker/main/.github/images/previews/preview-topbar.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/corecathx/whisker/main/previews/preview1.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/corecathx/whisker/main/.github/images/previews/preview-lockscreen.png" alt="lock"><figcaption>lock</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/corecathx/whisker/main/.github/images/previews/preview-rightbar.png" alt="Right-edge icon rail (transparent, icons only) with control centre attached to its left; same layout mirrored"><figcaption>Right-edge icon rail (transparent, icons only) with control centre attached to its left; same layout mirrored</figcaption></figure>
+</div></section>
+<section class="proj" id="dhrruvsharma-shell-"><h2><a href="https://github.com/dhrruvsharma/shell">dhrruvsharma/shell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/dhrruvsharma/shell/master/previews/rice-screenshots/pic4.png" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/dhrruvsharma/shell/master/previews/rice-screenshots/pic2.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/dhrruvsharma/shell/master/previews/rice-screenshots/pic3.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/dhrruvsharma/shell/master/previews/rice-screenshots/pic5.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/dhrruvsharma/shell/master/previews/rice-screenshots/pic6.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/dhrruvsharma/shell/master/previews/rice-screenshots/pic8.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/dhrruvsharma/shell/master/previews/rice-screenshots/pic1.png" alt="launcher"><figcaption>launcher</figcaption></figure>
+</div></section>
+<section class="proj" id="end-4-dots-hyprland--ii-docs--"><h2><a href="https://github.com/end-4/dots-hyprland (ii docs)">end-4/dots-hyprland (ii docs)</a></h2><div class="row">
+<figure><img loading="lazy" src="https://ii.clsty.link/screenshots/ii-qs.3.jpg" alt="~440px left sidebar bled flush into the left edge and merged with the top bar; tab row, message cards, docked composer"><figcaption>~440px left sidebar bled flush into the left edge and merged with the top bar; tab row, message cards, docked composer</figcaption></figure>
+<figure><img loading="lazy" src="https://ii.clsty.link/screenshots/ii-qs.4.jpg" alt="Overview and search attached under the top bar"><figcaption>Overview and search attached under the top bar</figcaption></figure>
+</div></section>
+<section class="proj" id="end-4-dots-hyprland-"><h2><a href="https://github.com/end-4/dots-hyprland">end-4/dots-hyprland</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/98703a66-0743-439f-a721-cef7afa6ab95" alt="illogical-impulse additional panel view"><figcaption>illogical-impulse additional panel view</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/5d4e7d07-d0b4-4406-a4c9-ed7ba90e3fe4" alt="illogical-impulse desktop with left sidebar/dock and top bar"><figcaption>illogical-impulse desktop with left sidebar/dock and top bar</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/c51bed8b-3670-4d4c-9074-873be224fb8e" alt="illogical-impulse panel composition"><figcaption>illogical-impulse panel composition</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/6a32395f-9437-4192-8faf-2951a9e84cbe" alt="illogical-impulse sidebar/overview surfaces"><figcaption>illogical-impulse sidebar/overview surfaces</figcaption></figure>
+</div></section>
+<section class="proj" id="enhaoswen-Tide-island-"><h2><a href="https://github.com/enhaoswen/Tide-island">enhaoswen/Tide-island</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/enhaoswen/Tide-island/display/Preview/clock.png" alt="bar"><figcaption>bar</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/enhaoswen/Tide-island/display/Preview/cc_1.png" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/enhaoswen/Tide-island/display/Preview/cc_2.png" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/enhaoswen/Tide-island/display/Preview/msg.png" alt="notifications"><figcaption>notifications</figcaption></figure>
+</div></section>
+<section class="proj" id="eq-desktop-eqsh-"><h2><a href="https://github.com/eq-desktop/eqsh">eq-desktop/eqsh</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/eq-desktop/eqsh/main/Media/preview7.png" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/eq-desktop/eqsh/main/Media/banner.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/eq-desktop/eqsh/main/Media/preview5.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/eq-desktop/eqsh/main/Media/preview.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+</div></section>
+<section class="proj" id="Gakuseei-Ricelin-"><h2><a href="https://github.com/Gakuseei/Ricelin">Gakuseei/Ricelin</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Gakuseei/Ricelin/main/assets/shell.png" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Gakuseei/Ricelin/main/assets/hero.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+</div></section>
+<section class="proj" id="HANCORE-linux-quickshell-dots-"><h2><a href="https://github.com/HANCORE-linux/quickshell-dots">HANCORE-linux/quickshell-dots</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/HANCORE-linux/quickshell-dots/main/docs/media/v2-preview.webp" alt="desktop"><figcaption>desktop</figcaption></figure>
+</div></section>
+<section class="proj" id="hayyaoe-zenities-"><h2><a href="https://github.com/hayyaoe/zenities">hayyaoe/zenities</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/hayyaoe/zenities/HEAD/screenshots/hero-new.png" alt="eww vertical left sidebar (~42px) with inline revealer accordion modules; right-hand widget card stack"><figcaption>eww vertical left sidebar (~42px) with inline revealer accordion modules; right-hand widget card stack</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/hayyaoe/zenities/HEAD/screenshots/tmux-ncspot-cava.png" alt="Sidebar geometry and edge margin detail"><figcaption>Sidebar geometry and edge margin detail</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/hayyaoe/zenities/HEAD/screenshots/wallpaper-switcher.png" alt="Wallpaper-switcher drawer opening alongside the vertical sidebar at matched height and radius"><figcaption>Wallpaper-switcher drawer opening alongside the vertical sidebar at matched height and radius</figcaption></figure>
+</div></section>
+<section class="proj" id="iamhrigved-Hyprdots-"><h2><a href="https://github.com/iamhrigved/Hyprdots">iamhrigved/Hyprdots</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/iamhrigved/Hyprdots/main/Assets/full1.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/iamhrigved/Hyprdots/main/Assets/full3-float.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/iamhrigved/Hyprdots/main/Assets/rofi1.png" alt="launcher"><figcaption>launcher</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/iamhrigved/Hyprdots/main/Assets/swaync1.png" alt="notifications"><figcaption>notifications</figcaption></figure>
+</div></section>
+<section class="proj" id="koeqaife-hyprland-material-you-"><h2><a href="https://github.com/koeqaife/hyprland-material-you">koeqaife/hyprland-material-you</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/koeqaife/hyprland-material-you/HEAD/assets/screenshot.png" alt="Right-edge control centre - 2x2 drill-in tiles plus notification list in the same surface"><figcaption>Right-edge control centre - 2x2 drill-in tiles plus notification list in the same surface</figcaption></figure>
+</div></section>
+<section class="proj" id="kotontrion-kompass-"><h2><a href="https://github.com/kotontrion/kompass">kotontrion/kompass</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/78278e56-4951-4713-9b5e-a2468405be84" alt="Ultra-thin ~22px left rail with the quick-settings panel starting at x=22, zero gap, same dark surface - one L-shaped slab; AdwNavigationView drill-in inside the same surface"><figcaption>Ultra-thin ~22px left rail with the quick-settings panel starting at x=22, zero gap, same dark surface - one L-shaped slab; AdwNavigationView drill-in inside the same surface</figcaption></figure>
+</div></section>
+<section class="proj" id="liixini-skwd-"><h2><a href="https://github.com/liixini/skwd">liixini/skwd</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/f66130c0-238d-47f9-8867-520af1552838" alt="skwd shell preview 1"><figcaption>skwd shell preview 1</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/dd73ab27-0217-4de1-a058-826534d4bb5b" alt="skwd shell preview 2"><figcaption>skwd shell preview 2</figcaption></figure>
+</div></section>
+<section class="proj" id="luyu-wu-Config-"><h2><a href="https://github.com/luyu-wu/Config">luyu-wu/Config</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/d9c46940-f813-4aeb-a741-8ab021fa59b0" alt="desktop"><figcaption>desktop</figcaption></figure>
+</div></section>
+<section class="proj" id="mailong2401-cartoon-shell-"><h2><a href="https://github.com/mailong2401/cartoon-shell">mailong2401/cartoon-shell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/b2db795c-3fb7-4993-a70c-adc1e147aa1b" alt="bar"><figcaption>bar</figcaption></figure>
+</div></section>
+<section class="proj" id="MannuVilasara-xenon-shell-"><h2><a href="https://github.com/MannuVilasara/xenon-shell">MannuVilasara/xenon-shell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/0f2a2575-17e0-4286-b91e-1db6d33f4462" alt="bar"><figcaption>bar</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/40e13ac7-2efe-42f6-8b0d-668a65df45f4" alt="bar"><figcaption>bar</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/79d45aaa-6ba6-4111-9d77-930e965c733a" alt="dashboard"><figcaption>dashboard</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/a1a436f4-bdf7-46fc-b4c4-690e719ae7ff" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/d7f43145-0ebc-428c-b02c-e15d40b17a6d" alt="notifications"><figcaption>notifications</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/1ab4eade-74b3-47cc-ab4b-7a346a479096" alt="picker"><figcaption>picker</figcaption></figure>
+</div></section>
+<section class="proj" id="matteogini-dotfiles-"><h2><a href="https://github.com/matteogini/dotfiles">matteogini/dotfiles</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/matteogini/dotfiles/hyprland/preview/windows.png" alt="bar"><figcaption>bar</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/matteogini/dotfiles/hyprland/preview/control_center.png" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/matteogini/dotfiles/hyprland/preview/desktop.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/matteogini/dotfiles/hyprland/preview/launcher.png" alt="launcher"><figcaption>launcher</figcaption></figure>
+</div></section>
+<section class="proj" id="mika2go-dotfiles-"><h2><a href="https://github.com/mika2go/dotfiles">mika2go/dotfiles</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/mika2go/dotfiles/main/assets/previews/desktop.png" alt="54px monochrome left rail with 350px hover flyout rendered inside the SAME layershell window, square corners, zero gap"><figcaption>54px monochrome left rail with 350px hover flyout rendered inside the SAME layershell window, square corners, zero gap</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/mika2go/dotfiles/main/assets/previews/dashboard.png" alt="Dashboard flyout"><figcaption>Dashboard flyout</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/mika2go/dotfiles/main/assets/previews/launcher.png" alt="Launcher flyout"><figcaption>Launcher flyout</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/mika2go/dotfiles/main/assets/previews/wallpapers.png" alt="Wallpaper picker flyout"><figcaption>Wallpaper picker flyout</figcaption></figure>
+</div></section>
+<section class="proj" id="myamusashi-vast-shell-"><h2><a href="https://github.com/myamusashi/vast-shell">myamusashi/vast-shell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/447c0b4a-a5b4-41ec-8f4a-05b57f523edb" alt="bar"><figcaption>bar</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/a34f1a9f-f9ed-4f82-991f-e68e79e54fec" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/6283c0b6-6055-4fd0-900a-0dabafac46a3" alt="launcher"><figcaption>launcher</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/8049ec79-ade0-47d5-b2d8-cb5c5a25e895" alt="notifications"><figcaption>notifications</figcaption></figure>
+</div></section>
+<section class="proj" id="na-ive-nandoroid-shell-"><h2><a href="https://github.com/na-ive/nandoroid-shell">na-ive/nandoroid-shell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/2f2aab8c-5420-43e1-b5da-dfe3a7f014d1" alt="bar"><figcaption>bar</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/09d8322d-d27f-44ab-ac5c-e75353f20d22" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/7ef022bd-4f7a-446f-be19-35e740e45058" alt="dashboard"><figcaption>dashboard</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/12ef3312-c6a8-475c-8c5f-5326c4573e87" alt="launcher"><figcaption>launcher</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/3685b0fc-92d3-4182-9134-3e10d1469d7b" alt="lock"><figcaption>lock</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/bf4dd19e-848c-4fde-b214-9900058c8c69" alt="notifications"><figcaption>notifications</figcaption></figure>
+</div></section>
+<section class="proj" id="Neurarian-matshell-"><h2><a href="https://github.com/Neurarian/matshell">Neurarian/matshell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/f0b2c99f-9d15-4a86-8625-3b1d6bf3c6ce" alt="Left dashboard column and right control-centre column, both flush to screen edges and to the bar"><figcaption>Left dashboard column and right control-centre column, both flush to screen edges and to the bar</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/b61585b6-e17c-4d43-98e8-3e49962ae108" alt="Wi-Fi expander opened INLINE inside the control-centre column (accordion, not a second window)"><figcaption>Wi-Fi expander opened INLINE inside the control-centre column (accordion, not a second window)</figcaption></figure>
+</div></section>
+<section class="proj" id="nine7nine-n7n-AGS-Shell-"><h2><a href="https://github.com/nine7nine/n7n-AGS-Shell">nine7nine/n7n-AGS-Shell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/nine7nine/n7n-AGS-Shell/assets/20159346/efa71ff1-8868-47ce-958d-906cc0a62630" alt="Thin vertical icon rails flush at both screen edges - square outer edge, rounded inner edge"><figcaption>Thin vertical icon rails flush at both screen edges - square outer edge, rounded inner edge</figcaption></figure>
+</div></section>
+<section class="proj" id="noctalia-dev-noctalia-shell-"><h2><a href="https://github.com/noctalia-dev/noctalia-shell">noctalia-dev/noctalia-shell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://noctalia.dev/_app/immutable/assets/kirisaki.CWbz4FnU.webp" alt="Additional showcase layout"><figcaption>Additional showcase layout</figcaption></figure>
+<figure><img loading="lazy" src="https://noctalia.dev/_app/immutable/assets/mossmossmoss.D4kPyxFH.webp" alt="Additional showcase layout"><figcaption>Additional showcase layout</figcaption></figure>
+<figure><img loading="lazy" src="https://noctalia.dev/_app/immutable/assets/nefuya_20-07-2026.D0G_rg0g.webp" alt="Control centre as ONE surface - ~215px labelled vertical nav rail (Home/Media/Audio/.../Screen Time) + content pane, hairline seam, filled-pill active row"><figcaption>Control centre as ONE surface - ~215px labelled vertical nav rail (Home/Media/Audio/.../Screen Time) + content pane, hairline seam, filled-pill active row</figcaption></figure>
+<figure><img loading="lazy" src="https://noctalia.dev/_app/immutable/assets/dreadwarrior2k.q9cLEQ2j.webp" alt="Showcase layout (dreadwarrior2k)"><figcaption>Showcase layout (dreadwarrior2k)</figcaption></figure>
+<figure><img loading="lazy" src="https://noctalia.dev/_app/immutable/assets/ltar.BsNE4smw.webp" alt="Showcase layout (ltar)"><figcaption>Showcase layout (ltar)</figcaption></figure>
+<figure><img loading="lazy" src="https://noctalia.dev/_app/immutable/assets/lysec.yPhf_fIS.webp" alt="Showcase layout (lysec)"><figcaption>Showcase layout (lysec)</figcaption></figure>
+<figure><img loading="lazy" src="https://noctalia.dev/_app/immutable/assets/shubada.ce6qA6V_.webp" alt="Thin left icon rail at the screen edge with a tall right-side widget panel"><figcaption>Thin left icon rail at the screen edge with a tall right-side widget panel</figcaption></figure>
+</div></section>
+<section class="proj" id="nucleus-hq-nucleus-shell-"><h2><a href="https://github.com/nucleus-hq/nucleus-shell">nucleus-hq/nucleus-shell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/3c40fd00-8e5b-4309-8b3a-42aa07d234f5" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/ed49afb6-1114-4616-88da-3d4addd5dd49" alt="dashboard"><figcaption>dashboard</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/nucleus-hq/nucleus-shell/main/previews/Love.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/nucleus-hq/nucleus-shell/main/previews/Metallic.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/864a8aaa-c8da-4c84-bffc-976cddacc042" alt="launcher"><figcaption>launcher</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/nucleus-hq/nucleus-shell/main/previews/Forests.png" alt="Nucleus shell theme preview (Forests)"><figcaption>Nucleus shell theme preview (Forests)</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/09fa37c5-c422-4a68-9908-83719f1e5428" alt="picker"><figcaption>picker</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/nucleus-hq/nucleus-shell/main/previews/Passion.png" alt="Theme preview Passion - MergedEdgeRect/GothCorners sidebar path is in source but screenshots show horizontal default"><figcaption>Theme preview Passion - MergedEdgeRect/GothCorners sidebar path is in source but screenshots show horizontal default</figcaption></figure>
+</div></section>
+<section class="proj" id="Nurysso-Hecate-"><h2><a href="https://github.com/Nurysso/Hecate">Nurysso/Hecate</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Nurysso/Hermes/main/hecate/gifs/settings.gif" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Nurysso/Hermes/main/hecate/hecate-install.gif" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Nurysso/Hermes/main/hecate/img/hecate-helper.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Nurysso/Hermes/main/hecate/img/hecate-widget.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+</div></section>
+<section class="proj" id="Nytril-ark-rumda-"><h2><a href="https://github.com/Nytril-ark/rumda">Nytril-ark/rumda</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Nytril-ark/rumda/main/pictures/dark.png" alt="48px FLOATING left vertical rail with 18px edge margin - counter-example of the gapped treatment"><figcaption>48px FLOATING left vertical rail with 18px edge margin - counter-example of the gapped treatment</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Nytril-ark/rumda/main/pictures/lightDash.png" alt="Light-theme dashboard"><figcaption>Light-theme dashboard</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Nytril-ark/rumda/main/pictures/barArt.png" alt="Vertical bar detail"><figcaption>Vertical bar detail</figcaption></figure>
+</div></section>
+<section class="proj" id="octagonemusic-octashell-"><h2><a href="https://github.com/octagonemusic/octashell">octagonemusic/octashell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/octagonemusic/octashell/main/screenshots/preview1.jpeg" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/octagonemusic/octashell/main/screenshots/preview2.jpeg" alt="desktop"><figcaption>desktop</figcaption></figure>
+</div></section>
+<section class="proj" id="R7rainz-dotfiles-"><h2><a href="https://github.com/R7rainz/dotfiles">R7rainz/dotfiles</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/b4ab952f-be97-499d-a486-d246c987d4e2" alt="desktop"><figcaption>desktop</figcaption></figure>
+</div></section>
+<section class="proj" id="r-unixporn-AwesomeWM-sidebar-"><h2><a href="https://github.com/r/unixporn AwesomeWM sidebar">r/unixporn AwesomeWM sidebar</a></h2><div class="row">
+<figure><img loading="lazy" src="https://i.redd.it/ztldgrkk2wdc1.png" alt="BEST MATCH: ~40px left icon rail flush against a ~585px control panel, zero gap, one L-shaped slab; avatar+power row, search, app list, media card, 5 quick-toggle tiles, notifications"><figcaption>BEST MATCH: ~40px left icon rail flush against a ~585px control panel, zero gap, one L-shaped slab; avatar+power row, search, app list, media card, 5 quick-toggle tiles, notifications</figcaption></figure>
+</div></section>
+<section class="proj" id="r-unixporn-bspwm-eww-sidebar-"><h2><a href="https://github.com/r/unixporn bspwm eww sidebar">r/unixporn bspwm eww sidebar</a></h2><div class="row">
+<figure><img loading="lazy" src="https://i.redd.it/25xyzigql9c81.png" alt="Full-height ~300px slab bled into the left edge, rounded right corners only, bento tiles inside"><figcaption>Full-height ~300px slab bled into the left edge, rounded right corners only, bento tiles inside</figcaption></figure>
+</div></section>
+<section class="proj" id="r-unixporn-BSPWM-Sidebar-"><h2><a href="https://github.com/r/unixporn BSPWM Sidebar">r/unixporn BSPWM Sidebar</a></h2><div class="row">
+<figure><img loading="lazy" src="https://i.redd.it/3sadj37bclb81.png" alt="Control-centre drawer hanging off the top bar at the left edge, flush, bottom-right radius only"><figcaption>Control-centre drawer hanging off the top bar at the left edge, flush, bottom-right radius only</figcaption></figure>
+</div></section>
+<section class="proj" id="r-unixporn-Herbstluftwm-sidebar-"><h2><a href="https://github.com/r/unixporn Herbstluftwm sidebar">r/unixporn Herbstluftwm sidebar</a></h2><div class="row">
+<figure><img loading="lazy" src="https://i.redd.it/2vaf7sg02y471.png" alt="Light-mode ~190px flush full-height rail with pill icon+label nav rows"><figcaption>Light-mode ~190px flush full-height rail with pill icon+label nav rows</figcaption></figure>
+</div></section>
+<section class="proj" id="r-unixporn-Hyprland-HyprPanel-SideBar-"><h2><a href="https://github.com/r/unixporn Hyprland HyprPanel SideBar">r/unixporn Hyprland HyprPanel SideBar</a></h2><div class="row">
+<figure><img loading="lazy" src="https://i.redd.it/9qeulm0rndxd1.png" alt="Thin ~40px left icon rail running full height alongside a top bar"><figcaption>Thin ~40px left icon rail running full height alongside a top bar</figcaption></figure>
+</div></section>
+<section class="proj" id="r-unixporn-i3-eww-Sidebar-"><h2><a href="https://github.com/r/unixporn i3 eww Sidebar">r/unixporn i3 eww Sidebar</a></h2><div class="row">
+<figure><img loading="lazy" src="https://i.redd.it/ruvp8fkp5f0e1.png" alt="~78px icon rail plus a 250px attached drawer plus a THIRD attached control-panel column - progressive multi-stage drawer"><figcaption>~78px icon rail plus a 250px attached drawer plus a THIRD attached control-panel column - progressive multi-stage drawer</figcaption></figure>
+</div></section>
+<section class="proj" id="r-unixporn-KDE-sidebar-panel-"><h2><a href="https://github.com/r/unixporn KDE sidebar panel">r/unixporn KDE sidebar panel</a></h2><div class="row">
+<figure><img loading="lazy" src="https://i.redd.it/k35psjr7e0ua1.png" alt="Plasma panel as a ~250px left sidebar, radius 0, fully flush; media applet and ring gauges stacked"><figcaption>Plasma panel as a ~250px left sidebar, radius 0, fully flush; media applet and ring gauges stacked</figcaption></figure>
+</div></section>
+<section class="proj" id="r-unixporn-KDE-sidebars-underrated-"><h2><a href="https://github.com/r/unixporn KDE sidebars underrated">r/unixporn KDE sidebars underrated</a></h2><div class="row">
+<figure><img loading="lazy" src="https://i.redd.it/kdqxjq1df8ga1.png" alt="Four-up collage of very thin left icon rails with stacked vertical clocks"><figcaption>Four-up collage of very thin left icon rails with stacked vertical clocks</figcaption></figure>
+</div></section>
+<section class="proj" id="saimoomedits-eww-widgets-"><h2><a href="https://github.com/saimoomedits/eww-widgets">saimoomedits/eww-widgets</a></h2><div class="row">
+<figure><img loading="lazy" src="https://user-images.githubusercontent.com/72156551/154564705-ecd540bd-e8c5-4b03-8827-c76b2ef6eb08.png" alt="eww leftbar - single left panel, one surface with stacked sections (profile, clock, media, gauges, toggles)"><figcaption>eww leftbar - single left panel, one surface with stacked sections (profile, clock, media, gauges, toggles)</figcaption></figure>
+</div></section>
+<section class="proj" id="snowarch-iNiR-"><h2><a href="https://github.com/snowarch/iNiR">snowarch/iNiR</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/5c5996e7-90eb-4789-9921-0d5fe5283fa3" alt="48px icon rail baked into the LEFT of the panel itself, shared background, one rounded container, chip + indicator on active item"><figcaption>48px icon rail baked into the LEFT of the panel itself, shared background, one rounded container, chip + indicator on active item</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/ba866063-b26a-47cb-83c8-d77bd033bf8b" alt="iNiR desktop overview"><figcaption>iNiR desktop overview</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/3ce2055b-648c-45a1-9d09-705c1b4a03b7" alt="Left vertical bar with the left sidebar drawer opening flush against its inner edge, plus a right-edge vertical dock"><figcaption>Left vertical bar with the left sidebar drawer opening flush against its inner edge, plus a right-edge vertical dock</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/ea2311dc-769e-44dc-a46d-37cf8807d2cc" alt="Right control-centre drawer with toggles, notifications and calendar"><figcaption>Right control-centre drawer with toggles, notifications and calendar</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/1fe258bc-8aec-4fd9-8574-d9d7472c3cc8" alt="Right-side vertical bar (rings, workspace dots, stacked clock) with a separate left panel"><figcaption>Right-side vertical bar (rings, workspace dots, stacked clock) with a separate left panel</figcaption></figure>
+</div></section>
+<section class="proj" id="StatIndet-quickshell-"><h2><a href="https://github.com/StatIndet/quickshell">StatIndet/quickshell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/StatIndet/picture/main/island4.png" alt="bar"><figcaption>bar</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/StatIndet/picture/main/island3.png" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/StatIndet/picture/main/island2.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/StatIndet/picture/main/island1.png" alt="notifications"><figcaption>notifications</figcaption></figure>
+</div></section>
+<section class="proj" id="stormy-soul-sshell-"><h2><a href="https://github.com/stormy-soul/sshell">stormy-soul/sshell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/117d58f9-aab4-473c-8f19-d5531167b50f" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/35e78cd6-c7d4-479f-8022-2d2ce2fd6d9f" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/4538d4d6-2323-4547-a427-625356bac72e" alt="lock"><figcaption>lock</figcaption></figure>
+<figure><img loading="lazy" src="https://github.com/user-attachments/assets/155e819b-a3c5-40aa-aea7-8e919d3d0ed5" alt="notifications"><figcaption>notifications</figcaption></figure>
+</div></section>
+<section class="proj" id="tripathiji1312-quickshell-"><h2><a href="https://github.com/tripathiji1312/quickshell">tripathiji1312/quickshell</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/tripathiji1312/quickshell/main/image_quick/bluetooth.png" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/tripathiji1312/quickshell/main/image_quick/main_config.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/tripathiji1312/quickshell/main/image_quick/notification.png" alt="notifications"><figcaption>notifications</figcaption></figure>
+</div></section>
+<section class="proj" id="tuxdotrs-tpanel-"><h2><a href="https://github.com/tuxdotrs/tpanel">tuxdotrs/tpanel</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/tuxdotrs/tpanel/refs/heads/main/assets/gallery/latest.png" alt="Full-height left wallpaper panel and right control-centre panel pinned to the screen edges"><figcaption>Full-height left wallpaper panel and right control-centre panel pinned to the screen edges</figcaption></figure>
+</div></section>
+<section class="proj" id="Ubuntu-Unity-7--reference--"><h2><a href="https://github.com/search?q=Ubuntu Unity 7 (reference)">Ubuntu Unity 7 (reference)</a></h2><div class="row">
+<figure><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/e/e4/Unity_7.7_-_Dash.png" alt="The purest version of the pattern - 64px launcher rail with the Dash starting at exactly x=64, zero gap, shared translucent slab, full height"><figcaption>The purest version of the pattern - 64px launcher rail with the Dash starting at exactly x=64, zero gap, shared translucent slab, full height</figcaption></figure>
+<figure><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/1/10/Unity_7.6_dash_on_Ubuntu_Unity_22.10.png" alt="Unity 7.6 Dash flush against the launcher on a modern Ubuntu Unity release"><figcaption>Unity 7.6 Dash flush against the launcher on a modern Ubuntu Unity release</figcaption></figure>
+</div></section>
+<section class="proj" id="unfaiyted-faiyt-ags-"><h2><a href="https://github.com/unfaiyted/faiyt-ags">unfaiyted/faiyt-ags</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/unfaiyted/faiyt-ags/HEAD/docs/side-panels.png" alt="Left AI panel and right control centre flush under the bar; tab strip inside one panel swaps sections"><figcaption>Left AI panel and right control centre flush under the bar; tab strip inside one panel swaps sections</figcaption></figure>
+</div></section>
+<section class="proj" id="VS-Code--reference--"><h2><a href="https://github.com/search?q=VS Code (reference)">VS Code (reference)</a></h2><div class="row">
+<figure><img loading="lazy" src="https://code.visualstudio.com/assets/docs/editing/userinterface/hero.png" alt="Canonical 48px Activity Bar icon rail with a flush Side Bar sharing one continuous surface, zero gap"><figcaption>Canonical 48px Activity Bar icon rail with a flush Side Bar sharing one continuous surface, zero gap</figcaption></figure>
+</div></section>
+<section class="proj" id="Youwes09-Ateon-"><h2><a href="https://github.com/Youwes09/Ateon">Youwes09/Ateon</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Youwes09/Ateon/HEAD/extra/previews/Blossom-Sidebar-4k.png" alt="Left sidebar hanging flush off the top bar, inline settings accordion, dock pinned at panel bottom"><figcaption>Left sidebar hanging flush off the top bar, inline settings accordion, dock pinned at panel bottom</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/Youwes09/Ateon/HEAD/extra/previews/Minion-Multi-4k.png" alt="Left sidebar plus separate right control-centre card with drill-in rows"><figcaption>Left sidebar plus separate right control-centre card with drill-in rows</figcaption></figure>
+</div></section>
+<section class="proj" id="zepyxunderscore-hyprzepyx-"><h2><a href="https://github.com/zepyxunderscore/hyprzepyx">zepyxunderscore/hyprzepyx</a></h2><div class="row">
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/zepyxunderscore/hyprzepyx/main/.previews/kernel-fault/cc.png" alt="control-centre"><figcaption>control-centre</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/zepyxunderscore/hyprzepyx/main/.previews/quiet-fracture/desktop.png" alt="desktop"><figcaption>desktop</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/zepyxunderscore/hyprzepyx/main/.previews/kernel-fault/launcher.png" alt="launcher"><figcaption>launcher</figcaption></figure>
+<figure><img loading="lazy" src="https://raw.githubusercontent.com/zepyxunderscore/hyprzepyx/main/.previews/quiet-fracture/swaync.png" alt="notifications"><figcaption>notifications</figcaption></figure>
+</div></section>
+<footer>
+<p>Images are loaded from each project's own repository rather than copied here, so this file
+stays small and nothing is republished. A few will rot as projects move things; the project
+link always works.</p>
+<p>Captions describe the surface shown — control centre, notification centre, launcher, bar —
+or, for the sidebar set, how the panel attaches to the rail.</p>
+</footer>
+</div></body></html>

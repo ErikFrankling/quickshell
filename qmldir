@@ -1,0 +1,10 @@
+# A qmldir overrides the implicit directory import, so every type used from
+# another file has to be listed here, not just the singletons.
+singleton Theme 1.0 Theme.qml
+singleton Sys 1.0 Sys.qml
+singleton Notifs 1.0 Notifs.qml
+
+Panel 1.0 Panel.qml
+RailButton 1.0 RailButton.qml
+Slider 1.0 Slider.qml
+Stat 1.0 Stat.qml

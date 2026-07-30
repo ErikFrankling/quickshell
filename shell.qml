@@ -154,16 +154,19 @@ ShellRoot {
                     win.page = win.page === name ? "" : name;
                 }
 
-                // The rail item a page belongs to, if it is on the rail at all.
+                // The rail item a page belongs to. Every page has one: the rail
+                // is fixed, so a keybind can always find the button it would
+                // have been opened from.
                 function railItem(name) {
-                    if (name === "monitor")
-                        return ringBox;
-                    if (name === "widgets")
-                        return chevron;
-                    for (let i = 0; i < cluster.count; i++) {
-                        const l = cluster.itemAt(i);
-                        if (l && l.modelData.id === name)
-                            return l;
+                    switch (name) {
+                    case "monitor": return ringBox;
+                    case "widgets": return chevron;
+                    case "looks": return looksBtn;
+                    case "audio": return audioBtn;
+                    case "network": return networkBtn;
+                    case "bluetooth": return btBtn;
+                    case "player": return playerBtn;
+                    case "notifs": return notifsBtn;
                     }
                     return null;
                 }
@@ -181,19 +184,6 @@ ShellRoot {
                     function looks(): void { win.openAt(null, "looks"); }
                     function widgets(): void { win.openAt(null, "widgets"); }
                     function close(): void { win.page = ""; }
-                }
-
-                // A row in the flyout opens the widget's own panel. Only the
-                // window actually showing the flyout answers — the others are
-                // on other screens and were never asked. The opener stays the
-                // chevron: the new page takes the flyout's place rather than
-                // jumping somewhere else on the way.
-                Connections {
-                    target: Pins
-                    function onActivate(id: string): void {
-                        if (win.page === "widgets")
-                            win.page = id;
-                    }
                 }
 
                 SystemClock { id: clock; precision: SystemClock.Minutes }
@@ -231,81 +221,6 @@ ShellRoot {
                     topRightRadius: Theme.radius
                     bottomRightRadius: Theme.radius
 
-                    // One per cluster button. They report state, not just what
-                    // they open. In components rather than inline in the column
-                    // because the column is the pin list now.
-                    Component {
-                        id: bLooks
-                        Btn {
-                            id: looksBtn
-                            glyph: "󰸉"
-                            active: win.page === "looks"
-                            onClicked: win.openAt(looksBtn, "looks")
-                        }
-                    }
-                    Component {
-                        id: bAudio
-                        Btn {
-                            id: audioBtn
-                            glyph: Audio.muted ? "󰝟" : Audio.vol > 0.66 ? "󰕾" : Audio.vol > 0.33 ? "󰖀" : "󰕿"
-                            active: win.page === "audio"
-                            tint: Audio.muted ? Theme.bad : Theme.fg
-                            onClicked: win.openAt(audioBtn, "audio")
-                        }
-                    }
-                    Component {
-                        id: bNetwork
-                        Btn {
-                            id: networkBtn
-                            // Four states, four shapes, and a dot that stays lit
-                            // on VPN — he wants to see that without opening
-                            // anything.
-                            glyph: win.vpn ? "󰦝"
-                                : Sys.net === "" ? "󰤮"
-                                : Sys.net.toLowerCase().indexOf("eth") >= 0 ? "󰈀" : "󰤨"
-                            active: win.page === "network"
-                            badge: win.vpn ? 1 : 0
-                            tint: win.vpn ? Theme.good
-                                : Sys.net === "" ? Theme.bad : Theme.fg
-                            onClicked: win.openAt(networkBtn, "network")
-                        }
-                    }
-                    Component {
-                        id: bBluetooth
-                        Btn {
-                            id: btBtn
-                            glyph: Bluetooth.defaultAdapter?.enabled ? "󰂯" : "󰂲"
-                            active: win.page === "bluetooth"
-                            tint: !Bluetooth.defaultAdapter?.enabled ? Theme.dim
-                                : Bluetooth.devices.values.some(d => d.connected) ? Theme.good : Theme.fg
-                            onClicked: win.openAt(btBtn, "bluetooth")
-                        }
-                    }
-                    Component {
-                        id: bPlayer
-                        Btn {
-                            id: playerBtn
-                            glyph: Mpris.players.values.some(p => p.isPlaying) ? "󰝚" : "󰎊"
-                            active: win.page === "player"
-                            tint: Mpris.players.values.some(p => p.isPlaying) ? Theme.good : Theme.dim
-                            onClicked: win.openAt(playerBtn, "player")
-                        }
-                    }
-                    Component {
-                        id: bNotifs
-                        Btn {
-                            id: notifsBtn
-                            glyph: "󰂚"
-                            active: win.page === "notifs"
-                            badge: Notifs.unread
-                            tint: Notifs.unread > 0 ? Theme.accent : Theme.dim
-                            onClicked: {
-                                win.openAt(notifsBtn, "notifs");
-                                if (win.page === "notifs") Notifs.markSeen();
-                            }
-                        }
-                    }
-
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.topMargin: 8
@@ -313,7 +228,6 @@ ShellRoot {
                         spacing: 0
 
                         Group {
-                            visible: Pins.state("workspaces") === "pinned"
                             Workspaces { Layout.alignment: Qt.AlignHCenter }
                         }
 
@@ -329,7 +243,6 @@ ShellRoot {
 
                             property bool hovering: false
 
-                            visible: Pins.state("monitor") === "pinned"
                             Layout.alignment: Qt.AlignHCenter
                             implicitWidth: rings.implicitWidth
                             implicitHeight: rings.implicitHeight
@@ -360,27 +273,67 @@ ShellRoot {
 
                         Item { implicitHeight: 8 }
 
-                        // Which buttons this cluster draws, and in what order,
-                        // is the pin list — nothing here is hardcoded. Noctalia
-                        // drives its whole bar this way, off a widget registry
-                        // and a per-section Repeater of loaders; this is the
-                        // same shape, one cluster wide.
+                        // The shell's own buttons, in this order, always. They
+                        // are not pinnable and not removable: this cluster is
+                        // what the rail is for, and changing it is a code
+                        // change rather than a setting.
                         Group {
-                            visible: cluster.count > 0
+                            Btn {
+                                id: looksBtn
+                                glyph: "󰸉"
+                                active: win.page === "looks"
+                                onClicked: win.openAt(looksBtn, "looks")
+                            }
 
-                            Repeater {
-                                id: cluster
-                                model: ScriptModel { values: Pins.railWidgets }
+                            Btn {
+                                id: audioBtn
+                                glyph: Audio.muted ? "󰝟" : Audio.vol > 0.66 ? "󰕾" : Audio.vol > 0.33 ? "󰖀" : "󰕿"
+                                active: win.page === "audio"
+                                tint: Audio.muted ? Theme.bad : Theme.fg
+                                onClicked: win.openAt(audioBtn, "audio")
+                            }
 
-                                Loader {
-                                    required property var modelData
-                                    Layout.alignment: Qt.AlignHCenter
-                                    sourceComponent: modelData.id === "looks" ? bLooks
-                                        : modelData.id === "audio" ? bAudio
-                                        : modelData.id === "network" ? bNetwork
-                                        : modelData.id === "bluetooth" ? bBluetooth
-                                        : modelData.id === "player" ? bPlayer
-                                        : modelData.id === "notifs" ? bNotifs : null
+                            Btn {
+                                id: networkBtn
+                                // Four states, four shapes, and a dot that stays
+                                // lit on VPN — he wants to see that without
+                                // opening anything.
+                                glyph: win.vpn ? "󰦝"
+                                    : Sys.net === "" ? "󰤮"
+                                    : Sys.net.toLowerCase().indexOf("eth") >= 0 ? "󰈀" : "󰤨"
+                                active: win.page === "network"
+                                badge: win.vpn ? 1 : 0
+                                tint: win.vpn ? Theme.good
+                                    : Sys.net === "" ? Theme.bad : Theme.fg
+                                onClicked: win.openAt(networkBtn, "network")
+                            }
+
+                            Btn {
+                                id: btBtn
+                                glyph: Bluetooth.defaultAdapter?.enabled ? "󰂯" : "󰂲"
+                                active: win.page === "bluetooth"
+                                tint: !Bluetooth.defaultAdapter?.enabled ? Theme.dim
+                                    : Bluetooth.devices.values.some(d => d.connected) ? Theme.good : Theme.fg
+                                onClicked: win.openAt(btBtn, "bluetooth")
+                            }
+
+                            Btn {
+                                id: playerBtn
+                                glyph: Mpris.players.values.some(p => p.isPlaying) ? "󰝚" : "󰎊"
+                                active: win.page === "player"
+                                tint: Mpris.players.values.some(p => p.isPlaying) ? Theme.good : Theme.dim
+                                onClicked: win.openAt(playerBtn, "player")
+                            }
+
+                            Btn {
+                                id: notifsBtn
+                                glyph: "󰂚"
+                                active: win.page === "notifs"
+                                badge: Notifs.unread
+                                tint: Notifs.unread > 0 ? Theme.accent : Theme.dim
+                                onClicked: {
+                                    win.openAt(notifsBtn, "notifs");
+                                    if (win.page === "notifs") Notifs.markSeen();
                                 }
                             }
                         }
@@ -472,7 +425,6 @@ ShellRoot {
 
                         Group {
                             gap: 0
-                            visible: Pins.state("clock") === "pinned"
                             Text {
                                 Layout.alignment: Qt.AlignHCenter
                                 text: Qt.formatDateTime(clock.date, "HH")

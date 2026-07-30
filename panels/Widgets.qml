@@ -2,11 +2,13 @@ import ".."
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Services.SystemTray
 
-// The chevron flyout: everything the rail could show, split by where it
-// currently lives. The pin button moves a row onto the rail, the eye takes it
-// out of circulation entirely. Rows stay live — clicking one opens its panel or
-// activates its tray item, without pinning it first.
+// The chevron flyout: every system tray icon, split by where it currently
+// lives. The pin button moves one onto the rail, the eye takes it out of
+// circulation entirely. Rows stay live — clicking one activates its item
+// without pinning it first. Tray icons only; the rail's own buttons are not
+// listed because they cannot be moved.
 ColumnLayout {
     spacing: Theme.pad
 
@@ -28,7 +30,7 @@ ColumnLayout {
             // flyout is open would otherwise have Qt rebuild every delegate
             // from inside the destructor of the one that just went away.
             model: ScriptModel {
-                values: Pins.all.filter(e => Pins.state(e.id) === sec.want)
+                values: SystemTray.items.values.filter(i => Pins.state(Pins.idOf(i)) === sec.want)
             }
 
             RowLayout {
@@ -39,14 +41,15 @@ ColumnLayout {
                 spacing: 6
 
                 Entry {
-                    glyph: row.modelData.glyph
-                    label: row.modelData.label
-                    onClicked: row.modelData.item ? row.modelData.item.activate()
-                                                  : Pins.activate(row.modelData.id)
+                    // An em space holds the glyph column open for the icon
+                    // drawn over it. Tooltips are free-form and often several
+                    // lines; one line fits a row.
+                    glyph: " "
+                    label: (row.modelData.tooltipTitle || row.modelData.title
+                            || row.modelData.id).split("\n")[0]
+                    onClicked: row.modelData.activate()
 
-                    // Tray rows carry an icon where every other row has a glyph.
                     Image {
-                        visible: !!row.modelData.item
                         anchors {
                             left: parent.left
                             leftMargin: 13
@@ -54,7 +57,7 @@ ColumnLayout {
                         }
                         width: 15
                         height: 15
-                        source: row.modelData.item?.icon ?? ""
+                        source: row.modelData.icon
                         smooth: true
                     }
                 }
@@ -62,13 +65,13 @@ ColumnLayout {
                 Btn {
                     glyph: "󰐃"
                     active: sec.want === "pinned"
-                    onClicked: Pins.set(row.modelData.id,
+                    onClicked: Pins.set(Pins.idOf(row.modelData),
                                         sec.want === "pinned" ? "overflow" : "pinned")
                 }
 
                 Btn {
                     glyph: sec.want === "hidden" ? "󰈉" : "󰈈"
-                    onClicked: Pins.set(row.modelData.id,
+                    onClicked: Pins.set(Pins.idOf(row.modelData),
                                         sec.want === "hidden" ? "overflow" : "hidden")
                 }
             }
@@ -76,7 +79,7 @@ ColumnLayout {
     }
 
     Text {
-        text: "Widgets"
+        text: "Tray icons"
         color: Theme.fg
         font.pixelSize: 18
         font.weight: Font.DemiBold

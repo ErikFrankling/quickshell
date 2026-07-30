@@ -581,7 +581,15 @@ ShellRoot {
                     Component { id: cBluetooth; Panels.Bluetooth {} }
                     Component { id: cPlayer; Panels.Player {} }
                     Component { id: cLooks; Panels.Looks {} }
-                    Component { id: cWidgets; Panels.Widgets {} }
+                    // The tray rows in the flyout open the same menu the rail's
+                    // icons do. The panel cannot reach trayMenu from its own
+                    // scope, so it asks for the menu and this hands it over.
+                    Component {
+                        id: cWidgets
+                        Panels.Widgets {
+                            onMenuRequested: (item, x, y) => trayMenu.show(item, x, y)
+                        }
+                    }
                 }
             }
         }

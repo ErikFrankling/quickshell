@@ -44,6 +44,10 @@ ColumnLayout {
     ListView {
         Layout.fillWidth: true
         Layout.fillHeight: true
+        // A ListView reports no implicit height of its own, so the card it
+        // sits in would size to nothing and slice the rows. Report the
+        // content, and the card follows it up to its own screen clamp.
+        implicitHeight: contentHeight
         spacing: 6
         clip: true
         model: Bluetooth.devices

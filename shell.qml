@@ -441,21 +441,13 @@ ShellRoot {
 
                     readonly property int inset: Theme.pad + 4
                     readonly property int room: win.height - Theme.pad * 2
-                    // The list pages fill whatever height they are given; every
-                    // other page is exactly as tall as its content. A page whose
-                    // list is a fillHeight ListView has to be named here — a
-                    // ListView reports no implicit height, so left to size
-                    // itself the card cuts the first row in half.
-                    readonly property bool list: win.shown === "notifs"
-                        || win.shown === "network" || win.shown === "bluetooth"
-
                     x: Theme.rail + Theme.pad
                     y: (win.height - height) / 2
                     width: Theme.panel * win.p
                     // The floor keeps a page that has not reported a size yet
                     // from flashing past as a sliver.
-                    height: Math.min(room, Math.max(200, list ? 560
-                        : (body.item ? body.item.implicitHeight : 0) + inset * 2))
+                    height: Math.min(room, Math.max(200,
+                        (body.item ? body.item.implicitHeight : 0) + inset * 2))
                     radius: Theme.radius
                     color: Theme.bg
                     clip: true
@@ -479,8 +471,7 @@ ShellRoot {
                         x: card.inset
                         y: card.inset
                         width: Theme.panel - card.inset * 2
-                        height: card.list ? card.height - card.inset * 2
-                                          : card.room - card.inset * 2
+                        height: card.room - card.inset * 2
                         active: win.shown !== ""
                         sourceComponent: win.shown === "notifs" ? cNotifs
                             : win.shown === "monitor" ? cMonitor

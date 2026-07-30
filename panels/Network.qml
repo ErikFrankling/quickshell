@@ -1,10 +1,23 @@
 import ".."
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Networking
 
 ColumnLayout {
+    id: root
     spacing: Theme.pad
+
+    // There is no global list of access points: they hang off the wifi
+    // device, and it scans for none of them until asked. The Binding turns
+    // the scanner on while this page exists and off again when it closes.
+    readonly property var wifi: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
+
+    Binding {
+        target: root.wifi
+        property: "scannerEnabled"
+        value: true
+    }
 
     Text {
         text: "Network"
@@ -31,18 +44,26 @@ ColumnLayout {
     ListView {
         Layout.fillWidth: true
         Layout.fillHeight: true
+        // See Bluetooth.qml: a ListView has no implicit height, so the card
+        // needs to be told the content height to size to it.
+        implicitHeight: contentHeight
         spacing: 6
         clip: true
-        model: Networking.accessPoints
+        model: ScriptModel {
+            values: [...(root.wifi?.networks.values ?? [])]
+                .filter(n => n.name)
+                .sort((a, b) => b.signalStrength - a.signalStrength)
+        }
 
         delegate: Entry {
             required property var modelData
             width: ListView.view.width
-            glyph: modelData.strength > 66 ? "󰤨" : modelData.strength > 33 ? "󰤥" : "󰤟"
-            label: modelData.ssid
-            on: modelData.active
-            value: modelData.strength + "%"
-            onClicked: modelData.connect()
+            glyph: modelData.signalStrength > 0.66 ? "󰤨"
+                 : modelData.signalStrength > 0.33 ? "󰤥" : "󰤟"
+            label: modelData.name
+            on: modelData.connected
+            value: Math.round(modelData.signalStrength * 100) + "%"
+            onClicked: modelData.connected ? modelData.disconnect() : modelData.connect()
         }
     }
 }

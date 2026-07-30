@@ -37,6 +37,9 @@ ColumnLayout {
     ListView {
         Layout.fillWidth: true
         Layout.fillHeight: true
+        // See Bluetooth.qml. The card grows with the history until it hits
+        // the screen, and past that the list keeps the overflow and scrolls.
+        implicitHeight: contentHeight
         spacing: 9
         clip: true
         model: root.showSaved ? Notifs.saved : Notifs.history

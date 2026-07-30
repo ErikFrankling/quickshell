@@ -33,7 +33,7 @@ tick it. This file exists because requirements were being forgotten between turn
 - [x] Concave corners connecting the rail to open panels
 - [x] Workspaces show the number and the real icon of the app running there
 - [x] Icons sit to the right of the number so numbers stay close together
-- [ ] Workspaces always in numerical order — Hyprland reports them unordered
+- [x] Workspaces always in numerical order — Hyprland reports them unordered
 - [x] Always-visible icons carry state, not just an action: bluetooth on/off,
       wifi vs ethernet vs disconnected
 - [ ] Network state always readable without opening a panel — wifi, ethernet,

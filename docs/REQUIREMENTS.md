@@ -151,6 +151,12 @@ his system; these are proposals.
 
 ## Research, for discussion rather than implementation
 
+All three answered in `docs/keyboard.md` — yes to each. That file exists because
+these were ticked for a month with nothing durable behind them: the research had
+happened but lived only in agent transcripts.
+
 - [x] Can the QMK/Vial layout of the Dactyl be rendered as a cheatsheet?
 - [x] Can Hyprland's binds be read (via hyprctl, not by parsing config)?
 - [x] Can Neovim's keymaps be read?
+- [ ] Actually build the cheatsheet *(not asked for yet — he asked whether it
+      was possible)*

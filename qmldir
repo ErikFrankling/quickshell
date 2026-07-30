@@ -7,6 +7,7 @@ singleton Caps 1.0 Caps.qml
 singleton Notifs 1.0 Notifs.qml
 singleton Markup 1.0 Markup.qml
 singleton Audio 1.0 Audio.qml
+singleton Net 1.0 Net.qml
 singleton Pins 1.0 Pins.qml
 
 Bar 1.0 Bar.qml

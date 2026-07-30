@@ -14,8 +14,14 @@ ColumnLayout {
 
     // Downloads land beside the local ones, so a wallpaper joins the list the
     // moment it finishes. A real directory, not a cache — it is synced between
-    // his machines.
+    // his machines, by the syncthing folder named `wallpapers` in the NixOS
+    // config, which must point at this exact path and nowhere else. When the
+    // two disagree the grid is empty while the disk is full, so the empty
+    // state below says out loud which directory it looked in.
     readonly property string dir: Quickshell.env("HOME") + "/Pictures/wallpapers"
+
+    // The same path with $HOME folded back to a tilde, for showing a human.
+    readonly property string dirLabel: "~" + root.dir.slice(Quickshell.env("HOME").length)
 
     property list<string> walls: []
     property string current: ""
@@ -309,7 +315,8 @@ ColumnLayout {
     Text {
         visible: text !== ""
         text: root.note !== "" ? root.note
-            : root.cells.length === 0 && !root.online ? "No images yet — try Browse online"
+            : root.cells.length === 0 && !root.online
+                ? "Nothing in " + root.dirLabel + " — try Browse online"
             : ""
         color: Theme.dim
         font.pixelSize: 11

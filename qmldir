@@ -13,6 +13,7 @@ Btn 1.0 Btn.qml
 ConcaveCorner 1.0 ConcaveCorner.qml
 Graph 1.0 Graph.qml
 Group 1.0 Group.qml
+LauncherWindow 1.0 LauncherWindow.qml
 NotifCard 1.0 NotifCard.qml
 Ring 1.0 Ring.qml
 Entry 1.0 Entry.qml

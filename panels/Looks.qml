@@ -85,16 +85,12 @@ ColumnLayout {
     }
 
     function pick(cell) {
-        if (cell.id === "") {
-            root.setWall(cell.full);
-            return;
-        }
+        if (cell.id === "") { root.setWall(cell.full); return; }
         const dest = root.wallDir + "/wallhaven-" + cell.id +
             (cell.full.toLowerCase().endsWith(".png") ? ".png" : ".jpg");
         root.busy = true;
         dl.dest = dest;
-        dl.command = ["sh", "-c",
-            "mkdir -p " + JSON.stringify(root.wallDir) +
+        dl.command = ["sh", "-c", "mkdir -p " + JSON.stringify(root.wallDir) +
             " && { [ -s " + JSON.stringify(dest) + " ] || curl -fsSL --max-time 90 -o " +
             JSON.stringify(dest) + " " + JSON.stringify(cell.full) + "; }"];
         dl.running = true;
@@ -102,12 +98,13 @@ ColumnLayout {
 
     // Start hyprpaper if it is not already up, then set the image. It ships in
     // this flake, so it is on PATH whether or not the system config has it.
+    // hyprpaper 0.8 dropped `preload` and no longer wants the path quoted.
     function setWall(path) {
         root.current = path;
+        wallProc.running = false;
         wallProc.command = ["sh", "-c",
-            "pgrep -x hyprpaper >/dev/null || (hyprpaper &); sleep 0.3; " +
-            "hyprctl hyprpaper preload '" + path + "'; " +
-            "hyprctl hyprpaper wallpaper \",'" + path + "'\""];
+            "pgrep -x hyprpaper >/dev/null || { setsid hyprpaper >/dev/null 2>&1 & sleep 1; }; " +
+            "hyprctl hyprpaper wallpaper " + JSON.stringify("," + path)];
         wallProc.running = true;
     }
 
@@ -219,32 +216,27 @@ ColumnLayout {
         cellHeight: Math.round(cellWidth * 9 / 16)
         model: root.cells
 
-        delegate: Item {
+        delegate: Rectangle {
             id: cell
             required property var modelData
-            width: GridView.view.cellWidth
-            height: GridView.view.cellHeight
+            width: GridView.view.cellWidth - 6
+            height: GridView.view.cellHeight - 6
+            radius: Theme.radiusS
+            clip: true
+            color: Theme.bgAlt
+            border.width: root.current === cell.modelData.full ? 2 : 0
+            border.color: Theme.accent
 
-            Rectangle {
+            Image {
                 anchors.fill: parent
-                anchors.margins: 3
-                radius: Theme.radiusS
-                clip: true
-                color: Theme.bgAlt
-                border.width: root.current === cell.modelData.full ? 2 : 0
-                border.color: Theme.accent
-
-                Image {
-                    anchors.fill: parent
-                    source: cell.modelData.thumb
-                    fillMode: Image.PreserveAspectCrop
-                    sourceSize.width: 220
-                    asynchronous: true
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: root.pick(cell.modelData)
-                }
+                source: cell.modelData.thumb
+                fillMode: Image.PreserveAspectCrop
+                sourceSize.width: 220
+                asynchronous: true
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.pick(cell.modelData)
             }
         }
     }

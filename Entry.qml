@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 
-// A tappable row inside a panel: icon, label, optional right-hand value.
+// A tappable row inside a panel. Same hover discipline as Btn.
 Rectangle {
     id: root
 
@@ -9,13 +9,14 @@ Rectangle {
     property string label: ""
     property string value: ""
     property bool on: false
+    property bool hovering: false
 
     signal clicked
 
     Layout.fillWidth: true
     implicitHeight: 44
     radius: Theme.radiusS
-    color: root.on ? Qt.alpha(Theme.accent, 0.18) : ma.containsMouse ? Theme.bgHi : Theme.bgAlt
+    color: root.on ? Qt.alpha(Theme.accent, 0.18) : root.hovering ? Theme.bgHi : Theme.bgAlt
 
     Behavior on color { ColorAnimation { duration: 110 } }
 
@@ -45,9 +46,11 @@ Rectangle {
     }
 
     MouseArea {
-        id: ma
         anchors.fill: parent
         hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onEntered: root.hovering = true
+        onExited: root.hovering = false
         onClicked: root.clicked()
     }
 }

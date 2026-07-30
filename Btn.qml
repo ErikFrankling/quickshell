@@ -1,15 +1,19 @@
 import QtQuick
 import QtQuick.Layouts
 
+// Hover is held in an explicit property set from entered/exited rather than
+// read from containsMouse, which drops transiently and makes the highlight
+// flicker while the pointer is still inside. The visual rect is centred at a
+// fixed size rather than filling, so a relayout cannot resize it under the
+// cursor. Both idioms taken from noctalia's NIconButton.
 Item {
     id: root
 
     property string glyph: ""
     property bool active: false
     property int badge: 0
-    property string tip: ""
-    // Colour the glyph when the thing it represents is actually on.
     property color tint: Theme.dim
+    property bool hovering: false
 
     signal clicked
 
@@ -18,9 +22,12 @@ Item {
     implicitHeight: 34
 
     Rectangle {
-        anchors.fill: parent
+        id: visual
+        width: root.implicitWidth
+        height: root.implicitHeight
+        anchors.centerIn: parent
         radius: Theme.radiusS
-        color: root.active ? Theme.accent : ma.containsMouse ? Theme.bgHi : "transparent"
+        color: root.active ? Theme.accent : root.hovering ? Theme.bgHi : "transparent"
 
         Behavior on color { ColorAnimation { duration: 110 } }
 
@@ -34,15 +41,19 @@ Item {
 
     Rectangle {
         visible: root.badge > 0 && !root.active
-        anchors { top: parent.top; right: parent.right; margins: 5 }
-        width: 8; height: 8; radius: 4
+        anchors { top: visual.top; right: visual.right; margins: 4 }
+        width: 8
+        height: 8
+        radius: 4
         color: Theme.accent
     }
 
     MouseArea {
-        id: ma
         anchors.fill: parent
         hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onEntered: root.hovering = true
+        onExited: root.hovering = false
         onClicked: root.clicked()
     }
 }

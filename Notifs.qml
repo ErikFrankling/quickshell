@@ -17,7 +17,6 @@ Singleton {
     property list<var> popups: []
     property list<var> history: []
     property list<var> saved: []
-    property bool dnd: false
 
     readonly property int unread: history.filter(n => !n.seen).length
 
@@ -120,8 +119,7 @@ Singleton {
             root.live[s.key] = n;
 
             root.history = [s].concat(root.history).slice(0, 200);
-            if (!root.dnd || s.urgency === "critical")
-                root.popups = [s].concat(root.popups).slice(0, 4);
+            root.popups = [s].concat(root.popups).slice(0, 4);
 
             // Hold the D-Bus close back while the notification has actions, so
             // it stays answerable from history after the popup is gone.

@@ -30,28 +30,32 @@ tick it. This file exists because requirements were being forgotten between turn
 ## Rail (left sidebar)
 
 - [x] Left sidebar, Noctalia design language
-- [x] Concave corners connecting the rail to open panels
+- [ ] Concave corners connecting the rail to open panels
+      *(regressed on purpose: panels are now floating cards with a gap to the
+      rail, so there is no junction to fillet. Re-open if the cards are ever
+      attached to the rail again — `ConcaveCorner.qml` draws a lens, not a
+      fillet, and would need fixing first.)*
 - [x] Workspaces show the number and the real icon of the app running there
 - [x] Icons sit to the right of the number so numbers stay close together
 - [x] Workspaces always in numerical order — Hyprland reports them unordered
 - [x] Always-visible icons carry state, not just an action: bluetooth on/off,
       wifi vs ethernet vs disconnected
-- [ ] Network state always readable without opening a panel — wifi, ethernet,
+- [x] Network state always readable without opening a panel — wifi, ethernet,
       VPN, and whether the VPN is up
 - [x] Tray lives in the rail
 - [x] Tray left-click activates
-- [ ] Tray right-click opens the application's context menu
+- [x] Tray right-click opens the application's context menu
 - [x] Metric rings in the rail
-- [ ] Rings are clickable — no separate system-monitor button
-- [ ] Theme button sits with the other buttons
-- [ ] No launcher button in the rail
+- [x] Rings are clickable — no separate system-monitor button
+- [x] Theme button sits with the other buttons
+- [x] No launcher button in the rail
 - [ ] Rail is not cramped
 
 ## Panels
 
-- [ ] Panels are only as tall and wide as their content — never full height
-- [ ] Escape closes whatever panel is open
-- [ ] Opening a panel must not change the rail's width
+- [x] Panels are only as tall and wide as their content — never full height
+- [x] Escape closes whatever panel is open
+- [x] Opening a panel must not change the rail's width
 - [x] Do-not-disturb removed entirely
 - [x] Wifi panel
 - [x] Bluetooth panel
@@ -90,7 +94,7 @@ tick it. This file exists because requirements were being forgotten between turn
 ## Launcher
 
 - [x] Centred overlay window on top of everything
-- [ ] Wired up, and not reachable from a rail button
+- [x] Wired up, and not reachable from a rail button
 
 ## Research, for discussion rather than implementation
 

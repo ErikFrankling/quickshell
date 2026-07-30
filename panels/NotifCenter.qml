@@ -27,30 +27,11 @@ ColumnLayout {
         }
     }
 
-    RowLayout {
-        Layout.fillWidth: true
+    Text {
         visible: !root.showSaved
-        Text {
-            text: Notifs.dnd ? "Do not disturb is on" : Notifs.history.length + " in history"
-            color: Theme.dim
-            font.pixelSize: 12
-            Layout.fillWidth: true
-        }
-        Row {
-            id: dndRow
-            Rectangle {
-                width: 38; height: 21; radius: 11
-                color: Notifs.dnd ? Theme.accent : Theme.bgHi
-                Rectangle {
-                    x: Notifs.dnd ? parent.width - width - 3 : 3
-                    y: 3
-                    width: 15; height: 15; radius: 8
-                    color: Notifs.dnd ? Theme.bg : Theme.dim
-                    Behavior on x { NumberAnimation { duration: 130 } }
-                }
-                MouseArea { anchors.fill: parent; onClicked: Notifs.dnd = !Notifs.dnd }
-            }
-        }
+        text: Notifs.history.length + " in history"
+        color: Theme.dim
+        font.pixelSize: 12
     }
 
     ListView {

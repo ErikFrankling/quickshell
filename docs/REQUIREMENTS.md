@@ -30,13 +30,16 @@ tick it. This file exists because requirements were being forgotten between turn
 ## Rail (left sidebar)
 
 - [x] Left sidebar, Noctalia design language
-- [ ] Concave corners connecting the rail to open panels
-      *(REOPENED. An agent detached the cards and called the corners obsolete,
-      but Erik asked for both in one sentence: "the menu only as tall and wide
-      as the content that fills it and then those rounded corners to connect
-      it — it is noctalia, this is what noctalia is good at". Dropping them was
-      a design decision recorded as a consequence. `ConcaveCorner.qml` is dead
-      code today and draws a lens, not a fillet; it needs fixing first.)*
+- [ ] **Panels attach to the rail. No gap. Inverse corners at the join, so the
+      rail flows into the panel, and an animation that rolls the panel out.**
+      Asked for four times now and dropped twice. His reference images are
+      `docs/images/connect-*.png` — KaOS running Niri + Noctalia, panel flush
+      against the bar reading as one surface.
+      *(An agent detached the cards into floating cards with a gap and declared
+      the corners obsolete because "there is no junction to fillet" — a
+      regression justified after the fact. `ConcaveCorner.qml` is dead code and
+      draws a lens between an arc and its chord, not a fillet.)*
+      **Whatever fixes this must not reintroduce the rail resizing on open.**
 - [x] Workspaces show the number and the real icon of the app running there
 - [x] Icons sit to the right of the number so numbers stay close together
 - [x] Workspaces always in numerical order — Hyprland reports them unordered

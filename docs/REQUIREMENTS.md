@@ -83,6 +83,13 @@ tick it. This file exists because requirements were being forgotten between turn
 - [x] Media player: what is playing, and track switching
 - [x] Notification centre
 
+## On-screen display
+
+- [ ] Volume and brightness OSD at the bottom centre — appears on change, shows
+      the number **and** a filling bar, disappears on its own. Must react to
+      changes from anywhere (media keys, `wpctl`, `brightnessctl`), not just
+      the shell's own sliders. Brightness gated on the host having a backlight.
+
 ## Notifications
 
 - [x] Popups appear on screen and expire on their own

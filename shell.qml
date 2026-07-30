@@ -163,8 +163,7 @@ ShellRoot {
                     case "player": return playerBtn;
                     case "network": return networkBtn;
                     case "bluetooth": return btBtn;
-                    case "control": return chevron;
-                    case "calendar": return clockCol;
+                    case "control": return clockCol;
                     }
                     return null;
                 }
@@ -178,9 +177,15 @@ ShellRoot {
                     function bluetooth(): void { win.openAt(null, "bluetooth"); }
                     function player(): void { win.openAt(null, "player"); }
                     function control(): void { win.openAt(null, "control"); }
-                    function calendar(): void { win.openAt(null, "calendar"); }
                     function close(): void { win.page = ""; }
                 }
+
+                // Which page the control centre opens on. The clock is its
+                // button and lands on the notifications; the tray's overflow
+                // count is the one other thing that opens it, and it means the
+                // tray. Set before openAt, read once by the Loader below, and
+                // then owned by the panel's own tab strip.
+                property string controlPage: "notifs"
 
                 // Waybar's network-status.sh calls it VPN when tun0 is up, so
                 // the rail agrees with the bar he already reads.
@@ -268,8 +273,8 @@ ShellRoot {
                     // margin above: the workspaces run into the top edge.
                     readonly property int inner: rail.height - 8
                     // The part of the rail that is not negotiable: the metrics,
-                    // what is playing, the arrow and the two radios, the clock,
-                    // and the four gaps between those groups.
+                    // what is playing, the radios, the clock, and the four gaps
+                    // between those groups.
                     //
                     // The three groups below the spacer are measured by their
                     // grounds, not by their contents, because the ground is what
@@ -277,10 +282,12 @@ ShellRoot {
                     // each cluster is height the workspaces cannot have.
                     readonly property int fixed: ringBox.implicitHeight
                         + playerGroup.implicitHeight + clockGroup.implicitHeight
-                        // The arrow, wifi and bluetooth, which are three slots
-                        // of bottomGroup whatever the tray does, plus that
-                        // group's own ground.
-                        + Theme.slot * 3 + Theme.slotGap * 2 + Theme.groupPad * 2
+                        // Wifi and bluetooth, and the tunnel when there is one,
+                        // which are the slots of bottomGroup whatever the tray
+                        // does, plus that group's own ground.
+                        + Theme.slot * (win.vpn ? 3 : 2)
+                        + Theme.slotGap * (win.vpn ? 2 : 1)
+                        + Theme.groupPad * 2
                         + Theme.groupGap * 4
                     // What the two things that grow on their own have to share.
                     readonly property int elastic: Math.max(0, rail.inner - rail.fixed)
@@ -291,14 +298,23 @@ ShellRoot {
                     readonly property int trayCell: 26 + Theme.slotGap
                     readonly property int trayMax: Math.max(0,
                         Math.floor((rail.elastic - Theme.slot) / rail.trayCell))
+                    // How many cells the tray gets, and how many of them are
+                    // icons. When the rail cannot hold them all the last cell
+                    // carries the count instead of an icon, so saying how many
+                    // are missing never costs the height that lost them.
+                    readonly property int trayCells:
+                        Math.min(rail.trayMax, Pins.railTray.length)
+                    readonly property int trayShown:
+                        rail.trayCells < Pins.railTray.length
+                            ? Math.max(0, rail.trayCells - 1) : rail.trayCells
                     readonly property int trayHidden:
-                        Math.max(0, Pins.railTray.length - rail.trayMax)
+                        Pins.railTray.length - rail.trayShown
                     // And the workspaces take whatever the tray left. Counted
                     // rather than measured: the icons are delegates of a
                     // Repeater inside the column this budget also pays for, so
                     // reading its height back would close the loop.
                     readonly property int wsRoom: Math.max(0, rail.elastic
-                        - Math.min(rail.trayMax, Pins.railTray.length) * rail.trayCell)
+                        - rail.trayCells * rail.trayCell)
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -567,8 +583,8 @@ ShellRoot {
                         Item { implicitHeight: Theme.groupGap }
 
                         // The bottom cluster, and the whole of what the rail
-                        // keeps permanently: the arrow, the tray he pinned, and
-                        // the two radios.
+                        // keeps permanently: the tray he pinned, and the
+                        // radios.
                         //
                         // There used to be six buttons here. A theme button, a
                         // volume button and a notification button each cost a
@@ -579,42 +595,15 @@ ShellRoot {
                         // beside it. Wifi and bluetooth are the two that carry
                         // state you want without asking for it, so they are the
                         // two that stayed. Everything else moved behind the
-                        // arrow, which is now the control centre, or out of the
+                        // clock, which is the control centre now, or out of the
                         // shell entirely: looks is its own overlay window.
+                        //
+                        // The arrow that used to open the control centre is
+                        // gone with them. It was a button whose whole job was
+                        // to be a button, sitting one slot above a clock that
+                        // was already the right size to press.
                         Group {
                             id: bottomGroup
-
-                            // Everything without a slot of its own lives behind
-                            // this, as it does behind Windows' taskbar chevron
-                            // and Plasma's ExpanderArrow. It is here whether or
-                            // not anything is pinned, because it is no longer
-                            // only about the tray.
-                            Btn {
-                                id: chevron
-                                glyph: "󰅂"
-                                active: win.page === "control"
-                                // The bell's job, minus the bell: the only
-                                // thing that button ever said was a number, and
-                                // a number fits on the arrow.
-                                badge: Notifs.unread
-                                tint: Notifs.unread > 0 ? Theme.accent : Theme.dim
-                                onClicked: win.openAt(chevron, "control")
-
-                                // A pin the rail could not honour is not a pin
-                                // lost: the tray page lists every tray item,
-                                // pinned or not, so the icon is exactly one
-                                // click from where it always was. The count
-                                // says so, because a pinned icon that simply
-                                // stopped appearing would read as a bug.
-                                Text {
-                                    anchors { right: parent.right; bottom: parent.bottom; margins: 1 }
-                                    visible: rail.trayHidden > 0
-                                    text: "+" + rail.trayHidden
-                                    color: chevron.active ? Theme.bg : Theme.accent
-                                    font.pixelSize: 9
-                                    font.weight: Font.DemiBold
-                                }
-                            }
 
                             Repeater {
                                 // ScriptModel, not the bare array: binding a
@@ -632,7 +621,7 @@ ShellRoot {
                                 // without it the tray is what pushes the clock
                                 // off the bottom, and the tray and the clock
                                 // are the two things that must never go quietly.
-                                model: ScriptModel { values: Pins.railTray.slice(0, rail.trayMax) }
+                                model: ScriptModel { values: Pins.railTray.slice(0, rail.trayShown) }
                                 // Tray icons are a zoo of shapes and palettes; a
                                 // consistent circular ground makes the column read
                                 // as one set. Theme.bgAlt reads as a cell against
@@ -695,6 +684,48 @@ ShellRoot {
                                 }
                             }
 
+                            // A pin the rail could not honour is not a pin
+                            // lost: the tray page lists every tray item,
+                            // pinned or not, so the icon is exactly one click
+                            // from where it always was. The count says so,
+                            // because a pinned icon that simply stopped
+                            // appearing would read as a bug. It takes the last
+                            // cell rather than a row of its own, which is the
+                            // trade Windows' taskbar chevron makes and the one
+                            // the rail can afford: the count cannot cost the
+                            // height that caused it.
+                            Rectangle {
+                                id: trayMore
+
+                                visible: rail.trayHidden > 0
+                                Layout.alignment: Qt.AlignHCenter
+                                implicitWidth: 26
+                                implicitHeight: 26
+                                radius: 13
+                                color: moreMa.containsMouse ? Theme.accent : Theme.bgAlt
+
+                                Behavior on color { ColorAnimation { duration: 110 } }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "+" + rail.trayHidden
+                                    color: moreMa.containsMouse ? Theme.bg : Theme.accent
+                                    font.pixelSize: 10
+                                    font.weight: Font.DemiBold
+                                }
+
+                                MouseArea {
+                                    id: moreMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        win.controlPage = "tray";
+                                        win.openAt(trayMore, "control");
+                                    }
+                                }
+                            }
+
                             // The two that stayed, and the two that answer a
                             // question you did not have to ask: which network,
                             // and is anything connected.
@@ -708,16 +739,17 @@ ShellRoot {
                             // also where every shell read for this puts it.
                             Btn {
                                 id: networkBtn
-                                // Four states, four shapes, and a dot that stays
-                                // lit on VPN — he wants to see that without
-                                // opening anything.
-                                glyph: win.vpn ? "󰦝"
-                                    : Sys.net === "" ? "󰤮"
+                                // Three states, three shapes: this button says
+                                // which link, and only which link. It used to
+                                // swap to a shield whenever the tunnel was up,
+                                // which meant the one moment the rail could not
+                                // tell him wifi from ethernet was the moment he
+                                // was on a VPN — and REQUIREMENTS asks for all
+                                // four at once.
+                                glyph: Sys.net === "" ? "󰤮"
                                     : Sys.net.toLowerCase().indexOf("eth") >= 0 ? "󰈀" : "󰤨"
                                 active: win.page === "network"
-                                badge: win.vpn ? 1 : 0
-                                tint: win.vpn ? Theme.good
-                                    : Sys.net === "" ? Theme.bad : Theme.fg
+                                tint: Sys.net === "" ? Theme.bad : Theme.fg
                                 onClicked: win.openAt(networkBtn, "network")
 
                                 // Right button only, so the left one is
@@ -730,6 +762,43 @@ ShellRoot {
                                     acceptedButtons: Qt.RightButton
                                     onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
                                 }
+                            }
+
+                            // The tunnel, and only while there is one.
+                            //
+                            // This was a dot in the corner of the button above,
+                            // drawn with Btn's badge — the same 8px accent
+                            // circle the arrow used for unread notifications —
+                            // so the one thing on the rail that meant "a count
+                            // you have not read" also meant "your VPN is up",
+                            // and it sat on top of a glyph that already said
+                            // so. Erik read it as a notification, which is
+                            // exactly what it looked like. A slot that exists
+                            // only when the tunnel does says the same thing
+                            // without a second vocabulary, and it is how the
+                            // shells that show VPN at all do it: noctalia has a
+                            // VPN widget of its own beside its network widget
+                            // (Modules/Bar/Widgets/VPN.qml:107).
+                            //
+                            // The key rather than the shield. Material's own
+                            // name for this glyph is `vpn_key`, and it is what
+                            // DankMaterialShell (Modules/ControlCenter/
+                            // BuiltinPlugins/VpnWidget.qml:17) and caelestia
+                            // (modules/utilities/cards/Toggles.qml:144) both
+                            // draw; noctalia's shield is the other convention
+                            // and it is the one Erik read as security in
+                            // general rather than as a tunnel. Nerd Font does
+                            // carry a glyph literally called vpn, U+F0582, and
+                            // it is three thin letterforms that turn to mush at
+                            // 15px — rendered at rail size and rejected, along
+                            // with tunnel U+F183D, which at that size is a
+                            // filled blob. See docs/surveys/vpn-glyph.md.
+                            Btn {
+                                id: vpnBtn
+                                visible: win.vpn
+                                glyph: "󰌆"
+                                tint: Theme.good
+                                onClicked: win.openAt(vpnBtn, "network")
                             }
 
                             Btn {
@@ -773,18 +842,35 @@ ShellRoot {
 
                         Item { implicitHeight: Theme.groupGap }
 
-                        // The clock, and the calendar behind it. Laid across the
-                        // rail by RailClock rather than down it, which is why
-                        // this is a group of one 30px slot rather than the 92px
-                        // stack of five lines it replaced — the tallest single
-                        // thing on a rail that overflows on a laptop, for a date
-                        // nobody could read twice.
+                        // The clock, and the control centre behind it. Laid
+                        // across the rail by RailClock rather than down it,
+                        // which is why this is a group of one 30px slot rather
+                        // than the 92px stack of five lines it replaced — the
+                        // tallest single thing on a rail that overflows on a
+                        // laptop, for a date nobody could read twice.
+                        //
+                        // It used to open a month grid. That grid is deleted:
+                        // no account is signed in, Erik keeps his calendar in
+                        // applications that have one, and a page of bare
+                        // numbers was a page. What the clock opens now is
+                        // everything the arrow above it used to — notifications,
+                        // volume, the tray — because a clock is already the
+                        // biggest press target on the rail and it was spending
+                        // that on the least.
                         Group {
                             id: clockGroup
                             RailClock {
                                 id: clockCol
-                                active: win.page === "calendar"
-                                onActivated: win.openAt(clockCol, "calendar")
+                                active: win.page === "control"
+                                // The bell's job, minus the bell. The arrow
+                                // carried this count and the arrow is gone; the
+                                // notifications are still the first thing behind
+                                // this button, so the count still belongs on it.
+                                badge: Notifs.unread
+                                onActivated: {
+                                    win.controlPage = "notifs";
+                                    win.openAt(clockCol, "control");
+                                }
                             }
                         }
                     }
@@ -935,10 +1021,11 @@ ShellRoot {
                         // nine of its panels never do — so an oversized one
                         // simply runs out of the box the clamp put it in.
                         //
-                        // Giving the page `max(viewport, content)` also fixed
-                        // the calendar, which had no child absorbing slack and
-                        // so split the old fixed 976px between its two layout
-                        // children and pushed the month grid out of sight.
+                        // The `max(viewport, content)` on the Loader below is
+                        // the other half: a page with no child absorbing slack
+                        // used to have the old fixed 976px split between its
+                        // layout children, which pushed the bottom of it out of
+                        // sight.
                         Flickable {
                             id: body
 
@@ -976,8 +1063,7 @@ ShellRoot {
                                     : win.shown === "network" ? cNetwork
                                     : win.shown === "bluetooth" ? cBluetooth
                                     : win.shown === "player" ? cPlayer
-                                    : win.shown === "control" ? cControl
-                                    : win.shown === "calendar" ? cCalendar : null
+                                    : win.shown === "control" ? cControl : null
                             }
                         }
 
@@ -1009,7 +1095,6 @@ ShellRoot {
                     Component { id: cNetwork; Panels.Network {} }
                     Component { id: cBluetooth; Panels.Bluetooth {} }
                     Component { id: cPlayer; Panels.Player {} }
-                    Component { id: cCalendar; Panels.Calendar {} }
                     // The control centre's tray rows open the same menu the
                     // rail's icons do, and its Looks button opens the overlay
                     // window. Neither is reachable from a panel's own scope, so
@@ -1017,6 +1102,7 @@ ShellRoot {
                     Component {
                         id: cControl
                         Panels.Control {
+                            page: win.controlPage
                             onMenuRequested: (item, x, y) => trayMenu.show(item, x, y)
                             onLooksRequested: {
                                 win.page = "";

@@ -141,8 +141,10 @@ the prior-art surveys behind several of the choices below.
 
 ## Rail, continued
 
-- [x] Windows-style widgets menu: a chevron flyout that decides which items sit
-      on the rail and which live behind it.
+- [x] Windows-style widgets menu: a flyout that decides which items sit on the
+      rail and which live behind it. The chevron itself is gone — the clock is
+      the control centre's button now, the tray page behind it lists every item
+      pinned or not, and the overflow count sits on the last tray cell.
 - [x] **Only system tray icons are pinnable.** The shell's own buttons —
       network, bluetooth, audio, looks, notifications — must not be removable.
       *"i don't want the network button to be like fucking removable, that is

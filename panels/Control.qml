@@ -3,8 +3,12 @@ import "." as Pages
 import QtQuick
 import QtQuick.Layouts
 
-// Everything that did not earn a permanent slot on the rail, behind the one
-// arrow that did: notifications, volume, and the tray.
+// Everything that did not earn a permanent slot on the rail, behind the clock:
+// notifications, volume, and the tray.
+//
+// The clock is the button because an arrow whose only job was to be an arrow
+// was a slot spent on nothing, one group above a press target the rail was
+// already drawing.
 //
 // Almost nothing in this space pages. Noctalia's control centre is a stack of
 // cards and sends anything deeper to a sibling panel through

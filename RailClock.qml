@@ -41,11 +41,28 @@ import Quickshell
 // So this is the only design on the sheet that gets shorter while getting
 // easier to read. `HH:mm` on one line is a time; `HH` over `mm` is two numbers
 // you assemble into one, and nothing else on the rail asks to be read that way.
+//
+// It is also the control centre's button. There was an arrow one group above it
+// whose whole job was to be pressable, sitting over a clock that is already the
+// largest press target on the rail and was spending it on a month grid nobody
+// wanted. Windows puts the notifications behind the clock, GNOME puts the whole
+// shell menu behind it, and Plasma's digital clock opens its calendar-and-
+// notifications applet; a clock is the one thing on a bar everybody already
+// aims at.
 Item {
     id: root
 
-    // Whether the calendar page is the one showing, like every Btn on the rail.
+    // Whether the control centre is the page showing, like every Btn on the
+    // rail.
     property bool active: false
+
+    // Unread notifications. It reads on the date rather than as a dot in a
+    // corner, because a 45px clock has no corner free — `HH:mm` at 15px is the
+    // full width of the group — and because a dot on a rail button is what Erik
+    // had just finished reading as "there is a notification here" on a button
+    // where there could not be one. On this button there can be, and the cue
+    // is the date going from dim to the accent.
+    property int badge: 0
 
     signal activated
 
@@ -87,7 +104,8 @@ Item {
             // and nonsense in the next — and three letters cost the same room
             // as two digits.
             text: Qt.formatDateTime(clock.date, "dd MMM").toUpperCase()
-            color: root.active ? Theme.fg : Theme.dim
+            color: root.badge > 0 ? Theme.accent
+                 : root.active ? Theme.fg : Theme.dim
             font.pixelSize: 10
             font.letterSpacing: 0.5
             font.features: ({ tnum: 1 })

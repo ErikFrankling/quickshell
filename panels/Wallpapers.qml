@@ -18,7 +18,7 @@ ColumnLayout {
     // config, which must point at this exact path and nowhere else. When the
     // two disagree the grid is empty while the disk is full, so the empty
     // state below says out loud which directory it looked in.
-    readonly property string dir: Quickshell.env("HOME") + "/Pictures/wallpapers"
+    readonly property string dir: Quickshell.env("HOME") + "/wallpapers"
 
     // The same path with $HOME folded back to a tilde, for showing a human.
     readonly property string dirLabel: "~" + root.dir.slice(Quickshell.env("HOME").length)
@@ -34,8 +34,12 @@ ColumnLayout {
     property string note: ""
 
     // Off unless asked for: the hand-picked themes stay the way to choose
-    // colours, and this is the toy next to them.
-    readonly property string pick: root.current !== "" ? root.current : (root.walls[0] ?? "")
+    // colours, and this is the toy next to them. Named for what it is — the
+    // image the matcher derives from — and not `pick`, which is the verb the
+    // grid calls. A property and a function of the same name are one name on
+    // the QObject, the property wins silently, and every click on a wallpaper
+    // died on `"" is not a function` with nothing said to anyone.
+    readonly property string matchTarget: root.current !== "" ? root.current : (root.walls[0] ?? "")
 
     readonly property var cells: root.online
         ? root.hits
@@ -225,13 +229,18 @@ ColumnLayout {
     GridView {
         id: grid
         Layout.fillWidth: true
-        // A real height, and a constant one. The panel sizes itself to its
-        // content, so fillHeight leaves the grid a clipped sliver — and a
-        // height derived from cellHeight cannot be used either, because
-        // cellHeight comes from the width the layout has not worked out yet.
-        Layout.preferredHeight: 250
+        // Take the height going, but never less than three rows. The centred
+        // overlay has a height of its own to give away, so the grid can fill
+        // it; the rail panel sizes itself to its content instead, where
+        // fillHeight alone would leave a clipped sliver and the minimum is
+        // what actually decides.
+        Layout.fillHeight: true
+        Layout.minimumHeight: 250
         clip: true
-        cellWidth: Math.floor(width / 3)
+        // Roughly 210px a thumbnail, three at the narrowest. The rail panel
+        // gets its three columns; the overlay gets five and stops there rather
+        // than growing each thumbnail to the width of a playing card.
+        cellWidth: Math.floor(width / Math.max(3, Math.round(width / 210)))
         cellHeight: Math.round(cellWidth * 9 / 16)
 
         // A plain array here segfaults quickshell when an entry goes away.
@@ -253,7 +262,9 @@ ColumnLayout {
                 anchors.fill: parent
                 source: cell.modelData.thumb
                 fillMode: Image.PreserveAspectCrop
-                sourceSize.width: 220
+                // Both axes. Bounding the width alone lets a panorama decode
+                // as tall as it likes, which is the axis that costs the memory.
+                sourceSize: Qt.size(grid.cellWidth, grid.cellHeight)
                 asynchronous: true
                 cache: true
             }
@@ -302,8 +313,8 @@ ColumnLayout {
         Pill {
             label: matcher.on ? "On" : "Off"
             on: matcher.on
-            live: root.pick !== ""
-            onClicked: matcher.toggle(root.pick)
+            live: root.matchTarget !== ""
+            onClicked: matcher.toggle(root.matchTarget)
         }
     }
 

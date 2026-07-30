@@ -640,6 +640,17 @@ ShellRoot {
         function toggle(): void { launcher.open ? launcher.hide() : launcher.show(); }
     }
 
+    // The keybind itself. Registered over hyprland-global-shortcuts-v1, so the
+    // press arrives in this process; `bind = ..., global, quickshell:launcher`
+    // in his hyprland config points at it. The IpcHandler above stays for the
+    // command line, but the hot path forks no `qs` client.
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "launcher"
+        description: "Toggle the application launcher"
+        onPressed: launcher.open ? launcher.hide() : launcher.show()
+    }
+
     // The volume and brightness card at the bottom of the screen.
     Osd {}
 

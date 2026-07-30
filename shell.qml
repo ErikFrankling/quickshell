@@ -220,14 +220,173 @@ ShellRoot {
                     topRightRadius: Theme.radius
                     bottomRightRadius: Theme.radius
 
+                    // ---- the overflow budget --------------------------------
+                    // A vertical rail has a screen height to spend and no say
+                    // in what wants to sit on it: Hyprland makes workspaces as
+                    // he works and he pins tray icons as he finds them. A
+                    // ColumnLayout on its own does not care — the fillHeight
+                    // spacer collapses to nothing and then every group keeps
+                    // its full implicit height and the column simply runs off
+                    // the bottom of the screen, taking the tray and the clock
+                    // with it, invisible and unclickable.
+                    //
+                    // Nobody in this space handles it. Noctalia's vertical bar
+                    // is three independently anchored columns inside one
+                    // `clip: true` Item (Modules/Bar/Bar.qml:514-518), so its
+                    // sections grow into each other and whatever passes the
+                    // screen edge is cut; whisker's VBarContainer.qml:24 does
+                    // exactly the same. Neither has a cap, a scroll or an
+                    // indicator. So the ladder below is this shell's own, and
+                    // its one rule is that the rail spends its height from the
+                    // bottom up: the clock, the tray, the shell's own buttons
+                    // and the metrics all keep their place, and the workspaces
+                    // — the most numerous thing here and the only one with a
+                    // natural order to scroll through — are what gives.
+                    //
+                    // Height minus the two 8px margins the column is inset by.
+                    readonly property int inner: rail.height - 16
+                    // The part of the rail that is not negotiable: the metrics,
+                    // the buttons, the clock, and the three 8px gaps between
+                    // the groups below the spacer.
+                    readonly property int fixed: ringBox.implicitHeight
+                        + btnGroup.implicitHeight + clockGroup.implicitHeight + 24
+                    // What the two groups that grow on their own have to share.
+                    readonly property int elastic: Math.max(0, rail.inner - rail.fixed)
+                    // The tray is served first but never all of it: one
+                    // workspace pill's worth is held back so the rail always
+                    // still says which workspace he is on.
+                    readonly property int trayRoom:
+                        Math.max(0, rail.elastic - Theme.slot - Theme.groupPad * 2)
+                    // The chevron and its ground come out of that before the
+                    // icons do; each icon is a 26px cell over a 6px gap.
+                    readonly property int trayMax: Math.max(0,
+                        Math.floor((rail.trayRoom - Theme.groupPad * 2 - Theme.slot) / 32))
+                    readonly property int trayHidden:
+                        Math.max(0, Pins.railTray.length - rail.trayMax)
+                    // And the workspaces take whatever the tray left.
+                    readonly property int wsRoom:
+                        Math.max(0, rail.elastic - trayGroup.implicitHeight)
+
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.topMargin: 8
                         anchors.bottomMargin: 8
                         spacing: 0
 
+                        // The one elastic group on the rail. It is its natural
+                        // height until the rail runs out, and then it stops
+                        // growing and scrolls instead. Two things make that
+                        // safe rather than merely tidy: the focused pill is
+                        // scrolled back into view whenever it moves, so the
+                        // workspace he is actually on is never the one that
+                        // went away, and a chevron sits over each edge that has
+                        // more behind it, so a short list and a scrolled list
+                        // never look alike.
                         Group {
-                            Workspaces { Layout.alignment: Qt.AlignHCenter }
+                            id: wsGroup
+                            clip: true
+
+                            Item {
+                                id: wsBox
+
+                                Layout.alignment: Qt.AlignHCenter
+                                implicitWidth: wsCol.implicitWidth
+                                // Never taller than the pills, never taller
+                                // than the rail can pay for, and never shorter
+                                // than one pill.
+                                implicitHeight: Math.min(wsCol.implicitHeight,
+                                    Math.max(Theme.slot, rail.wsRoom - Theme.groupPad * 2))
+
+                                Flickable {
+                                    id: wsFlick
+
+                                    anchors.fill: parent
+                                    contentWidth: width
+                                    contentHeight: wsCol.implicitHeight
+                                    clip: true
+                                    boundsBehavior: Flickable.StopAtBounds
+                                    // Dead to the pointer while everything
+                                    // fits, so the common case behaves exactly
+                                    // as it did before there was a Flickable
+                                    // here at all.
+                                    interactive: contentHeight > height
+
+                                    // Scroll the focused pill back into view,
+                                    // by the shortest move that does it, so the
+                                    // list does not jump when he steps between
+                                    // two workspaces that are both already on
+                                    // screen.
+                                    function follow(): void {
+                                        if (contentHeight <= height) {
+                                            contentY = 0;
+                                            return;
+                                        }
+                                        for (let i = 0; i < wsCol.children.length; i++) {
+                                            const c = wsCol.children[i];
+                                            if (!c.here)
+                                                continue;
+                                            if (c.y < contentY)
+                                                contentY = c.y;
+                                            else if (c.y + c.height > contentY + height)
+                                                contentY = c.y + c.height - height;
+                                            break;
+                                        }
+                                        returnToBounds();
+                                    }
+
+                                    // callLater every time: the pill has not
+                                    // been given its y yet at the moment any of
+                                    // these fire.
+                                    onHeightChanged: Qt.callLater(wsFlick.follow)
+                                    onContentHeightChanged: Qt.callLater(wsFlick.follow)
+                                    Component.onCompleted: Qt.callLater(wsFlick.follow)
+
+                                    Connections {
+                                        target: Hyprland
+                                        function onFocusedWorkspaceChanged() {
+                                            Qt.callLater(wsFlick.follow);
+                                        }
+                                    }
+
+                                    Workspaces {
+                                        id: wsCol
+                                        width: wsFlick.width
+                                        height: implicitHeight
+                                    }
+                                }
+
+                                // The affordance, one per edge that has more
+                                // behind it. Drawn in the group's own ground
+                                // colour so it reads as the list running under
+                                // the edge rather than as a pill with a chevron
+                                // in it.
+                                Rectangle {
+                                    anchors { top: parent.top; left: parent.left; right: parent.right }
+                                    height: 10
+                                    color: Theme.bgHi
+                                    visible: wsFlick.contentY > 0.5
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "󰅃"
+                                        color: Theme.accent
+                                        font.pixelSize: 10
+                                    }
+                                }
+
+                                Rectangle {
+                                    anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+                                    height: 10
+                                    color: Theme.bgHi
+                                    visible: wsFlick.contentY + wsFlick.height
+                                        < wsFlick.contentHeight - 0.5
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "󰅀"
+                                        color: Theme.accent
+                                        font.pixelSize: 10
+                                    }
+                                }
+                            }
                         }
 
                         // the gap that does the work: everything above sits at the
@@ -285,6 +444,7 @@ ShellRoot {
                         // what the rail is for, and changing it is a code
                         // change rather than a setting.
                         Group {
+                            id: btnGroup
                             Btn {
                                 id: looksBtn
                                 glyph: "󰸉"
@@ -346,6 +506,7 @@ ShellRoot {
                         Item { implicitHeight: 8 }
 
                         Group {
+                            id: trayGroup
                             gap: 6
 
                             // Everything not pinned to the rail lives behind
@@ -356,6 +517,21 @@ ShellRoot {
                                 glyph: "󰅂"
                                 active: win.page === "widgets"
                                 onClicked: win.openAt(chevron, "widgets")
+
+                                // A pin the rail could not honour is not a pin
+                                // lost: the flyout lists every tray item,
+                                // pinned or not, so the icon is exactly one
+                                // click from where it always was. The count
+                                // says so, because a pinned icon that simply
+                                // stopped appearing would read as a bug.
+                                Text {
+                                    anchors { right: parent.right; bottom: parent.bottom; margins: 1 }
+                                    visible: rail.trayHidden > 0
+                                    text: "+" + rail.trayHidden
+                                    color: chevron.active ? Theme.bg : Theme.accent
+                                    font.pixelSize: 9
+                                    font.weight: Font.DemiBold
+                                }
                             }
 
                             Repeater {
@@ -366,7 +542,15 @@ ShellRoot {
                                 // went away, which segfaults when an
                                 // application quits. ScriptModel diffs by
                                 // identity and only removes the one delegate.
-                                model: ScriptModel { values: Pins.railTray }
+                                //
+                                // Sliced to what the rail can pay for. The
+                                // workspaces above absorb most of the pressure,
+                                // so this only bites once he has pinned more
+                                // icons than a screen this tall can hold — but
+                                // without it the tray is what pushes the clock
+                                // off the bottom, and the tray and the clock
+                                // are the two things that must never go quietly.
+                                model: ScriptModel { values: Pins.railTray.slice(0, rail.trayMax) }
                                 // Tray icons are a zoo of shapes and palettes; a
                                 // consistent circular ground makes the column read
                                 // as one set.
@@ -429,6 +613,7 @@ ShellRoot {
                         Item { implicitHeight: 8 }
 
                         Group {
+                            id: clockGroup
                             gap: 0
                             Text {
                                 Layout.alignment: Qt.AlignHCenter

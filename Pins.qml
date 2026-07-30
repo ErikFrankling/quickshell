@@ -9,53 +9,56 @@ import QtQuick
 //
 // Three states, not two: pinned (on the rail), overflow (in the flyout) and
 // hidden (nowhere). Overflow is the default, so a tray icon that appears
-// mid-session never shoves the rail around — Windows 11 starts new icons at
-// IsPromoted=0 and Plasma's shownItems/hiddenItems work the same way.
+// mid-session never shoves the rail around. Plasma's system tray stores exactly
+// this — a shownItems list, a hiddenItems list and nothing for the default —
+// in systemtraysettings.cpp, and Windows 11 starts new icons behind the chevron.
 Singleton {
     id: root
 
     property list<string> pinned: []
     property list<string> hidden: []
 
+    // Opening a widget's panel from the flyout. shell.qml owns the page and the
+    // flyout is loaded inside it, so the request has to come back out here.
+    signal activate(string id)
+
     // The rail's own widgets, addressed by name and never by position: a
     // widget's index changes the moment another one moves to the flyout.
+    // `fixed` marks the three that have their own shape and their own place on
+    // the rail; the rest are interchangeable buttons in one cluster.
     readonly property var widgets: [
-        { id: "launcher", glyph: "󰀻", label: "Launcher" },
+        { id: "workspaces", glyph: "󰕰", label: "Workspaces", fixed: true },
+        { id: "monitor", glyph: "󰍹", label: "System monitor", fixed: true },
         { id: "looks", glyph: "󰸉", label: "Looks" },
-        { id: "workspaces", glyph: "󰕰", label: "Workspaces" },
-        { id: "metrics", glyph: "󰄨", label: "Metrics" },
-        { id: "monitor", glyph: "󰍹", label: "Monitor" },
         { id: "audio", glyph: "󰕾", label: "Audio" },
         { id: "network", glyph: "󰤨", label: "Network" },
         { id: "bluetooth", glyph: "󰂯", label: "Bluetooth" },
         { id: "player", glyph: "󰝚", label: "Media" },
         { id: "notifs", glyph: "󰂚", label: "Notifications" },
-        { id: "clock", glyph: "󰥔", label: "Clock" }
+        { id: "clock", glyph: "󰥔", label: "Clock", fixed: true }
     ]
 
-    // Everything addressable, tray and widget alike, as one model. Two filtered
-    // views over this is all the rail and the flyout ever need.
+    // Everything addressable, tray and widget alike, as one list. The flyout is
+    // three filtered views over it.
     readonly property var all: root.widgets.concat(SystemTray.items.values.map(i => ({
         id: root.idOf(i),
-        glyph: "",
+        // An em space holds the glyph column open for the icon the row draws
+        // there instead.
+        glyph: " ",
         // Tooltips are free-form and often several lines. One line fits a row.
         label: (i.tooltipTitle || i.title || i.id).split("\n")[0],
         item: i
     })))
 
-    // A tray item's id is the StatusNotifierItem Id — the app picks it and it is
-    // the same string next launch. tooltipTitle is not: it carries unread counts
-    // and sync state, so a pin keyed on it silently detaches. Two apps get the
-    // Id wrong and Plasma special-cases both in systemtraymodel.cpp: Dropbox
-    // appends its pid, and every Chromium/Electron app calls itself
-    // chrome_status_icon_N in launch order.
+    // The two the rail reads.
+    readonly property var railWidgets: root.widgets.filter(w => !w.fixed && root.state(w.id) === "pinned")
+    readonly property var railTray: SystemTray.items.values.filter(i => root.state(root.idOf(i)) === "pinned")
+
+    // The StatusNotifierItem Id — the app picks it and it is the same string
+    // next launch. tooltipTitle is not: it carries unread counts and sync state,
+    // so a pin keyed on it silently detaches.
     function idOf(item) {
-        const raw = item.id ?? "";
-        if (raw.startsWith("dropbox-client-"))
-            return "tray:dropbox";
-        if (raw.startsWith("chrome_status_icon"))
-            return "tray:" + raw + "@" + (item.title || item.tooltipTitle);
-        return "tray:" + raw;
+        return "tray:" + (item.id || item.title);
     }
 
     function state(id) {
@@ -63,44 +66,15 @@ Singleton {
             : root.pinned.includes(id) ? "pinned" : "overflow";
     }
 
-    function isPinned(id) {
-        return root.pinned.includes(id);
-    }
-
     // Copy and reassign, never push: mutating a list in place does not notify,
     // so every binding reading it goes stale. This is the bug in this space.
-    function pin(id) {
+    function set(id, s) {
+        root.pinned = root.pinned.filter(x => x !== id);
         root.hidden = root.hidden.filter(x => x !== id);
-        if (!root.pinned.includes(id))
+        if (s === "pinned")
             root.pinned = root.pinned.concat([id]);
-        root.save();
-    }
-
-    function unpin(id) {
-        root.pinned = root.pinned.filter(x => x !== id);
-        root.save();
-    }
-
-    function toggle(id) {
-        if (root.isPinned(id))
-            root.unpin(id);
-        else
-            root.pin(id);
-    }
-
-    function conceal(id) {
-        root.pinned = root.pinned.filter(x => x !== id);
-        if (!root.hidden.includes(id))
+        else if (s === "hidden")
             root.hidden = root.hidden.concat([id]);
-        root.save();
-    }
-
-    function reveal(id) {
-        root.hidden = root.hidden.filter(x => x !== id);
-        root.save();
-    }
-
-    function save() {
         store.setText(JSON.stringify({ pinned: root.pinned, hidden: root.hidden }));
     }
 
@@ -116,11 +90,11 @@ Singleton {
             } catch (e) {}
         }
         // First run keeps the rail as it is today — every widget pinned, every
-        // tray icon in the flyout — and the user prunes from there.
+        // tray icon behind the chevron — and he prunes from there.
         onLoadFailed: err => {
             if (err === FileViewError.FileNotFound) {
                 root.pinned = root.widgets.map(w => w.id);
-                Qt.callLater(root.save);
+                Qt.callLater(() => store.setText(JSON.stringify({ pinned: root.pinned, hidden: [] })));
             }
         }
     }

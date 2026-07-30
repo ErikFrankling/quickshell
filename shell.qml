@@ -109,7 +109,19 @@ ShellRoot {
                     function bluetooth(): void { win.page = win.page === "bluetooth" ? "" : "bluetooth"; }
                     function player(): void { win.page = win.page === "player" ? "" : "player"; }
                     function looks(): void { win.page = win.page === "looks" ? "" : "looks"; }
+                    function widgets(): void { win.page = win.page === "widgets" ? "" : "widgets"; }
                     function close(): void { win.page = ""; }
+                }
+
+                // A row in the flyout opens the widget's own panel. Only the
+                // window actually showing the flyout answers — the others are
+                // on other screens and were never asked.
+                Connections {
+                    target: Pins
+                    function onActivate(id: string): void {
+                        if (win.page === "widgets")
+                            win.page = id;
+                    }
                 }
 
                 SystemClock { id: clock; precision: SystemClock.Minutes }
@@ -147,6 +159,75 @@ ShellRoot {
                     topRightRadius: Theme.radius
                     bottomRightRadius: Theme.radius
 
+                    // One per cluster button. They report state, not just what
+                    // they open. In components rather than inline in the column
+                    // because the column is the pin list now.
+                    Component {
+                        id: bLooks
+                        Btn {
+                            glyph: "󰸉"
+                            active: win.page === "looks"
+                            onClicked: win.page = win.page === "looks" ? "" : "looks"
+                        }
+                    }
+                    Component {
+                        id: bAudio
+                        Btn {
+                            glyph: Audio.muted ? "󰝟" : Audio.vol > 0.66 ? "󰕾" : Audio.vol > 0.33 ? "󰖀" : "󰕿"
+                            active: win.page === "audio"
+                            tint: Audio.muted ? Theme.bad : Theme.fg
+                            onClicked: win.page = win.page === "audio" ? "" : "audio"
+                        }
+                    }
+                    Component {
+                        id: bNetwork
+                        Btn {
+                            // Four states, four shapes, and a dot that stays lit
+                            // on VPN — he wants to see that without opening
+                            // anything.
+                            glyph: win.vpn ? "󰦝"
+                                : Sys.net === "" ? "󰤮"
+                                : Sys.net.toLowerCase().indexOf("eth") >= 0 ? "󰈀" : "󰤨"
+                            active: win.page === "network"
+                            badge: win.vpn ? 1 : 0
+                            tint: win.vpn ? Theme.good
+                                : Sys.net === "" ? Theme.bad : Theme.fg
+                            onClicked: win.page = win.page === "network" ? "" : "network"
+                        }
+                    }
+                    Component {
+                        id: bBluetooth
+                        Btn {
+                            glyph: Bluetooth.defaultAdapter?.enabled ? "󰂯" : "󰂲"
+                            active: win.page === "bluetooth"
+                            tint: !Bluetooth.defaultAdapter?.enabled ? Theme.dim
+                                : Bluetooth.devices.values.some(d => d.connected) ? Theme.good : Theme.fg
+                            onClicked: win.page = win.page === "bluetooth" ? "" : "bluetooth"
+                        }
+                    }
+                    Component {
+                        id: bPlayer
+                        Btn {
+                            glyph: Mpris.players.values.some(p => p.isPlaying) ? "󰝚" : "󰎊"
+                            active: win.page === "player"
+                            tint: Mpris.players.values.some(p => p.isPlaying) ? Theme.good : Theme.dim
+                            onClicked: win.page = win.page === "player" ? "" : "player"
+                        }
+                    }
+                    Component {
+                        id: bNotifs
+                        Btn {
+                            glyph: "󰂚"
+                            active: win.page === "notifs"
+                            badge: Notifs.unread
+                            tint: Notifs.unread > 0 ? Theme.accent : Theme.dim
+                            onClicked: {
+                                win.page = win.page === "notifs" ? "" : "notifs";
+                                if (win.page === "notifs") Notifs.markSeen();
+                            }
+                        }
+                    }
+
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.topMargin: 8
@@ -154,6 +235,7 @@ ShellRoot {
                         spacing: 0
 
                         Group {
+                            visible: Pins.state("workspaces") === "pinned"
                             Workspaces { Layout.alignment: Qt.AlignHCenter }
                         }
 
@@ -169,6 +251,7 @@ ShellRoot {
 
                             property bool hovering: false
 
+                            visible: Pins.state("monitor") === "pinned"
                             Layout.alignment: Qt.AlignHCenter
                             implicitWidth: rings.implicitWidth
                             implicitHeight: rings.implicitHeight
@@ -199,53 +282,27 @@ ShellRoot {
 
                         Item { implicitHeight: 8 }
 
+                        // Which buttons this cluster draws, and in what order,
+                        // is the pin list — nothing here is hardcoded. Noctalia
+                        // drives its whole bar this way, off a widget registry
+                        // and a per-section Repeater of loaders; this is the
+                        // same shape, one cluster wide.
                         Group {
-                            // Each of these reports state, not just what it opens.
-                            Btn {
-                                glyph: "󰸉"
-                                active: win.page === "looks"
-                                onClicked: win.page = win.page === "looks" ? "" : "looks"
-                            }
-                            Btn {
-                                glyph: Audio.muted ? "󰝟" : Audio.vol > 0.66 ? "󰕾" : Audio.vol > 0.33 ? "󰖀" : "󰕿"
-                                active: win.page === "audio"
-                                tint: Audio.muted ? Theme.bad : Theme.fg
-                                onClicked: win.page = win.page === "audio" ? "" : "audio"
-                            }
-                            Btn {
-                                // Four states, four shapes, and a dot that stays
-                                // lit on VPN — he wants to see that without
-                                // opening anything.
-                                glyph: win.vpn ? "󰦝"
-                                    : Sys.net === "" ? "󰤮"
-                                    : Sys.net.toLowerCase().indexOf("eth") >= 0 ? "󰈀" : "󰤨"
-                                active: win.page === "network"
-                                badge: win.vpn ? 1 : 0
-                                tint: win.vpn ? Theme.good
-                                    : Sys.net === "" ? Theme.bad : Theme.fg
-                                onClicked: win.page = win.page === "network" ? "" : "network"
-                            }
-                            Btn {
-                                glyph: Bluetooth.defaultAdapter?.enabled ? "󰂯" : "󰂲"
-                                active: win.page === "bluetooth"
-                                tint: !Bluetooth.defaultAdapter?.enabled ? Theme.dim
-                                    : Bluetooth.devices.values.some(d => d.connected) ? Theme.good : Theme.fg
-                                onClicked: win.page = win.page === "bluetooth" ? "" : "bluetooth"
-                            }
-                            Btn {
-                                glyph: Mpris.players.values.some(p => p.isPlaying) ? "󰝚" : "󰎊"
-                                active: win.page === "player"
-                                tint: Mpris.players.values.some(p => p.isPlaying) ? Theme.good : Theme.dim
-                                onClicked: win.page = win.page === "player" ? "" : "player"
-                            }
-                            Btn {
-                                glyph: "󰂚"
-                                active: win.page === "notifs"
-                                badge: Notifs.unread
-                                tint: Notifs.unread > 0 ? Theme.accent : Theme.dim
-                                onClicked: {
-                                    win.page = win.page === "notifs" ? "" : "notifs";
-                                    if (win.page === "notifs") Notifs.markSeen();
+                            visible: cluster.count > 0
+
+                            Repeater {
+                                id: cluster
+                                model: ScriptModel { values: Pins.railWidgets }
+
+                                Loader {
+                                    required property var modelData
+                                    Layout.alignment: Qt.AlignHCenter
+                                    sourceComponent: modelData.id === "looks" ? bLooks
+                                        : modelData.id === "audio" ? bAudio
+                                        : modelData.id === "network" ? bNetwork
+                                        : modelData.id === "bluetooth" ? bBluetooth
+                                        : modelData.id === "player" ? bPlayer
+                                        : modelData.id === "notifs" ? bNotifs : null
                                 }
                             }
                         }
@@ -253,8 +310,17 @@ ShellRoot {
                         Item { implicitHeight: 8 }
 
                         Group {
-                            visible: SystemTray.items.values.length > 0
                             gap: 6
+
+                            // Everything not pinned to the rail lives behind
+                            // this, as it does behind Windows' taskbar chevron
+                            // and Plasma's ExpanderArrow.
+                            Btn {
+                                glyph: "󰅂"
+                                active: win.page === "widgets"
+                                onClicked: win.page = win.page === "widgets" ? "" : "widgets"
+                            }
+
                             Repeater {
                                 // ScriptModel, not the bare array: binding a
                                 // live values slice straight into model has Qt
@@ -263,9 +329,7 @@ ShellRoot {
                                 // went away, which segfaults when an
                                 // application quits. ScriptModel diffs by
                                 // identity and only removes the one delegate.
-                                model: ScriptModel {
-                                    values: SystemTray.items.values.slice(0, 5)
-                                }
+                                model: ScriptModel { values: Pins.railTray }
                                 // Tray icons are a zoo of shapes and palettes; a
                                 // consistent circular ground makes the column read
                                 // as one set.
@@ -329,6 +393,7 @@ ShellRoot {
 
                         Group {
                             gap: 0
+                            visible: Pins.state("clock") === "pinned"
                             Text {
                                 Layout.alignment: Qt.AlignHCenter
                                 text: Qt.formatDateTime(clock.date, "HH")
@@ -376,9 +441,13 @@ ShellRoot {
 
                     readonly property int inset: Theme.pad + 4
                     readonly property int room: win.height - Theme.pad * 2
-                    // The two list pages fill whatever height they are given;
-                    // every other page is exactly as tall as its content.
-                    readonly property bool list: win.shown === "notifs" || win.shown === "network"
+                    // The list pages fill whatever height they are given; every
+                    // other page is exactly as tall as its content. A page whose
+                    // list is a fillHeight ListView has to be named here — a
+                    // ListView reports no implicit height, so left to size
+                    // itself the card cuts the first row in half.
+                    readonly property bool list: win.shown === "notifs"
+                        || win.shown === "network" || win.shown === "bluetooth"
 
                     x: Theme.rail + Theme.pad
                     y: (win.height - height) / 2
@@ -419,7 +488,8 @@ ShellRoot {
                             : win.shown === "network" ? cNetwork
                             : win.shown === "bluetooth" ? cBluetooth
                             : win.shown === "player" ? cPlayer
-                            : win.shown === "looks" ? cLooks : null
+                            : win.shown === "looks" ? cLooks
+                            : win.shown === "widgets" ? cWidgets : null
                     }
 
                     Component { id: cNotifs; Panels.NotifCenter {} }
@@ -429,6 +499,7 @@ ShellRoot {
                     Component { id: cBluetooth; Panels.Bluetooth {} }
                     Component { id: cPlayer; Panels.Player {} }
                     Component { id: cLooks; Panels.Looks {} }
+                    Component { id: cWidgets; Panels.Widgets {} }
                 }
             }
         }

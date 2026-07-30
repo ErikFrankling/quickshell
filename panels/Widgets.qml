@@ -1,13 +1,13 @@
 import ".."
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 
 // The chevron flyout: everything the rail could show, split by where it
 // currently lives. The pin button moves a row onto the rail, the eye takes it
-// out of circulation entirely. Tray rows stay live — clicking one activates it
-// without pinning it first.
+// out of circulation entirely. Rows stay live — clicking one opens its panel or
+// activates its tray item, without pinning it first.
 ColumnLayout {
-    id: root
     spacing: Theme.pad
 
     component Section: ColumnLayout {
@@ -24,23 +24,27 @@ ColumnLayout {
 
         Repeater {
             id: rows
-            model: Pins.all.filter(e => Pins.state(e.id) === sec.want)
+            // ScriptModel, not the bare array: a tray item that quits while the
+            // flyout is open would otherwise have Qt rebuild every delegate
+            // from inside the destructor of the one that just went away.
+            model: ScriptModel {
+                values: Pins.all.filter(e => Pins.state(e.id) === sec.want)
+            }
 
             RowLayout {
                 id: row
-                required property int index
                 required property var modelData
 
                 Layout.fillWidth: true
                 spacing: 6
 
                 Entry {
-                    // An em space holds the glyph column open for tray rows, so
-                    // their icon lands where every other row's glyph is.
-                    glyph: row.modelData.item ? " " : row.modelData.glyph
+                    glyph: row.modelData.glyph
                     label: row.modelData.label
-                    onClicked: row.modelData.item?.activate()
+                    onClicked: row.modelData.item ? row.modelData.item.activate()
+                                                  : Pins.activate(row.modelData.id)
 
+                    // Tray rows carry an icon where every other row has a glyph.
                     Image {
                         visible: !!row.modelData.item
                         anchors {
@@ -56,19 +60,16 @@ ColumnLayout {
                 }
 
                 Btn {
-                    glyph: Pins.isPinned(row.modelData.id) ? "󰐃" : "󰤰"
-                    active: Pins.isPinned(row.modelData.id)
-                    onClicked: Pins.toggle(row.modelData.id)
+                    glyph: "󰐃"
+                    active: sec.want === "pinned"
+                    onClicked: Pins.set(row.modelData.id,
+                                        sec.want === "pinned" ? "overflow" : "pinned")
                 }
 
                 Btn {
-                    glyph: Pins.state(row.modelData.id) === "hidden" ? "󰈉" : "󰈈"
-                    onClicked: {
-                        if (Pins.state(row.modelData.id) === "hidden")
-                            Pins.reveal(row.modelData.id);
-                        else
-                            Pins.conceal(row.modelData.id);
-                    }
+                    glyph: sec.want === "hidden" ? "󰈉" : "󰈈"
+                    onClicked: Pins.set(row.modelData.id,
+                                        sec.want === "hidden" ? "overflow" : "hidden")
                 }
             }
         }
@@ -81,7 +82,7 @@ ColumnLayout {
         font.weight: Font.DemiBold
     }
 
-    Section { title: "In the flyout"; want: "overflow" }
+    Section { title: "Behind the chevron"; want: "overflow" }
     Section { title: "On the rail"; want: "pinned" }
     Section { title: "Hidden"; want: "hidden" }
 

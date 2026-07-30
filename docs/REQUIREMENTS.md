@@ -121,9 +121,12 @@ tick it. This file exists because requirements were being forgotten between turn
 ## Applications that should follow the theme
 
 - [x] kitty — already follows, via the OSC broadcast, with no config change
-- [ ] neovim — use the published palette when it exists, fall back to
+- [x] neovim — use the published palette when it exists, fall back to
       tokyonight-night when it does not. Minimal change, in his `nvim` repo.
-- [ ] zellij — find out whether it can follow at all
+- [x] zellij — answered: only via a generated, mutable config file. It draws
+      its own UI and ignores OSC; a themes-dir file loads but does not
+      live-reload; a theme inline in config.kdl does. His config.kdl is a
+      store symlink, so it needs the proposal in the section below.
 
 ## Launcher
 

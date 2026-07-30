@@ -84,6 +84,11 @@ in
       Service = {
         ExecStart = lib.getExe cfg.package;
         Restart = "on-failure";
+        # Applications the launcher starts inherit this unit's cgroup, and the
+        # default kill mode would SIGTERM all of them when the unit restarts.
+        # Since ExecStart embeds the store path, every switch that touches a
+        # .qml file restarts it — which would close everything you had opened.
+        KillMode = "process";
       };
 
       Install.WantedBy = [ config.wayland.systemd.target ];

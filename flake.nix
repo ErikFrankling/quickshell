@@ -26,6 +26,9 @@
         root = ./.;
         fileset = lib.fileset.unions [
           (lib.fileset.fileFilter (f: f.hasExt "qml") ./.)
+          # schemes.js — the base16 corpus, imported by Themes.qml like any
+          # other QML source file.
+          (lib.fileset.fileFilter (f: f.hasExt "js") ./.)
           ./qmldir
         ];
       };
@@ -45,10 +48,14 @@
 
       # The installable version, for when the shell is part of the system
       # rather than something being iterated on.
+      # Arguments are forwarded, so `erikshell ipc call launcher toggle` works.
+      # Without that the IpcHandlers are unreachable on an installed system:
+      # `qs` finds an instance by its config path, which nobody knows once the
+      # config lives in the store.
       packages.${system}.default = pkgs.writeShellApplication {
         name = "erikshell";
         runtimeInputs = [ pkgs.quickshell ] ++ runtimeDeps;
-        text = ''exec quickshell -p ${src}'';
+        text = ''exec quickshell -p ${src} "$@"'';
       };
 
       # Importing this is enough — the package defaults to the one above, so a
@@ -57,6 +64,10 @@
         imports = [ ./nix/hm-module.nix ];
         programs.erikshell.package = lib.mkDefault self.packages.${system}.default;
       };
+
+      # Home Manager renamed the attribute; noctalia and DankMaterialShell both
+      # use the newer spelling.
+      homeModules = self.homeManagerModules;
 
       devShells.${system}.default = pkgs.mkShell {
         packages = [ pkgs.quickshell ] ++ runtimeDeps;

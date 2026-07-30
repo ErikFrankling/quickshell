@@ -128,6 +128,11 @@ tick it. This file exists because requirements were being forgotten between turn
       see the note at the bottom. GTK cannot be recoloured at runtime by any
       file; only the portal's light/dark + single accent gets through.)*
 - [x] A theme is colour only here; fonts, spacing, radii stay hardcoded
+- [ ] At least one light theme, and the shell has to survive it — it was built
+      dark throughout and a light base16 scheme runs base00→base07 the other
+      way round
+- [ ] A centred overlay listing every published base16 scheme with swatches,
+      so he can browse all of them and click one to apply
 - [x] A toggle to match the theme to the wallpaper — *"a cute little toggle
       you can turn on if you wanna try it"*. Off by default.
 

@@ -87,14 +87,34 @@ tick it. This file exists because requirements were being forgotten between turn
 - [x] Wallpaper switcher that actually applies the wallpaper
 - [x] Download wallpapers from the popular wallpaper sites
 - [x] Theme changes apply instantly at runtime — no rebuild
-- [ ] Theme written in a standard format so other applications follow it too,
+- [x] Theme written in a standard format so other applications follow it too,
       rather than a bespoke scheme only this shell understands
+      *(`~/.cache/wal/` in pywal's layout + base16 YAML, and OSC sequences
+      broadcast to every pts. Dotfiles still need to point at those files —
+      see the note at the bottom. GTK cannot be recoloured at runtime by any
+      file; only the portal's light/dark + single accent gets through.)*
 - [x] A theme is colour only here; fonts, spacing, radii stay hardcoded
 
 ## Launcher
 
 - [x] Centred overlay window on top of everything
 - [x] Wired up, and not reachable from a rail button
+
+## Waiting on Erik
+
+Changes that belong in the dotfiles repo, not here. Nothing has been done to
+his system; these are proposals.
+
+- kitty: `include ~/.cache/wal/colors-kitty.conf`, and drop
+  `auto_reload_config = -1` from `modules/home-manager/kitty.nix:23` so new
+  windows pick it up. Running windows already recolour via the OSC broadcast.
+- fish: `cat ~/.cache/wal/sequences` in `interactiveShellInit`, so terminals
+  opened later match the ones already running.
+- waybar: `@import "/home/erikf/.cache/wal/colors-waybar.css";` plus
+  `killall -SIGUSR2 waybar`.
+- GTK: not possible from a file. GTK loads `gtk.css` once and never watches
+  it, and libadwaita pins the theme name. The only live channel is the
+  portal, and it carries light/dark plus one accent colour.
 
 ## Research, for discussion rather than implementation
 

@@ -2,6 +2,7 @@
 # another file has to be listed, not just the singletons.
 singleton Theme 1.0 Theme.qml
 singleton Sys 1.0 Sys.qml
+singleton Caps 1.0 Caps.qml
 singleton Notifs 1.0 Notifs.qml
 singleton Markup 1.0 Markup.qml
 singleton Audio 1.0 Audio.qml

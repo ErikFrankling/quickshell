@@ -12,7 +12,7 @@ singleton Pins 1.0 Pins.qml
 Bar 1.0 Bar.qml
 Workspaces 1.0 Workspaces.qml
 Btn 1.0 Btn.qml
-ConcaveCorner 1.0 ConcaveCorner.qml
+CardShape 1.0 CardShape.qml
 Graph 1.0 Graph.qml
 Group 1.0 Group.qml
 LauncherWindow 1.0 LauncherWindow.qml

@@ -72,6 +72,22 @@ ShellRoot {
                     }
                 }
 
+                // The background rolls out solid; only the page inside it
+                // fades, and it starts halfway through the roll. That is
+                // noctalia's opacityTrigger — a timer at animationNormal * 0.5
+                // — and it is what keeps a page from being legible while it is
+                // still a sliver. On the way out the page leaves first.
+                property bool bodyShown: false
+                onOpenChanged: {
+                    if (open) {
+                        bodyIn.restart();
+                    } else {
+                        bodyIn.stop();
+                        bodyShown = false;
+                    }
+                }
+                Timer { id: bodyIn; interval: 150; onTriggered: win.bodyShown = true }
+
                 anchors { top: true; left: true; right: true; bottom: true }
                 color: "transparent"
 
@@ -431,56 +447,71 @@ ShellRoot {
                 }
 
                 // ---- panel --------------------------------------------------
-                // A floating card, not a slab: inset from the screen, centred
-                // beside the rail, only as tall as its content. It unfolds out
-                // of the rail edge, which is noctalia's attached-panel
-                // animation — pin the edge nearest the bar, animate the far
-                // one — so the near edge never moves and the rail is untouched.
-                Rectangle {
+                // Attached, not floating. The card's left edge *is* the rail's
+                // right edge, and the two corners along it curve the wrong way,
+                // so the rail reads as flaring out into the card rather than as
+                // having a card parked beside it — see CardShape. Only as tall
+                // as its content, clamped so the fillets still fit on screen.
+                //
+                // It unfolds out of the rail: noctalia's attached-panel
+                // animation pins the edge nearest the bar and moves only the
+                // far one, which is also why the rail cannot be disturbed.
+                Item {
                     id: card
 
                     readonly property int inset: Theme.pad + 4
-                    readonly property int room: win.height - Theme.pad * 2
-                    x: Theme.rail + Theme.pad
-                    y: (win.height - height) / 2
+                    readonly property int room: win.height - (Theme.pad + Theme.radius) * 2
+                    x: Theme.rail
+                    // Whole pixels: a half-pixel card edge puts a seam of
+                    // antialiasing where the fillet meets the rail.
+                    y: Math.round((win.height - height) / 2)
                     width: Theme.panel * win.p
                     // The floor keeps a page that has not reported a size yet
                     // from flashing past as a sliver.
                     height: Math.min(room, Math.max(200,
                         (body.item ? body.item.implicitHeight : 0) + inset * 2))
-                    radius: Theme.radius
-                    color: Theme.bg
-                    clip: true
 
                     visible: win.p > 0
-                    opacity: win.open ? 1 : 0
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: win.open ? 150 : 100
-                            easing.type: Easing.OutQuad
-                        }
+
+                    CardShape {
+                        cardWidth: card.width
+                        cardHeight: card.height
                     }
 
                     // Swallow clicks so they do not reach the dismiss layer.
                     MouseArea { anchors.fill: parent }
 
                     // Laid out at a constant width and revealed left to right,
-                    // so nothing reflows while the card is opening.
-                    Loader {
-                        id: body
-                        x: card.inset
-                        y: card.inset
-                        width: Theme.panel - card.inset * 2
-                        height: card.room - card.inset * 2
-                        active: win.shown !== ""
-                        sourceComponent: win.shown === "notifs" ? cNotifs
-                            : win.shown === "monitor" ? cMonitor
-                            : win.shown === "audio" ? cAudio
-                            : win.shown === "network" ? cNetwork
-                            : win.shown === "bluetooth" ? cBluetooth
-                            : win.shown === "player" ? cPlayer
-                            : win.shown === "looks" ? cLooks
-                            : win.shown === "widgets" ? cWidgets : null
+                    // so nothing reflows while the card is opening. The clip is
+                    // here rather than on the card because an inverted corner is
+                    // drawn outside the card's own bounds.
+                    Item {
+                        anchors.fill: parent
+                        clip: true
+                        opacity: win.bodyShown ? 1 : 0
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: win.open ? 150 : 75
+                                easing.type: Easing.OutQuad
+                            }
+                        }
+
+                        Loader {
+                            id: body
+                            x: card.inset
+                            y: card.inset
+                            width: Theme.panel - card.inset * 2
+                            height: card.room - card.inset * 2
+                            active: win.shown !== ""
+                            sourceComponent: win.shown === "notifs" ? cNotifs
+                                : win.shown === "monitor" ? cMonitor
+                                : win.shown === "audio" ? cAudio
+                                : win.shown === "network" ? cNetwork
+                                : win.shown === "bluetooth" ? cBluetooth
+                                : win.shown === "player" ? cPlayer
+                                : win.shown === "looks" ? cLooks
+                                : win.shown === "widgets" ? cWidgets : null
+                        }
                     }
 
                     Component { id: cNotifs; Panels.NotifCenter {} }

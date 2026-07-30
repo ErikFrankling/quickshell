@@ -24,14 +24,18 @@ ColumnLayout {
         ? root.walls.map(w => ({ thumb: "file://" + w, full: w, id: "" }))
         : root.hits
 
+    // base16 palettes: base00-03 background to border, base04-07 muted to
+    // brightest text, base08-0F red, orange, yellow, green, cyan, blue, magenta,
+    // brown. Theme.qml reads the shell's colours out of these slots and
+    // Scheme.qml publishes the whole palette for everything else on the desktop.
     readonly property var themes: [
-        { name: "Tokyo Night", fav: true, p: { bg: "#16181d", bgAlt: "#1d2027", bgHi: "#252932", line: "#2c313b", fg: "#d3dae3", dim: "#7c8796", accent: "#7aa2f7", good: "#9ece6a", warn: "#e0af68", bad: "#f7768e" } },
-        { name: "Gruvbox", fav: true, p: { bg: "#1d2021", bgAlt: "#282828", bgHi: "#32302f", line: "#3c3836", fg: "#ebdbb2", dim: "#928374", accent: "#d79921", good: "#b8bb26", warn: "#fabd2f", bad: "#fb4934" } },
-        { name: "Catppuccin Mocha", fav: true, p: { bg: "#1e1e2e", bgAlt: "#26263a", bgHi: "#313244", line: "#45475a", fg: "#cdd6f4", dim: "#7f849c", accent: "#89b4fa", good: "#a6e3a1", warn: "#f9e2af", bad: "#f38ba8" } },
-        { name: "Nord", fav: false, p: { bg: "#2e3440", bgAlt: "#343b4a", bgHi: "#3b4252", line: "#434c5e", fg: "#eceff4", dim: "#7b88a1", accent: "#88c0d0", good: "#a3be8c", warn: "#ebcb8b", bad: "#bf616a" } },
-        { name: "Rosé Pine", fav: false, p: { bg: "#191724", bgAlt: "#1f1d2e", bgHi: "#26233a", line: "#403d52", fg: "#e0def4", dim: "#908caa", accent: "#c4a7e7", good: "#9ccfd8", warn: "#f6c177", bad: "#eb6f92" } },
-        { name: "Everforest", fav: false, p: { bg: "#2d353b", bgAlt: "#343f44", bgHi: "#3d484d", line: "#475258", fg: "#d3c6aa", dim: "#859289", accent: "#a7c080", good: "#a7c080", warn: "#dbbc7f", bad: "#e67e80" } },
-        { name: "Kanagawa", fav: false, p: { bg: "#1f1f28", bgAlt: "#2a2a37", bgHi: "#363646", line: "#54546d", fg: "#dcd7ba", dim: "#727169", accent: "#7e9cd8", good: "#98bb6c", warn: "#e6c384", bad: "#e82424" } }
+        { name: "Tokyo Night", fav: true, p: { base00: "#16181d", base01: "#1d2027", base02: "#252932", base03: "#2c313b", base04: "#7c8796", base05: "#d3dae3", base06: "#c0caf5", base07: "#d5d6db", base08: "#f7768e", base09: "#ff9e64", base0A: "#e0af68", base0B: "#9ece6a", base0C: "#7dcfff", base0D: "#7aa2f7", base0E: "#bb9af7", base0F: "#d18616" } },
+        { name: "Gruvbox", fav: true, p: { base00: "#1d2021", base01: "#282828", base02: "#32302f", base03: "#3c3836", base04: "#928374", base05: "#ebdbb2", base06: "#d5c4a1", base07: "#fbf1c7", base08: "#fb4934", base09: "#fe8019", base0A: "#fabd2f", base0B: "#b8bb26", base0C: "#8ec07c", base0D: "#83a598", base0E: "#d3869b", base0F: "#d65d0e", accent: "#d79921" } },
+        { name: "Catppuccin Mocha", fav: true, p: { base00: "#1e1e2e", base01: "#26263a", base02: "#313244", base03: "#45475a", base04: "#7f849c", base05: "#cdd6f4", base06: "#f5e0dc", base07: "#b4befe", base08: "#f38ba8", base09: "#fab387", base0A: "#f9e2af", base0B: "#a6e3a1", base0C: "#94e2d5", base0D: "#89b4fa", base0E: "#cba6f7", base0F: "#f2cdcd" } },
+        { name: "Nord", fav: false, p: { base00: "#2e3440", base01: "#343b4a", base02: "#3b4252", base03: "#434c5e", base04: "#7b88a1", base05: "#eceff4", base06: "#e5e9f0", base07: "#f7f9fb", base08: "#bf616a", base09: "#d08770", base0A: "#ebcb8b", base0B: "#a3be8c", base0C: "#8fbcbb", base0D: "#88c0d0", base0E: "#b48ead", base0F: "#5e81ac" } },
+        { name: "Rosé Pine", fav: false, p: { base00: "#191724", base01: "#1f1d2e", base02: "#26233a", base03: "#403d52", base04: "#908caa", base05: "#e0def4", base06: "#e0def4", base07: "#faf4ed", base08: "#eb6f92", base09: "#ebbcba", base0A: "#f6c177", base0B: "#9ccfd8", base0C: "#31748f", base0D: "#c4a7e7", base0E: "#ebbcba", base0F: "#524f67" } },
+        { name: "Everforest", fav: false, p: { base00: "#2d353b", base01: "#343f44", base02: "#3d484d", base03: "#475258", base04: "#859289", base05: "#d3c6aa", base06: "#e6e2cc", base07: "#fdf6e3", base08: "#e67e80", base09: "#e69875", base0A: "#dbbc7f", base0B: "#a7c080", base0C: "#83c092", base0D: "#7fbbb3", base0E: "#d699b6", base0F: "#9da9a0", accent: "#a7c080" } },
+        { name: "Kanagawa", fav: false, p: { base00: "#1f1f28", base01: "#2a2a37", base02: "#363646", base03: "#54546d", base04: "#727169", base05: "#dcd7ba", base06: "#c8c093", base07: "#e6e0c2", base08: "#e82424", base09: "#ffa066", base0A: "#e6c384", base0B: "#98bb6c", base0C: "#7aa89f", base0D: "#7e9cd8", base0E: "#957fb8", base0F: "#d27e99" } }
     ]
 
     Process {
@@ -139,8 +143,9 @@ ColumnLayout {
                 Row {
                     spacing: 3
                     Repeater {
-                        model: [card.modelData.p.accent, card.modelData.p.good,
-                                card.modelData.p.warn, card.modelData.p.bad]
+                        model: [card.modelData.p.accent ?? card.modelData.p.base0D,
+                                card.modelData.p.base0B, card.modelData.p.base0A,
+                                card.modelData.p.base08]
                         Rectangle {
                             required property string modelData
                             width: 9; height: 18; radius: 3

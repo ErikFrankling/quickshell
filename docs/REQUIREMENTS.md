@@ -66,6 +66,13 @@ tick it. This file exists because requirements were being forgotten between turn
 ## Panels
 
 - [x] Panels are only as tall and wide as their content — never full height
+- [ ] …but when the content genuinely fills the screen, go full height
+      edge-to-edge and drop the fillets, rather than leaving a small dead gap
+      top and bottom. *"this looks goofy when it's basically the entire screen
+      with a small gap top and bottom."* The network panel is the example: very
+      short with wifi off, short with wifi on and no networks found, and
+      screen-filling with sixteen networks. Needs a threshold that does not
+      make the panel snap between the two looks as a list populates.
 - [x] Escape closes whatever panel is open
 - [x] Opening a panel must not change the rail's width
 - [x] Do-not-disturb removed entirely

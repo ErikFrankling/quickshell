@@ -54,16 +54,16 @@ the prior-art surveys behind several of the choices below.
 - [x] Theme button sits with the other buttons
 - [x] No launcher button in the rail
 - [ ] Rail is not cramped
-- [ ] A media player IN the rail, not a button that opens one — track name and
+- [x] A media player IN the rail, not a button that opens one — track name and
       playing state visible without opening anything. Same principle as the
       other rail icons carrying state. *(The rail is 58px wide and vertical;
       almost all prior art is for horizontal bars, so the design has to come
       from a shell that solves the vertical case.)*
-- [ ] Workspace pills still flicker on hover. The earlier fix covered
+- [x] Workspace pills no longer flicker on hover. The earlier fix covered
       `Btn.qml` and friends but not `Workspaces.qml`, which has its own
       MouseArea and colour logic — including the same `"transparent"` idle
       colour that was the root cause there.
-- [ ] The rail carries as many metrics as his waybar does. It currently shows
+- [x] The rail carries fan and battery now, gated per host. It shows
       four of about eleven — fan, swap, both disks, VRAM and **battery** all
       need a panel opened. On the laptop that is a regression against waybar.
 
@@ -89,7 +89,7 @@ the prior-art surveys behind several of the choices below.
 
 ## On-screen display
 
-- [ ] Volume and brightness OSD at the bottom centre — appears on change, shows
+- [x] Volume and brightness OSD at the bottom centre — appears on change, shows
       the number **and** a filling bar, disappears on its own. Must react to
       changes from anywhere (media keys, `wpctl`, `brightnessctl`), not just
       the shell's own sliders. Brightness gated on the host having a backlight.
@@ -144,7 +144,7 @@ the prior-art surveys behind several of the choices below.
 
 - [x] Windows-style widgets menu: a chevron flyout that decides which items sit
       on the rail and which live behind it.
-- [ ] **Only system tray icons are pinnable.** The shell's own buttons —
+- [x] **Only system tray icons are pinnable.** The shell's own buttons —
       network, bluetooth, audio, looks, notifications — must not be removable.
       *"i don't want the network button to be like fucking removable, that is
       retarded. can't remove those things from the bar, that is just
@@ -153,7 +153,7 @@ the prior-art surveys behind several of the choices below.
       program widgets like syncthing, claude, chatgpt and such."*
       An agent generalised pinning to every rail item; that was scope it was
       never given. Revert to tray-only and delete the extra machinery.
-- [ ] Tray context menu renders a broken-image checkerboard for entries whose
+- [x] Tray context menu renders nothing for an icon the theme lacks for entries whose
       icon will not resolve. *"would rather nothing is rendered than this."*
 
 ## Applications that should follow the theme

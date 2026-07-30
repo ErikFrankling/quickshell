@@ -19,6 +19,7 @@ Singleton {
     property int vram: 0
     property int disk: 0
     property string net: ""
+    property int brightness: -1        // -1 means no backlight on this machine
 
     property real memUsedGb: 0
     property real memTotalGb: 0
@@ -80,7 +81,27 @@ Singleton {
     }
 
     Process {
+        id: brightProc
+        command: ["sh", "-c", "brightnessctl -m 2>/dev/null | cut -d, -f4 | tr -d %"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const b = parseInt(text);
+                root.brightness = isNaN(b) ? -1 : b;
+            }
+        }
+    }
+
+    Process { id: setBright }
+
+    function setBrightness(pct) {
+        setBright.command = ["brightnessctl", "set", Math.round(pct * 100) + "%"];
+        setBright.running = true;
+        root.brightness = Math.round(pct * 100);
+    }
+
+    Process {
         id: gpuProc
+
         command: ["sh", "-c", "$HOME/.local/bin/gpu-util.sh 2>/dev/null"]
         stdout: StdioCollector {
             onStreamFinished: root.gpu = root.firstNum(text)
@@ -120,6 +141,7 @@ Singleton {
             sensors.running = true;
             diskProc.running = true;
             gpuProc.running = true;
+            brightProc.running = true;
             fanProc.running = true;
             netProc.running = true;
 

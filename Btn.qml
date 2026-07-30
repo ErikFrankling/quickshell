@@ -12,8 +12,8 @@ Item {
     signal clicked
 
     Layout.alignment: Qt.AlignHCenter
-    implicitWidth: 38
-    implicitHeight: 38
+    implicitWidth: 34
+    implicitHeight: 34
 
     Rectangle {
         anchors.fill: parent

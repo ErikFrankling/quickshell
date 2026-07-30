@@ -8,7 +8,7 @@ import Quickshell.Hyprland
 ColumnLayout {
     id: root
 
-    spacing: 6
+    spacing: 3
 
     // Windows grouped by workspace id, deduped by class so three terminals
     // show one icon rather than three.
@@ -107,7 +107,7 @@ ColumnLayout {
 
             Layout.alignment: Qt.AlignHCenter
             implicitWidth: 40
-            implicitHeight: body.implicitHeight + 10
+            implicitHeight: body.implicitHeight + 6
             radius: Theme.radiusS
             color: ws.here ? Qt.alpha(Theme.accent, 0.22) : hover.containsMouse ? Theme.bgHi : "transparent"
 
@@ -142,10 +142,10 @@ ColumnLayout {
                         required property string modelData
                         Layout.alignment: Qt.AlignHCenter
                         source: (root.revision, root.iconFor(modelData))
-                        sourceSize.width: 15
-                        sourceSize.height: 15
-                        Layout.preferredWidth: 15
-                        Layout.preferredHeight: 15
+                        sourceSize.width: 14
+                        sourceSize.height: 14
+                        Layout.preferredWidth: 14
+                        Layout.preferredHeight: 14
                         opacity: ws.here ? 1 : 0.62
                         smooth: true
                     }

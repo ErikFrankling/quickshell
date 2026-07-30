@@ -1,23 +1,34 @@
 pragma Singleton
 
 import Quickshell
+import Quickshell.Io
 import QtQuick
 
+// Colour lives here and nowhere else. The palette is read from a state file so
+// the theme picker can change it at runtime; the values below are the fallback
+// when that file does not exist yet.
 Singleton {
-    // The only place colour lives. Point this at base16 later and nothing
-    // downstream changes.
-    readonly property color bg: "#16181d"
-    readonly property color bgAlt: "#1d2027"
-    readonly property color bgHi: "#252932"
-    readonly property color line: "#2c313b"
-    readonly property color fg: "#d3dae3"
-    readonly property color dim: "#7c8796"
-    readonly property color accent: "#7aa2f7"
-    readonly property color good: "#9ece6a"
-    readonly property color warn: "#e0af68"
-    readonly property color bad: "#f7768e"
+    id: root
 
-    // Noctalia-ish geometry: generous radius, thin rail, roomy panel.
+    property var palette: ({})
+
+    function c(key, fallback) {
+        return root.palette[key] ?? fallback;
+    }
+
+    readonly property color bg: c("bg", "#16181d")
+    readonly property color bgAlt: c("bgAlt", "#1d2027")
+    readonly property color bgHi: c("bgHi", "#252932")
+    readonly property color line: c("line", "#2c313b")
+    readonly property color fg: c("fg", "#d3dae3")
+    readonly property color dim: c("dim", "#7c8796")
+    readonly property color accent: c("accent", "#7aa2f7")
+    readonly property color good: c("good", "#9ece6a")
+    readonly property color warn: c("warn", "#e0af68")
+    readonly property color bad: c("bad", "#f7768e")
+
+    readonly property string name: c("name", "Tokyo Night")
+
     readonly property int rail: 54
     readonly property int panel: 430
     readonly property int radius: 20
@@ -27,5 +38,27 @@ Singleton {
 
     function heat(pct) {
         return pct >= 90 ? bad : pct >= 70 ? warn : accent;
+    }
+
+    function apply(p) {
+        root.palette = p;
+        store.setText(JSON.stringify(p));
+    }
+
+    FileView {
+        id: store
+        path: Quickshell.statePath("theme.json")
+        atomicWrites: true
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                root.palette = JSON.parse(text());
+            } catch (e) {}
+        }
+        onLoadFailed: err => {
+            if (err === FileViewError.FileNotFound)
+                Qt.callLater(() => store.setText("{}"));
+        }
     }
 }

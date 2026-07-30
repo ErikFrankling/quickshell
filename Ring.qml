@@ -10,15 +10,15 @@ Item {
     property string text: ""      // centre text; defaults to rounded value
 
     Layout.alignment: Qt.AlignHCenter
-    implicitWidth: 34
-    implicitHeight: 34
+    implicitWidth: 30
+    implicitHeight: 30
 
     Canvas {
         id: c
         anchors.fill: parent
         onPaint: {
             const ctx = getContext("2d");
-            const w = width, r = w / 2 - 3;
+            const w = width, r = w / 2 - 2.5;
             ctx.reset();
             ctx.lineWidth = 3;
             ctx.lineCap = "round";

@@ -34,6 +34,14 @@ ColumnLayout {
         onMoved: v => { if (Pipewire.defaultAudioSource?.audio) Pipewire.defaultAudioSource.audio.volume = v; }
     }
 
+    Bar {
+        visible: Sys.brightness >= 0
+        glyph: "󰃟"
+        label: "Brightness"
+        value: Math.max(0, Sys.brightness) / 100
+        onMoved: v => Sys.setBrightness(v)
+    }
+
     Text {
         text: "Output devices"
         color: Theme.dim

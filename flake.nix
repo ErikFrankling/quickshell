@@ -12,6 +12,7 @@
       # Everything the shell shells out to at runtime.
       runtimeDeps = with pkgs; [
         brightnessctl
+        hyprpaper
       ];
     in
     {

@@ -43,6 +43,7 @@ ShellRoot {
                 function bluetooth(): void { win.page = win.page === "bluetooth" ? "" : "bluetooth"; }
                 function player(): void { win.page = win.page === "player" ? "" : "player"; }
                 function looks(): void { win.page = win.page === "looks" ? "" : "looks"; }
+                function launcher(): void { win.page = win.page === "launcher" ? "" : "launcher"; }
                 function close(): void { win.page = ""; }
             }
 
@@ -59,67 +60,101 @@ ShellRoot {
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.topMargin: 10
-                    anchors.bottomMargin: 10
-                    spacing: 2
+                    anchors.topMargin: 8
+                    anchors.bottomMargin: 8
+                    spacing: 0
 
-                    Btn { glyph: "󰀻"; active: win.page === "looks"; onClicked: win.page = win.page === "looks" ? "" : "looks" }
+                    // top: launch + looks
+                    Group {
+                        Btn { glyph: "󰀻"; active: win.page === "launcher"; onClicked: win.page = win.page === "launcher" ? "" : "launcher" }
+                        Btn { glyph: "󰸉"; active: win.page === "looks"; onClicked: win.page = win.page === "looks" ? "" : "looks" }
+                    }
 
                     Item { implicitHeight: 8 }
 
-                    Workspaces { Layout.alignment: Qt.AlignHCenter }
+                    Group {
+                        Workspaces { Layout.alignment: Qt.AlignHCenter }
+                    }
 
+                    // the gap that does the work: everything above sits at the
+                    // top, everything below at the bottom.
                     Item { Layout.fillHeight: true }
 
-                    // metrics as rings, hotter the closer to the limit
-                    ColumnLayout {
-                        Layout.alignment: Qt.AlignHCenter
-                        spacing: 11
+                    Group {
+                        gap: 9
                         Ring { label: "cpu"; value: Sys.cpu }
                         Ring { label: "ram"; value: Sys.mem }
                         Ring { label: "gpu"; value: Sys.gpu }
                         Ring { label: "°c"; value: Sys.temp; text: Sys.temp }
                     }
 
-                    Item { implicitHeight: 14 }
+                    Item { implicitHeight: 8 }
 
-                    Btn { glyph: "󰍹"; active: win.page === "monitor"; onClicked: win.page = win.page === "monitor" ? "" : "monitor" }
-                    Btn { glyph: "󰕾"; active: win.page === "audio"; onClicked: win.page = win.page === "audio" ? "" : "audio" }
-                    Btn { glyph: "󰤨"; active: win.page === "network"; onClicked: win.page = win.page === "network" ? "" : "network" }
-                    Btn { glyph: "󰂯"; active: win.page === "bluetooth"; onClicked: win.page = win.page === "bluetooth" ? "" : "bluetooth" }
-                    Btn { glyph: "󰝚"; active: win.page === "player"; onClicked: win.page = win.page === "player" ? "" : "player" }
-                    Btn {
-                        glyph: "󰂚"
-                        active: win.page === "notifs"
-                        badge: Notifs.unread
-                        onClicked: {
-                            win.page = win.page === "notifs" ? "" : "notifs";
-                            if (win.page === "notifs") Notifs.markSeen();
-                        }
-                    }
-
-                    Item { implicitHeight: 6 }
-
-                    Repeater {
-                        model: SystemTray.items
-                        Item {
-                            required property var modelData
-                            Layout.alignment: Qt.AlignHCenter
-                            implicitWidth: 22
-                            implicitHeight: 24
-                            Image {
-                                anchors.centerIn: parent
-                                width: 16; height: 16
-                                source: parent.modelData.icon
+                    Group {
+                        Btn { glyph: "󰍹"; active: win.page === "monitor"; onClicked: win.page = win.page === "monitor" ? "" : "monitor" }
+                        Btn { glyph: "󰕾"; active: win.page === "audio"; onClicked: win.page = win.page === "audio" ? "" : "audio" }
+                        Btn { glyph: "󰤨"; active: win.page === "network"; onClicked: win.page = win.page === "network" ? "" : "network" }
+                        Btn { glyph: "󰂯"; active: win.page === "bluetooth"; onClicked: win.page = win.page === "bluetooth" ? "" : "bluetooth" }
+                        Btn { glyph: "󰝚"; active: win.page === "player"; onClicked: win.page = win.page === "player" ? "" : "player" }
+                        Btn {
+                            glyph: "󰂚"
+                            active: win.page === "notifs"
+                            badge: Notifs.unread
+                            onClicked: {
+                                win.page = win.page === "notifs" ? "" : "notifs";
+                                if (win.page === "notifs") Notifs.markSeen();
                             }
-                            MouseArea { anchors.fill: parent; onClicked: parent.modelData.activate() }
                         }
                     }
 
-                    ColumnLayout {
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.topMargin: 8
-                        spacing: -3
+                    Item { implicitHeight: 8 }
+
+                    Group {
+                        visible: SystemTray.items.values.length > 0
+                        gap: 6
+                        Repeater {
+                            model: SystemTray.items.values.slice(0, 5)
+                            // Tray icons are a zoo of shapes and palettes. A
+                            // consistent circular ground under each one is what
+                            // makes the column read as one set.
+                            Rectangle {
+                                required property var modelData
+                                Layout.alignment: Qt.AlignHCenter
+                                implicitWidth: 26
+                                implicitHeight: 26
+                                radius: 13
+                                color: tm.containsMouse ? Theme.accent : Theme.bgAlt
+
+                                Behavior on color { ColorAnimation { duration: 110 } }
+
+                                Image {
+                                    anchors.centerIn: parent
+                                    width: 15
+                                    height: 15
+                                    source: parent.modelData.icon
+                                    smooth: true
+                                }
+
+                                MouseArea {
+                                    id: tm
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                    onClicked: e => {
+                                        if (e.button === Qt.RightButton)
+                                            parent.modelData.display(parent, 0, 0);
+                                        else
+                                            parent.modelData.activate();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Item { implicitHeight: 8 }
+
+                    Group {
+                        gap: 0
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: Qt.formatDateTime(clock.date, "HH")
@@ -130,8 +165,27 @@ ShellRoot {
                         Text {
                             Layout.alignment: Qt.AlignHCenter
                             text: Qt.formatDateTime(clock.date, "mm")
-                            color: Theme.dim
+                            color: Theme.fg
                             font.pixelSize: 15
+                        }
+                        Rectangle {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.topMargin: 5
+                            Layout.bottomMargin: 4
+                            width: 16; height: 1
+                            color: Theme.line
+                        }
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: Qt.formatDateTime(clock.date, "dd")
+                            color: Theme.dim
+                            font.pixelSize: 11
+                        }
+                        Text {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: Qt.formatDateTime(clock.date, "MM")
+                            color: Theme.dim
+                            font.pixelSize: 11
                         }
                     }
                 }
@@ -170,7 +224,8 @@ ShellRoot {
                         : win.page === "network" ? cNetwork
                         : win.page === "bluetooth" ? cBluetooth
                         : win.page === "player" ? cPlayer
-                        : win.page === "looks" ? cLooks : null
+                        : win.page === "looks" ? cLooks
+                        : win.page === "launcher" ? cLauncher : null
                 }
 
                 Component { id: cNotifs; Panels.NotifCenter {} }
@@ -180,6 +235,7 @@ ShellRoot {
                 Component { id: cBluetooth; Panels.Bluetooth {} }
                 Component { id: cPlayer; Panels.Player {} }
                 Component { id: cLooks; Panels.Looks {} }
+                Component { id: cLauncher; Panels.Launcher {} }
             }
         }
     }

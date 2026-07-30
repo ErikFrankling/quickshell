@@ -19,6 +19,7 @@ Singleton {
     readonly property bool hasBacklight: Caps.hasBacklight
     readonly property bool hasSwap: Caps.hasSwap
     readonly property bool hasNet: Caps.hasNet
+    readonly property bool hasDiskIo: Caps.hasDiskIo
     readonly property bool hasCores: Caps.hasCores
 
     property int cpu: 0
@@ -41,18 +42,29 @@ Singleton {
     property real netUp: 0
     property real swapIn: 0             // bytes/sec
     property real swapOut: 0
+    property real diskRead: 0           // bytes/sec
+    property real diskWrite: 0
     property var disks: []              // [{ path, pct, usedGb, sizeGb }]
 
-    // Sixty samples of every metric, keyed by name. The panel graphs them all
-    // the same way, so one object beats a property per metric.
+    // One sample every two seconds, sixty kept, so every graph in the panel
+    // covers the same two minutes. The panel says so on screen, reading it from
+    // here, so the label cannot drift away from the thing it describes.
+    readonly property int pollMs: 2000
+    readonly property int samples: 60
+    readonly property int historySec: samples * pollMs / 1000
+
+    // History, keyed by metric name. The panel graphs them all the same way, so
+    // one object beats a property per metric. Only what actually moves inside
+    // the window is recorded — a two-minute history of a disk that is 97% full
+    // is a flat line, and a flat line is not worth drawing.
     property var history: ({})
 
-    function record(samples) {
+    function record(vals) {
         const h = {};
         for (const k in root.history)
             h[k] = root.history[k];
-        for (const k in samples)
-            h[k] = (h[k] || []).slice(-59).concat(samples[k]);
+        for (const k in vals)
+            h[k] = (h[k] || []).slice(1 - root.samples).concat(vals[k]);
         root.history = h;
     }
 
@@ -80,11 +92,13 @@ Singleton {
     property var prevCpu: ({})
     property var prevNet: ({ t: 0, rx: 0, tx: 0 })
     property var prevSwap: ({ t: 0, i: 0, o: 0 })
+    property var prevDisk: ({ t: 0, r: 0, w: 0 })
 
     FileView { id: stat; path: "/proc/stat" }
     FileView { id: meminfo; path: "/proc/meminfo" }
     FileView { id: netdev; path: "/proc/net/dev" }
     FileView { id: vmstat; path: "/proc/vmstat" }
+    FileView { id: diskstats; path: "/proc/diskstats" }
 
     // Busy is the change in non-idle jiffies over the change in total, per line.
     function readCpu(text) {
@@ -140,6 +154,29 @@ Singleton {
             root.swapOut = Math.max(0, 4096 * (o - p.o) / (t - p.t));
         }
         root.prevSwap = { t: t, i: i, o: o };
+    }
+
+    // The throughput btop draws. Per Documentation/admin-guide/iostats.rst a
+    // line is major, minor, name and then the eleven counters, of which the
+    // third is sectors read and the seventh sectors written — whole-line fields
+    // six and ten. The block layer reports those in 512-byte units whatever the
+    // drive's own sector size is. Caps.blocks holds whole devices only, so a
+    // partition is never added on top of the disk it lives on.
+    function readDiskIo(text) {
+        let rd = 0, wr = 0;
+        for (const line of text.split("\n")) {
+            const f = line.trim().split(/\s+/);
+            if (f.length < 10 || Caps.blocks.indexOf(f[2]) < 0)
+                continue;
+            rd += Number(f[5]);
+            wr += Number(f[9]);
+        }
+        const t = Date.now() / 1000, p = root.prevDisk;
+        if (p.t > 0 && t > p.t) {
+            root.diskRead = Math.max(0, 512 * (rd - p.r) / (t - p.t));
+            root.diskWrite = Math.max(0, 512 * (wr - p.w) / (t - p.t));
+        }
+        root.prevDisk = { t: t, r: rd, w: wr };
     }
 
     // --- shelled-out readings, grouped so each tick forks as little as it can
@@ -221,18 +258,16 @@ Singleton {
         id: dfProc
         stdout: StdioCollector {
             onStreamFinished: {
-                const out = [], h = {};
+                const out = [];
                 for (const line of text.trim().split("\n")) {
                     const f = line.trim().split(/\s+/);
                     if (f.length < 3 || !(Number(f[2]) > 0))
                         continue;
-                    const pct = Math.round(100 * f[1] / f[2]);
                     // Decimal GB, the unit df and the old waybar config used.
-                    out.push({ path: f[0], pct: pct, usedGb: f[1] / 1e9, sizeGb: f[2] / 1e9 });
-                    h["disk:" + f[0]] = pct;
+                    out.push({ path: f[0], pct: Math.round(100 * f[1] / f[2]),
+                        usedGb: f[1] / 1e9, sizeGb: f[2] / 1e9 });
                 }
                 root.disks = out;
-                root.record(h);
             }
         }
     }
@@ -248,7 +283,7 @@ Singleton {
 
     // --- polling ------------------------------------------------------------
     Timer {
-        interval: 2000
+        interval: root.pollMs
         running: Caps.probed
         repeat: true
         triggeredOnStart: true
@@ -257,6 +292,7 @@ Singleton {
             meminfo.reload();
             netdev.reload();
             vmstat.reload();
+            diskstats.reload();
             sensorProc.running = Caps.hasTemp || Caps.hasFan;
             gpuProc.running = Caps.hasGpu;
             netProc.running = Caps.hasNet;
@@ -265,6 +301,7 @@ Singleton {
             root.readCpu(stat.text());
             root.readNet(netdev.text());
             root.readSwapIo(vmstat.text());
+            root.readDiskIo(diskstats.text());
 
             const mi = meminfo.text();
             const mTotal = kb(mi, "MemTotal");
@@ -277,10 +314,11 @@ Singleton {
             if (sTotal > 0)
                 root.swap = Math.round(100 * (1 - kb(mi, "SwapFree") / sTotal));
 
-            root.record({ cpu: root.cpu, mem: root.mem, swap: root.swap,
-                swapIn: root.swapIn, swapOut: root.swapOut, temp: root.temp,
+            root.record({ cpu: root.cpu, mem: root.mem, temp: root.temp,
                 fan: root.fan, gpu: root.gpu, vram: root.vram,
-                battery: root.battery, netDown: root.netDown, netUp: root.netUp });
+                swapIn: root.swapIn, swapOut: root.swapOut,
+                netDown: root.netDown, netUp: root.netUp,
+                diskRead: root.diskRead, diskWrite: root.diskWrite });
         }
     }
 

@@ -23,6 +23,7 @@ Singleton {
     property string fanSource: ""      // "hwmon" (rpm) | "fw" (percent) | none
     property var foundDisks: []
     property var nics: []              // interfaces backed by real hardware
+    property var blocks: []            // whole block devices, no partitions
 
     // Home Manager writes this; anything it does not set falls through to what
     // the probe found.
@@ -39,6 +40,7 @@ Singleton {
     readonly property bool hasBacklight: set("backlight", foundBacklight)
     readonly property bool hasSwap: set("swap", foundSwap)
     readonly property bool hasNet: set("net", nics.length > 0)
+    readonly property bool hasDiskIo: set("diskio", blocks.length > 0)
     readonly property bool hasCores: set("cores", true)
     readonly property var disks: Array.isArray(cfg.disks) ? cfg.disks : foundDisks
 
@@ -65,6 +67,10 @@ echo "battery=$bat"
 [ -n "$(ls -A /sys/class/backlight 2>/dev/null)" ] && echo backlight=1 || echo backlight=0
 awk '/^SwapTotal:/ { print "swap=" (($2 > 0) ? 1 : 0) }' /proc/meminfo
 echo "nics=$(for d in /sys/class/net/*; do [ -e "$d/device" ] && basename "$d"; done | tr '\\n' ' ')"
+# /sys/block lists whole devices only — partitions hang off them — so summing
+# these never counts a disk twice. What is left to drop is the devices with no
+# spindle or cell behind them, and the mappers stacked on a device already here.
+echo "blocks=$(for d in /sys/block/*; do n=\${d##*/}; case "$n" in loop*|ram*|zram*|sr*|fd*|dm-*|md*) continue;; esac; echo "$n"; done | tr '\\n' ' ')"
 echo "disks=$(df -B1 --output=target,size -x tmpfs -x devtmpfs -x efivarfs -x overlay -x squashfs -x fuse.portal 2>/dev/null | awk 'NR > 1 && $2 + 0 > 10737418240 { print $1 }' | tr '\\n' ' ')"
 `]
 
@@ -85,6 +91,7 @@ echo "disks=$(df -B1 --output=target,size -x tmpfs -x devtmpfs -x efivarfs -x ov
                 root.foundBacklight = v.backlight === "1";
                 root.foundSwap = v.swap === "1";
                 root.nics = list(v.nics);
+                root.blocks = list(v.blocks);
                 root.foundDisks = list(v.disks);
                 root.probed = true;
             }

@@ -1,10 +1,14 @@
 import ".."
+import Quickshell
 import QtQuick
 import QtQuick.Layouts
 
-// Everything this machine can actually measure, one graph each, newest on the
-// right. What is absent from `rows` is absent from the hardware — no zeroed
-// ring standing in for a GPU that is not there.
+// Everything this machine can actually measure. What moves inside the graph
+// window gets a graph, newest on the right; what only creeps — disk fullness,
+// charge, swap occupancy — gets a number and a bar, because a two-minute
+// history of it would be a flat line saying nothing. What is absent from both
+// lists is absent from the hardware: no zeroed ring standing in for a GPU that
+// is not there.
 Flickable {
     id: root
 
@@ -38,13 +42,16 @@ Flickable {
                 autoscale: true,
                 readout: "↓ " + Sys.human(Sys.netDown) + "  ↑ " + Sys.human(Sys.netUp)
             });
-        if (Sys.hasSwap) {
+        if (Sys.hasDiskIo)
             r.push({
-                label: "Swap",
-                values: h.swap,
-                tint: Theme.heat(Sys.swap),
-                readout: Sys.swap + "%"
+                label: "Disk I/O",
+                values: h.diskRead,
+                values2: h.diskWrite,
+                max: 1048576,
+                autoscale: true,
+                readout: "R " + Sys.human(Sys.diskRead) + "/s  W " + Sys.human(Sys.diskWrite) + "/s"
             });
+        if (Sys.hasSwap)
             r.push({
                 label: "Swap I/O",
                 values: h.swapIn,
@@ -53,7 +60,6 @@ Flickable {
                 autoscale: true,
                 readout: "in " + Sys.human(Sys.swapIn) + "  out " + Sys.human(Sys.swapOut)
             });
-        }
         if (Sys.hasTemp)
             r.push({
                 label: "Temperature",
@@ -83,21 +89,31 @@ Flickable {
                 readout: Sys.vramUsedGb.toFixed(0) + " / " + Sys.vramTotalGb.toFixed(0) + " GB"
             });
         }
+        return r;
+    }
+
+    // The levels, not the traffic. Swap occupancy is here rather than in the
+    // graphs because it only climbs while the kernel is already paging, and the
+    // Swap I/O graph is what shows that the moment it starts — the percentage
+    // itself would take the better part of an hour to visibly bend.
+    readonly property var bars: {
+        const b = [];
+        if (Sys.hasSwap)
+            b.push({ label: "Swap", pct: Sys.swap, readout: Sys.swap + "%" });
         if (Sys.hasBattery)
-            r.push({
+            b.push({
                 label: "Battery",
-                values: h.battery,
+                pct: Sys.battery,
                 tint: Theme.heat(100 - Sys.battery),
                 readout: Sys.battery + "%"
             });
         for (const d of Sys.disks)
-            r.push({
-                label: "Disk " + d.path,
-                values: h["disk:" + d.path],
-                tint: Theme.heat(d.pct),
-                readout: d.usedGb.toFixed(0) + " / " + d.sizeGb.toFixed(0) + " GB"
+            b.push({
+                label: d.path,
+                pct: d.pct,
+                readout: d.pct + "%  ·  " + d.usedGb.toFixed(0) + " / " + d.sizeGb.toFixed(0) + " GB"
             });
-        return r;
+        return b;
     }
 
     ColumnLayout {
@@ -113,7 +129,17 @@ Flickable {
                 color: Theme.fg
                 font.pixelSize: 18
                 font.weight: Font.DemiBold
+            }
+            // Every graph below is sampled by the same timer, so one label is
+            // the whole truth — and it is read off the timer, not typed here.
+            Text {
+                text: "graphs · last " + (Sys.historySec % 60 === 0
+                    ? Sys.historySec / 60 + " min" : Sys.historySec + "s")
+                color: Theme.dim
+                font.pixelSize: 11
                 Layout.fillWidth: true
+                Layout.bottomMargin: 2
+                verticalAlignment: Text.AlignBottom
             }
             Text {
                 text: Sys.net !== "" ? Sys.net : "offline"
@@ -130,7 +156,7 @@ Flickable {
             spacing: 3
 
             Repeater {
-                model: Sys.cores
+                model: ScriptModel { values: Sys.cores }
 
                 Rectangle {
                     required property var modelData
@@ -150,12 +176,53 @@ Flickable {
             }
         }
 
+        // Above the graphs, because these are the two lines you open the panel
+        // to read and the graphs below them are what scrolls off the bottom.
         Repeater {
-            model: root.rows
+            model: ScriptModel { values: root.bars }
+
+            RowLayout {
+                id: bar
+                required property var modelData
+                Layout.fillWidth: true
+                spacing: Theme.pad
+
+                Text {
+                    text: bar.modelData.label
+                    color: Theme.dim
+                    font.pixelSize: 11
+                    Layout.preferredWidth: 52
+                    elide: Text.ElideRight
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 6
+                    radius: 3
+                    color: Theme.bgAlt
+
+                    Rectangle {
+                        anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+                        width: Math.max(2, parent.width * Math.min(100, bar.modelData.pct) / 100)
+                        radius: 3
+                        color: bar.modelData.tint ?? Theme.heat(bar.modelData.pct)
+                    }
+                }
+
+                Text {
+                    text: bar.modelData.readout
+                    color: Theme.fg
+                    font.pixelSize: 12
+                    font.weight: Font.DemiBold
+                }
+            }
+        }
+
+        Repeater {
+            model: ScriptModel { values: root.rows }
 
             Graph {
                 required property var modelData
-                required property int index
                 Layout.fillWidth: true
                 values: modelData.values ?? []
                 values2: modelData.values2 ?? []

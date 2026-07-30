@@ -127,8 +127,18 @@ tick it. This file exists because requirements were being forgotten between turn
 ## Rail, continued
 
 - [x] Windows-style widgets menu: a chevron flyout that decides which items sit
-      on the rail and which live behind it. `Pins.qml` and `panels/Widgets.qml`
-      exist but were never wired to anything.
+      on the rail and which live behind it.
+- [ ] **Only system tray icons are pinnable.** The shell's own buttons —
+      network, bluetooth, audio, looks, notifications — must not be removable.
+      *"i don't want the network button to be like fucking removable, that is
+      retarded. can't remove those things from the bar, that is just
+      unnecessary complexity i don't need. if i want to change a button i will
+      change the code. the only things i need when i talk about widgets is the
+      program widgets like syncthing, claude, chatgpt and such."*
+      An agent generalised pinning to every rail item; that was scope it was
+      never given. Revert to tray-only and delete the extra machinery.
+- [ ] Tray context menu renders a broken-image checkerboard for entries whose
+      icon will not resolve. *"would rather nothing is rendered than this."*
 
 ## Applications that should follow the theme
 

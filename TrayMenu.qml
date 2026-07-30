@@ -63,6 +63,61 @@ PanelWindow {
         menu: root.item ? root.item.menu : null
     }
 
+    // QsMenuEntry.icon is a url string, not an icon name. An entry that came
+    // over DBus carrying an icon-name gets "image://icon/<name>"; one carrying
+    // inline icon-data gets a url into Quickshell's own image provider.
+    //
+    // The icon provider does not fail on a name the icon theme has never heard
+    // of. It answers with missingPixmap(), the magenta and black checkerboard,
+    // as a perfectly valid image, so the Image reaches Ready and nothing
+    // downstream can tell that the lookup missed — which is why every project
+    // that guards on the url alone still draws the checkerboard. Resolve the
+    // name here instead and hand the Image an empty source when it misses, so
+    // the row draws nothing rather than a broken square.
+    //
+    // Two kinds of url pass through untouched. Anything that is not an
+    // "image://icon/" url is inline image data, which always loads. And a name
+    // that carries a query string has a fallback attached, either a "?path="
+    // directory to search or a "?fallback=" second name — Spotify's tray icon
+    // is "spotify-linux-32", which exists in no installed theme and only under
+    // the path Spotify hands over — and iconPath can check neither of those, so
+    // those urls are left to the provider.
+    function iconUrl(entry) {
+        const url = entry?.icon ?? "";
+        const prefix = "image://icon/";
+        if (!url.startsWith(prefix))
+            return url;
+        const name = url.slice(prefix.length);
+        if (name.includes("?"))
+            return url;
+        // Quickshell's own resolver, so this asks exactly the question the
+        // provider is about to ask: empty means QIcon has nothing for the name.
+        return Quickshell.iconPath(name, true) === "" ? "" : url;
+    }
+
+    // Whether the rows hold a column open for their icons. A menu normally
+    // mixes entries that have an icon with entries that do not, and a real menu
+    // reserves the icon column across the whole menu so that every label starts
+    // on the same line: Qt's QMenu measures the widest icon over all of the
+    // menu's actions and indents every label by it, and that width falls to
+    // zero when no action has an icon at all. josecriane's tray menu arranges
+    // the same thing by hand, passing keepEmptySpace to each row
+    // (modules/popups/TrayMenu.qml:163) so that a row without an icon still
+    // gets an empty item of icon size (ds/list/ListItem.qml:157-162).
+    //
+    // So a single entry whose icon resolves opens the column for every row, and
+    // when none of them resolve the column collapses and the menu reads as
+    // plain text instead of as a row of holes. Submenu rows share the top
+    // level's column, since they are drawn inline in the same card.
+    readonly property bool gutter: {
+        const entries = opener.children ? opener.children.values : [];
+        for (let i = 0; i < entries.length; i++) {
+            if (root.iconUrl(entries[i]) !== "")
+                return true;
+        }
+        return false;
+    }
+
     // Anything outside the card dismisses.
     MouseArea {
         anchors.fill: parent
@@ -115,6 +170,8 @@ PanelWindow {
                     MenuRow {
                         width: parent.width
                         entry: group.modelData
+                        image: root.iconUrl(group.modelData)
+                        gutter: root.gutter
                         open: root.unfolded === group.index
                         onActivated: {
                             if (group.modelData.hasChildren)
@@ -142,6 +199,8 @@ PanelWindow {
                             width: group.width
                             indent: 14
                             entry: modelData
+                            image: root.iconUrl(modelData)
+                            gutter: root.gutter
                             onActivated: {
                                 if (!modelData.hasChildren) {
                                     modelData.triggered();
@@ -164,6 +223,12 @@ PanelWindow {
         property real indent: 0
         property bool open: false
 
+        // Passed in rather than read off the entry: resolving the icon and
+        // sizing the icon column are decisions for the menu as a whole, and an
+        // inline component has its own scope and cannot reach the ids around it.
+        property string image: ""
+        property bool gutter: false
+
         signal activated
 
         // An entry is destroyed the moment the application withdraws its menu,
@@ -173,7 +238,6 @@ PanelWindow {
         readonly property bool usable: row.entry?.enabled ?? false
         readonly property int button: row.entry?.buttonType ?? QsMenuButtonType.None
         readonly property bool checked: row.entry?.checkState === Qt.Checked
-        readonly property string image: row.entry?.icon ?? ""
         readonly property string label: row.entry?.text ?? ""
         readonly property bool foldable: row.entry?.hasChildren ?? false
 
@@ -229,11 +293,21 @@ PanelWindow {
 
             Image {
                 id: glyph
+
+                // Width and visibility are deliberately separate. The column is
+                // held open for every row of a menu that has any icon at all,
+                // so a row whose icon did not resolve keeps its label in line
+                // with the others; but with no source to draw it paints
+                // nothing, and visible stays false so it can never paint
+                // anything. Geometry is unaffected by visible in Qt Quick, so
+                // the reserved width survives.
+                readonly property bool reserved: row.gutter || row.image !== ""
+
                 anchors.left: box.right
                 anchors.leftMargin: box.shown ? 7 : 9
                 anchors.verticalCenter: parent.verticalCenter
                 visible: row.image !== ""
-                width: glyph.visible ? 14 : 0
+                width: glyph.reserved ? 14 : 0
                 height: 14
                 source: row.image
                 sourceSize.width: 28
@@ -244,7 +318,7 @@ PanelWindow {
 
             Text {
                 anchors.left: glyph.right
-                anchors.leftMargin: glyph.visible ? 8 : 0
+                anchors.leftMargin: glyph.reserved ? 8 : 0
                 anchors.right: chevron.visible ? chevron.left : parent.right
                 anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter

@@ -25,7 +25,7 @@ tick it. This file exists because requirements were being forgotten between turn
 - [x] `AGENTS.md` + `CLAUDE.md` carrying the two rules
 - [ ] Imported through Home Manager as part of the declarative config
       *(deferred by Erik until the shell beats what he has now)*
-- [ ] Per-host options exposed to the NixOS config (`nix/hm-module.nix`)
+- [x] Per-host options exposed to the NixOS config (`nix/hm-module.nix`)
 
 ## Rail (left sidebar)
 
@@ -73,9 +73,9 @@ tick it. This file exists because requirements were being forgotten between turn
 
 - [x] Rings fill as the resource approaches its limit
 - [x] Reuse the existing waybar scripts rather than reimplementing them
-- [ ] Graphs for every metric, not just CPU and memory
-- [ ] Temperature, fan speed, swap usage, swap transfer rate, network throughput
-- [ ] Capability detection — no GPU ring on a host without a GPU
+- [x] Graphs for every metric, not just CPU and memory
+- [x] Temperature, fan speed, swap usage, swap transfer rate, network throughput
+- [x] Capability detection — no GPU ring on a host without a GPU
 
 ## Theming
 

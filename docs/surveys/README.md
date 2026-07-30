@@ -10,6 +10,7 @@ relevant one before rewriting the widget it covers.
 | `player-survey.qml` / `player-survey.png` | How do ten shells fit a now-playing widget into a narrow vertical rail — art, title, transport controls, and what they drop when there is no room? |
 | `clock-survey.qml` / `.md` / `.png` | How do thirteen shells fit hours, minutes, day and month into a 58px vertical strip, and what does each design actually cost in pixels of rail height? |
 | `hover-survey.md` | How do sixteen projects colour and animate the workspace pill on hover, and where does the hover state live (`MouseArea` vs `HoverHandler`)? |
+| `control-centre.md` | When sixteen shells put several unrelated things behind one button, how do they page between them and how does the panel size itself — and where did each of them put the settings GUI? Also: does a vertical bar round its corners, and how do they mark the bar button whose panel is open? |
 | `wallpaper-survey.md` | How do six projects build a wallpaper + theme switcher — where the images come from, how the wallpaper is applied and persisted, how themes are stored, and whether light/dark is declared or guessed from luminance? |
 | `hyprland-lua.md` | Does an earlier session about rewriting the Hyprland config in Lua exist? (No — every transcript store was searched; the answer and the search scope are written down so nobody looks again.) |
 | `requirements-audit.md` | Which ticked boxes in `REQUIREMENTS.md` were not actually done, checked against the code and the running shell rather than against the document? |

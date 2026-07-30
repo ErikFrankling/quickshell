@@ -1,6 +1,7 @@
 # A qmldir overrides the implicit directory import, so every type used from
 # another file has to be listed, not just the singletons.
 singleton Theme 1.0 Theme.qml
+singleton Scheme 1.0 Scheme.qml
 singleton Sys 1.0 Sys.qml
 singleton Caps 1.0 Caps.qml
 singleton Notifs 1.0 Notifs.qml
@@ -18,3 +19,4 @@ LauncherWindow 1.0 LauncherWindow.qml
 NotifCard 1.0 NotifCard.qml
 Ring 1.0 Ring.qml
 Entry 1.0 Entry.qml
+TrayMenu 1.0 TrayMenu.qml

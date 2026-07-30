@@ -36,6 +36,13 @@ ShellRoot {
                 WlrLayershell.namespace: "shell-exclusion"
             }
 
+            // Its own overlay window so it can sit above everything and take
+            // the focus Escape needs. Opened from the tray cells below.
+            TrayMenu {
+                id: trayMenu
+                screen: scope.modelData
+            }
+
             PanelWindow {
                 id: win
 
@@ -249,7 +256,16 @@ ShellRoot {
                             visible: SystemTray.items.values.length > 0
                             gap: 6
                             Repeater {
-                                model: SystemTray.items.values.slice(0, 5)
+                                // ScriptModel, not the bare array: binding a
+                                // live values slice straight into model has Qt
+                                // rebuild every delegate synchronously from
+                                // inside the destructor of the item that just
+                                // went away, which segfaults when an
+                                // application quits. ScriptModel diffs by
+                                // identity and only removes the one delegate.
+                                model: ScriptModel {
+                                    values: SystemTray.items.values.slice(0, 5)
+                                }
                                 // Tray icons are a zoo of shapes and palettes; a
                                 // consistent circular ground makes the column read
                                 // as one set.
@@ -273,20 +289,6 @@ ShellRoot {
                                         smooth: true
                                     }
 
-                                    // The menu is a DBusMenuHandle. anchor.item
-                                    // on its own does not place it: Zaphkiel,
-                                    // vast-shell and diinki all set the window
-                                    // and a rect mapped into that window, so do
-                                    // the same. The rect is set on click,
-                                    // because the rail scrolls under the cell.
-                                    QsMenuAnchor {
-                                        id: trayMenu
-                                        menu: cell.modelData.menu
-                                        anchor.edges: Edges.Right
-                                        anchor.gravity: Edges.Right
-                                        anchor.adjustment: PopupAdjustment.Flip
-                                    }
-
                                     MouseArea {
                                         anchors.fill: parent
                                         hoverEnabled: true
@@ -307,11 +309,16 @@ ShellRoot {
                                             }
                                             if (!cell.modelData.hasMenu)
                                                 return;
-                                            const w = cell.QsWindow.window;
-                                            trayMenu.anchor.window = w;
-                                            trayMenu.anchor.rect = w.contentItem.mapFromItem(
-                                                cell, 0, 0, cell.width, cell.height);
-                                            trayMenu.open();
+                                            // TrayMenu draws the menu itself,
+                                            // so it wants a position rather
+                                            // than an anchor. win covers the
+                                            // whole screen, so mapping to its
+                                            // root item gives screen
+                                            // coordinates. Beside the rail, top
+                                            // aligned with the icon.
+                                            const p = cell.mapToItem(null, 0, 0);
+                                            trayMenu.show(cell.modelData,
+                                                Theme.rail + Theme.pad, p.y - 6);
                                         }
                                     }
                                 }

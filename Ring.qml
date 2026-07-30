@@ -15,8 +15,12 @@ Item {
     property real heat: value
 
     Layout.alignment: Qt.AlignHCenter
-    implicitWidth: 30
-    implicitHeight: 30
+    // One rail slot, like every other control on the rail. The caption below is
+    // the one thing on the rail that lives outside its slot: it is a label on
+    // the ring rather than a control of its own, so it hangs into the gap under
+    // it and the rings group is given a wider gap to carry it.
+    implicitWidth: Theme.slot
+    implicitHeight: Theme.slot
 
     Canvas {
         id: c

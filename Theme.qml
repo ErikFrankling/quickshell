@@ -57,6 +57,32 @@ Singleton {
     readonly property int pad: 14
     readonly property real panelOpacity: 0.82
 
+    // The rail's vertical rhythm, and the only place it is decided.
+    //
+    // Every control on the rail stands `slot` tall with `slotGap` under it: a
+    // workspace pill, a metric ring, a button and a tray cell all take the same
+    // stripe of the bar, so scanning down the rail is scanning down one grid.
+    // Widths still differ — a pill carries a number and up to two application
+    // icons, a button carries one glyph — because equal *slot* is the point,
+    // not equal shape. Noctalia's bar works the same way: one capsuleHeight,
+    // 27px against a 33px bar, that every widget on the bar is measured from,
+    // and one widgetSpacing between them.
+    //
+    // 28 is where the rail already was on average — the pills were 24, the tray
+    // cells 26, the rings 30 and the buttons 34 — so unifying costs the rail no
+    // height overall. It gains the pills four pixels and a two-point larger
+    // number, and takes six back off every button, which is the direction the
+    // rail was wrong in: cramped at the top, loose at the bottom.
+    readonly property int slot: 28
+    readonly property int slotGap: 5
+    readonly property int icon: 15
+
+    // A group's rounded ground: how far it is inset from the rail, and how much
+    // air it keeps around its column.
+    readonly property int groupWidth: 46
+    readonly property int groupPad: 6
+    readonly property int groupGap: 8
+
     function heat(pct) {
         return pct >= 90 ? bad : pct >= 70 ? warn : accent;
     }

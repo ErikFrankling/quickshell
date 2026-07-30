@@ -7,11 +7,11 @@ Rectangle {
     id: root
 
     default property alias content: col.data
-    property int gap: 4
+    property int gap: Theme.slotGap
 
     Layout.alignment: Qt.AlignHCenter
-    implicitWidth: 46
-    implicitHeight: col.implicitHeight + 12
+    implicitWidth: Theme.groupWidth
+    implicitHeight: col.implicitHeight + Theme.groupPad * 2
     radius: 15
     color: Theme.bgHi
 

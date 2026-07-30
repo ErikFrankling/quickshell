@@ -8,7 +8,7 @@ import Quickshell.Hyprland
 ColumnLayout {
     id: root
 
-    spacing: 3
+    spacing: Theme.slotGap
 
     // Windows grouped by workspace id, deduped by class so three terminals
     // show one icon rather than three.
@@ -130,8 +130,11 @@ ColumnLayout {
             readonly property var classes: root.byWorkspace[modelData.id] ?? []
 
             Layout.alignment: Qt.AlignHCenter
+            // One rail slot tall, the same stripe a button or a ring takes.
+            // Wider than it is tall because it carries a number and up to two
+            // application icons side by side, which a button does not.
             implicitWidth: 44
-            implicitHeight: 24
+            implicitHeight: Theme.slot
             radius: Theme.radiusS
             // Idle is the hover colour at zero alpha, never "transparent":
             // "transparent" is transparent *black*, and ColorAnimation walks
@@ -163,17 +166,25 @@ ColumnLayout {
             RowLayout {
                 id: body
                 anchors.centerIn: parent
-                spacing: 4
+                spacing: 3
 
                 Text {
                     // Same label the sort ranks on, so the rail always reads in
                     // the order of the numbers it is showing.
+                    //
+                    // The number is what the pill is for and it was the
+                    // smallest type on the rail, so it goes up two points. The
+                    // cap is what a two-digit number needs at that size and not
+                    // a pixel less: a workspace named rather than numbered
+                    // elides instead of pushing its icons out of the pill, but
+                    // "10" — which is a real workspace here — must never elide,
+                    // and at 15 it did.
                     text: root.label(ws.modelData)
                     color: ws.here ? Theme.accent : Theme.dim
-                    font.pixelSize: 11
+                    font.pixelSize: 13
                     font.weight: ws.here ? Font.Bold : Font.Normal
                     elide: Text.ElideRight
-                    Layout.maximumWidth: 34
+                    Layout.maximumWidth: 20
                 }
 
                 Repeater {
@@ -181,10 +192,10 @@ ColumnLayout {
                     Image {
                         required property string modelData
                         source: (root.revision, root.iconFor(modelData))
-                        sourceSize.width: 14
-                        sourceSize.height: 14
-                        Layout.preferredWidth: 14
-                        Layout.preferredHeight: 14
+                        sourceSize.width: 13
+                        sourceSize.height: 13
+                        Layout.preferredWidth: 13
+                        Layout.preferredHeight: 13
                         opacity: ws.here ? 1 : 0.62
                         smooth: true
                     }
@@ -200,15 +211,17 @@ ColumnLayout {
 
             MouseArea {
                 id: hover
-                // The pills stand 3px apart, so a hit area that stops at the
-                // visual leaves a dead strip between every pair: dragging down
-                // the rail fires exit and enter at each boundary and the
-                // highlight drops out and comes back on the way past. Reaching
-                // into the gap makes the areas tile, which is what every rail
-                // worth copying does — bjarneo -2, josecriane and tripathiji
-                // -4, noctalia a full-height container behind a smaller pill.
+                // The pills stand Theme.slotGap apart, so a hit area that stops
+                // at the visual leaves a dead strip between every pair:
+                // dragging down the rail fires exit and enter at each boundary
+                // and the highlight drops out and comes back on the way past.
+                // Reaching half the gap either way makes the areas tile, which
+                // is what every rail worth copying does — bjarneo -2,
+                // josecriane and tripathiji -4, noctalia a full-height
+                // container behind a smaller pill. Rounding up rather than down
+                // keeps them tiling when the gap is odd.
                 anchors.fill: parent
-                anchors.margins: -2
+                anchors.margins: -Math.ceil(Theme.slotGap / 2)
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: ws.modelData.activate()

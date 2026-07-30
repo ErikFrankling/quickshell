@@ -34,8 +34,8 @@ Item {
     signal clicked
 
     Layout.alignment: Qt.AlignHCenter
-    implicitWidth: 34
-    implicitHeight: 34
+    implicitWidth: Theme.slot
+    implicitHeight: Theme.slot
 
     Rectangle {
         id: visual
@@ -51,13 +51,13 @@ Item {
             anchors.centerIn: parent
             text: root.glyph
             color: root.active ? Theme.bg : root.tint
-            font.pixelSize: 16
+            font.pixelSize: Theme.icon
         }
     }
 
     Rectangle {
         visible: root.badge > 0 && !root.active
-        anchors { top: visual.top; right: visual.right; margins: 4 }
+        anchors { top: visual.top; right: visual.right; margins: 3 }
         width: 8
         height: 8
         radius: 4

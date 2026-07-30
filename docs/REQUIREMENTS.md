@@ -50,6 +50,15 @@ tick it. This file exists because requirements were being forgotten between turn
 - [x] Theme button sits with the other buttons
 - [x] No launcher button in the rail
 - [ ] Rail is not cramped
+- [ ] A media player IN the rail, not a button that opens one — track name and
+      playing state visible without opening anything. Same principle as the
+      other rail icons carrying state. *(The rail is 58px wide and vertical;
+      almost all prior art is for horizontal bars, so the design has to come
+      from a shell that solves the vertical case.)*
+- [ ] Workspace pills still flicker on hover. The earlier fix covered
+      `Btn.qml` and friends but not `Workspaces.qml`, which has its own
+      MouseArea and colour logic — including the same `"transparent"` idle
+      colour that was the root cause there.
 - [ ] The rail carries as many metrics as his waybar does. It currently shows
       four of about eleven — fan, swap, both disks, VRAM and **battery** all
       need a panel opened. On the laptop that is a regression against waybar.

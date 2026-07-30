@@ -114,16 +114,34 @@ ShellRoot {
                     onActivated: win.page = ""
                 }
 
-                // Where the card centres itself: the middle of the rail item
-                // that opened the page, in this window's coordinates. -1 means
-                // nothing claimed a position and the card falls back to the
-                // middle of the screen.
+                // The rail item the open page belongs to. A reference, not a
+                // position: the rail relays out under an open panel every time
+                // a widget is pinned from the flyout, a tray icon arrives or a
+                // workspace appears, and a stored position is wrong from that
+                // moment on.
+                property Item opener: null
+
+                // Where the card centres itself: the middle of `opener`, in
+                // this window's coordinates. -1 means nothing claimed a
+                // position and the card falls back to the middle of the screen.
                 //
-                // Resolved once, on the click, and stored — mapToItem sets up
-                // no binding dependency on the source item's position (Ricelin
-                // says the same in its VFader), so a live binding would go
-                // stale the moment the rail relaid itself out.
-                property real anchorY: -1
+                // The sum up the parent chain is what makes this a binding.
+                // mapToItem is an ordinary function call into C++ and reads no
+                // QML properties, so a binding built on it never re-evaluates —
+                // it is stale from the first frame, before the layout has even
+                // run. Reading each ancestor's `y` registers it as a
+                // dependency, so the card re-centres whenever any of them
+                // moves. Ricelin's VFader forces the same dependency with
+                // `void tick.y` before its mapToItem; walking the chain is that
+                // idiom with nothing left to remember to list.
+                readonly property real anchorY: {
+                    if (!opener || !opener.visible)
+                        return -1;
+                    let y = opener.height / 2;
+                    for (let i = opener; i; i = i.parent)
+                        y += i.y;
+                    return y;
+                }
 
                 // `item` is the rail item that was clicked, or null for a
                 // keybind, in which case the rail is asked whether this page
@@ -132,9 +150,7 @@ ShellRoot {
                 // BarService.lookupWidget() — and centres on the screen when
                 // the widget is not on the bar.
                 function openAt(item, name) {
-                    const src = item ?? win.railItem(name);
-                    win.anchorY = (src && src.visible)
-                        ? src.mapToItem(null, 0, src.height / 2).y : -1;
+                    win.opener = item ?? win.railItem(name);
                     win.page = win.page === name ? "" : name;
                 }
 
@@ -169,9 +185,9 @@ ShellRoot {
 
                 // A row in the flyout opens the widget's own panel. Only the
                 // window actually showing the flyout answers — the others are
-                // on other screens and were never asked. anchorY is left where
-                // the chevron put it: the new page takes the flyout's place
-                // rather than jumping somewhere else on the way.
+                // on other screens and were never asked. The opener stays the
+                // chevron: the new page takes the flyout's place rather than
+                // jumping somewhere else on the way.
                 Connections {
                     target: Pins
                     function onActivate(id: string): void {
@@ -519,6 +535,8 @@ ShellRoot {
                     // bar in SmartPanel's setPosition(): centre on the button,
                     // then Math.max(top, Math.min(y, bottom - height)), with
                     // the screen centre standing in when there is no button.
+                    // Unlike noctalia's, which runs once and keeps the answer,
+                    // this is a binding all the way down to the opener.
                     //
                     // Whole pixels: a half-pixel card edge puts a seam of
                     // antialiasing where the fillet meets the rail.
@@ -540,7 +558,15 @@ ShellRoot {
                     // noctalia animates the same resize, its height Behavior
                     // running at animationNormal whenever the panel is not
                     // mid-open. Off during the roll so it cannot fight it.
+                    //
+                    // y eases for the same reason and on the same terms: now
+                    // that it tracks the opener, the rail relaying out slides
+                    // the card rather than teleporting it.
                     Behavior on height {
+                        enabled: win.p === 1
+                        NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                    }
+                    Behavior on y {
                         enabled: win.p === 1
                         NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                     }

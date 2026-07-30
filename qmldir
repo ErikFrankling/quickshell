@@ -4,6 +4,7 @@ singleton Theme 1.0 Theme.qml
 singleton Sys 1.0 Sys.qml
 singleton Notifs 1.0 Notifs.qml
 singleton Markup 1.0 Markup.qml
+singleton Audio 1.0 Audio.qml
 
 Bar 1.0 Bar.qml
 Workspaces 1.0 Workspaces.qml

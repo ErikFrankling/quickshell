@@ -29,7 +29,7 @@ Singleton {
 
     readonly property string name: c("name", "Tokyo Night")
 
-    readonly property int rail: 54
+    readonly property int rail: 58
     readonly property int panel: 430
     readonly property int radius: 20
     readonly property int radiusS: 10

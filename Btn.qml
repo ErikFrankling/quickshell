@@ -8,6 +8,8 @@ Item {
     property bool active: false
     property int badge: 0
     property string tip: ""
+    // Colour the glyph when the thing it represents is actually on.
+    property color tint: Theme.dim
 
     signal clicked
 
@@ -25,7 +27,7 @@ Item {
         Text {
             anchors.centerIn: parent
             text: root.glyph
-            color: root.active ? Theme.bg : Theme.dim
+            color: root.active ? Theme.bg : root.tint
             font.pixelSize: 16
         }
     }

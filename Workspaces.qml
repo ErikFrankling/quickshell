@@ -106,8 +106,8 @@ ColumnLayout {
             readonly property var classes: root.byWorkspace[modelData.id] ?? []
 
             Layout.alignment: Qt.AlignHCenter
-            implicitWidth: 40
-            implicitHeight: body.implicitHeight + 6
+            implicitWidth: 44
+            implicitHeight: 24
             radius: Theme.radiusS
             color: ws.here ? Qt.alpha(Theme.accent, 0.22) : hover.containsMouse ? Theme.bgHi : "transparent"
 
@@ -122,25 +122,24 @@ ColumnLayout {
                 color: Theme.accent
             }
 
-            ColumnLayout {
+            // Number and icons side by side keeps each row short, so the rows
+            // sit close together and the group reclaims vertical space.
+            RowLayout {
                 id: body
                 anchors.centerIn: parent
-                spacing: 2
+                spacing: 4
 
                 Text {
-                    Layout.alignment: Qt.AlignHCenter
                     text: ws.modelData.name
                     color: ws.here ? Theme.accent : Theme.dim
                     font.pixelSize: 11
                     font.weight: ws.here ? Font.Bold : Font.Normal
                 }
 
-                // Up to three icons, then a count for the rest.
                 Repeater {
-                    model: ws.classes.slice(0, 3)
+                    model: ws.classes.slice(0, 2)
                     Image {
                         required property string modelData
-                        Layout.alignment: Qt.AlignHCenter
                         source: (root.revision, root.iconFor(modelData))
                         sourceSize.width: 14
                         sourceSize.height: 14
@@ -152,9 +151,8 @@ ColumnLayout {
                 }
 
                 Text {
-                    visible: ws.classes.length > 3
-                    Layout.alignment: Qt.AlignHCenter
-                    text: "+" + (ws.classes.length - 3)
+                    visible: ws.classes.length > 2
+                    text: "+" + (ws.classes.length - 2)
                     color: Theme.dim
                     font.pixelSize: 8
                 }

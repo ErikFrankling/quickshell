@@ -10,7 +10,7 @@ Rectangle {
     property int gap: 4
 
     Layout.alignment: Qt.AlignHCenter
-    implicitWidth: 42
+    implicitWidth: 46
     implicitHeight: col.implicitHeight + 12
     radius: 15
     color: Theme.bgHi

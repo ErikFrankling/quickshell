@@ -7,6 +7,8 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
+import Quickshell.Bluetooth
+import Quickshell.Services.Mpris
 import Quickshell.Services.SystemTray
 import "panels" as Panels
 
@@ -91,15 +93,44 @@ ShellRoot {
                     Item { implicitHeight: 8 }
 
                     Group {
-                        Btn { glyph: "󰍹"; active: win.page === "monitor"; onClicked: win.page = win.page === "monitor" ? "" : "monitor" }
-                        Btn { glyph: "󰕾"; active: win.page === "audio"; onClicked: win.page = win.page === "audio" ? "" : "audio" }
-                        Btn { glyph: "󰤨"; active: win.page === "network"; onClicked: win.page = win.page === "network" ? "" : "network" }
-                        Btn { glyph: "󰂯"; active: win.page === "bluetooth"; onClicked: win.page = win.page === "bluetooth" ? "" : "bluetooth" }
-                        Btn { glyph: "󰝚"; active: win.page === "player"; onClicked: win.page = win.page === "player" ? "" : "player" }
+                        // Each of these reports state, not just what it opens.
                         Btn {
-                            glyph: "󰂚"
+                            glyph: "󰍹"
+                            active: win.page === "monitor"
+                            tint: Sys.cpu >= 90 || Sys.temp >= 85 ? Theme.bad
+                                : Sys.cpu >= 70 || Sys.temp >= 75 ? Theme.warn : Theme.dim
+                            onClicked: win.page = win.page === "monitor" ? "" : "monitor"
+                        }
+                        Btn {
+                            glyph: Audio.muted ? "󰝟" : Audio.vol > 0.66 ? "󰕾" : Audio.vol > 0.33 ? "󰖀" : "󰕿"
+                            active: win.page === "audio"
+                            tint: Audio.muted ? Theme.bad : Theme.fg
+                            onClicked: win.page = win.page === "audio" ? "" : "audio"
+                        }
+                        Btn {
+                            glyph: Sys.net === "" ? "󰤮" : Sys.net.toLowerCase().indexOf("eth") >= 0 ? "󰈀" : "󰤨"
+                            active: win.page === "network"
+                            tint: Sys.net === "" ? Theme.bad : Theme.good
+                            onClicked: win.page = win.page === "network" ? "" : "network"
+                        }
+                        Btn {
+                            glyph: Bluetooth.defaultAdapter?.enabled ? "󰂯" : "󰂲"
+                            active: win.page === "bluetooth"
+                            tint: !Bluetooth.defaultAdapter?.enabled ? Theme.dim
+                                : Bluetooth.devices.values.some(d => d.connected) ? Theme.good : Theme.fg
+                            onClicked: win.page = win.page === "bluetooth" ? "" : "bluetooth"
+                        }
+                        Btn {
+                            glyph: Mpris.players.values.some(p => p.isPlaying) ? "󰝚" : "󰎊"
+                            active: win.page === "player"
+                            tint: Mpris.players.values.some(p => p.isPlaying) ? Theme.good : Theme.dim
+                            onClicked: win.page = win.page === "player" ? "" : "player"
+                        }
+                        Btn {
+                            glyph: Notifs.dnd ? "󰂛" : "󰂚"
                             active: win.page === "notifs"
                             badge: Notifs.unread
+                            tint: Notifs.dnd ? Theme.warn : Notifs.unread > 0 ? Theme.accent : Theme.dim
                             onClicked: {
                                 win.page = win.page === "notifs" ? "" : "notifs";
                                 if (win.page === "notifs") Notifs.markSeen();

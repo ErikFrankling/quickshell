@@ -3,7 +3,7 @@
 A personal Quickshell desktop shell for Hyprland. Left sidebar, notifications,
 control panels, launcher. Not a product — nobody else installs this.
 
-## The two rules
+## The three rules
 
 ### 1. Write as little code as possible, and make it beautiful
 
@@ -40,6 +40,14 @@ So, every session, before editing anything:
 `docs/` holds a catalogue of every Quickshell project above 50 stars, a design
 gallery, and the research behind the choices here. It is there so you never have
 to guess.
+
+### 3. A survey you do is a file you commit
+
+When you compare how other projects solved something — a table, a contact
+sheet, anything with file:line citations — write it into `docs/surveys/` and
+commit it, in the same session. Scratchpads are deleted and transcripts are not
+searchable; work that only exists in one of those has to be done again. Keep
+the source too, not just the screenshot of it.
 
 ## Running it
 

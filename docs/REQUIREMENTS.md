@@ -5,6 +5,10 @@ here is inferred — each line traces to something he actually asked for. Keep i
 up to date: when a session adds a requirement, add it here, and when one lands,
 tick it. This file exists because requirements were being forgotten between turns.
 
+Two audits of this file against the code and the running shell are kept in
+`docs/surveys/` (`requirements-audit.md`, `requirements-audit-2.md`), alongside
+the prior-art surveys behind several of the choices below.
+
 ## Rules that govern all work
 
 - [x] Code stays as simple and trivial as possible. Do not over-engineer.

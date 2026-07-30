@@ -1,0 +1,337 @@
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; padding:28px 26px 34px; background:#16181d; color:#d3dae3;
+         font:13px/1.45 "DejaVu Sans", sans-serif; width:1560px; }
+  h1 { font-size:21px; margin:0 0 4px; color:#dcd7ba; font-weight:600; }
+  .sub { color:#7c8796; font-size:12.5px; margin:0 0 22px; }
+  .grid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; }
+  .cell { background:#1d2027; border:1px solid #2c313b; border-radius:10px;
+          padding:12px 12px 11px; display:flex; flex-direction:column; }
+  .name { font-size:13px; font-weight:700; color:#dcd7ba; margin-bottom:1px; }
+  .where { font-size:11px; color:#7aa2f7; margin-bottom:9px; }
+  .stage { background:#0f1116; border-radius:7px; height:104px; position:relative;
+           display:flex; align-items:center; justify-content:center; margin-bottom:9px;
+           overflow:hidden; }
+  .stage.top { align-items:flex-start; padding-top:9px; }
+  .stage.bot { align-items:flex-end; padding-bottom:9px; }
+  .stage.rgt { justify-content:flex-end; padding-right:9px; }
+  .card { background:#252932; border-radius:9px; padding:8px 10px;
+          display:flex; align-items:center; gap:8px; }
+  .ic { font-size:14px; color:#7aa2f7; line-height:1; }
+  .track { height:6px; background:#3a3f4b; border-radius:3px; position:relative; }
+  .fill { position:absolute; inset:0 auto 0 0; background:#7aa2f7; border-radius:3px; }
+  .num { font-size:11px; color:#d3dae3; font-variant-numeric:tabular-nums; }
+  .dim { color:#7c8796; }
+  .red { color:#f7768e; }
+  dl { margin:0; font-size:11px; }
+  dl div { display:flex; gap:6px; padding:1.5px 0; }
+  dt { color:#7c8796; flex:0 0 62px; }
+  dd { margin:0; flex:1; color:#c3cad6; }
+  .mine { border-color:#7aa2f7; box-shadow:0 0 0 1px #7aa2f7; background:#20242e; }
+  .mine .name { color:#7aa2f7; }
+  .tag { display:inline-block; font-size:10px; background:#7aa2f7; color:#16181d;
+         border-radius:4px; padding:1px 6px; margin-left:6px; vertical-align:1px; font-weight:700; }
+</style>
+
+<h1>On-screen display: fourteen real Quickshell implementations</h1>
+<p class="sub">Layouts redrawn to scale from the source. &ldquo;Detects&rdquo; is how each one notices a change made outside the shell &mdash; a media key, wpctl, brightnessctl.</p>
+
+<div class="grid">
+
+  <div class="cell mine">
+    <div class="name">this shell <span class="tag">BUILT</span></div>
+    <div class="where">bottom centre &middot; 300&times;62</div>
+    <div class="stage bot">
+      <div class="card" style="width:230px">
+        <span class="ic">&#9834;</span>
+        <div class="track" style="flex:1"><div class="fill" style="width:65%"></div></div>
+        <span class="num">65%</span>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>1600 ms, restart()</dd></div>
+      <div><dt>Detects</dt><dd>Audio/Sys property change signal</dd></div>
+      <div><dt>Number</dt><dd>yes &middot; bar, no arc</dd></div>
+      <div><dt>Mute</dt><dd>red crossed glyph, bar keeps width, drained grey</dd></div>
+      <div><dt>Input</dt><dd>mask: Region {} &middot; focus None</dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">noctalia</div>
+    <div class="where">configurable, dflt bottom &middot; 320&times;72</div>
+    <div class="stage bot">
+      <div class="card" style="width:240px">
+        <span class="ic">&#9834;</span>
+        <div class="track" style="flex:1"><div class="fill" style="width:55%"></div></div>
+        <span class="num">55%</span>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>2000 ms</dd></div>
+      <div><dt>Detects</dt><dd>AudioService signals; FileView on sysfs backlight</dd></div>
+      <div><dt>Number</dt><dd>yes &middot; bar</dd></div>
+      <div><dt>Mute</dt><dd>different glyph from 0, bar to 0, error colour</dd></div>
+      <div><dt>Startup</dt><dd>2 s timer + deferred signal connect</dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">DankMaterialShell</div>
+    <div class="where">nine-way, dflt top right</div>
+    <div class="stage top rgt">
+      <div class="card" style="width:210px">
+        <span class="ic">&#9834;</span>
+        <div class="track" style="flex:1;height:8px"><div class="fill" style="width:40%"></div>
+          <span style="position:absolute;left:40%;top:-4px;width:14px;height:14px;border-radius:50%;background:#7aa2f7"></span></div>
+        <span class="num">40%</span>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>3000 ms</dd></div>
+      <div><dt>Detects</dt><dd>Connections on sink.audio; daemon IPC for backlight</dd></div>
+      <div><dt>Number</dt><dd>yes &middot; draggable slider</dd></div>
+      <div><dt>Mute</dt><dd>icon swap only</dd></div>
+      <div><dt>Startup</dt><dd>suppressOSD=true, 2 s timer clears</dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">caelestia</div>
+    <div class="where">right edge, vertical stack</div>
+    <div class="stage rgt">
+      <div style="display:flex;gap:6px">
+        <div style="width:22px;height:74px;border-radius:11px;background:#252932;position:relative">
+          <div style="position:absolute;left:0;right:0;bottom:0;height:60%;background:#7aa2f7;border-radius:11px"></div></div>
+        <div style="width:22px;height:74px;border-radius:11px;background:#252932;position:relative">
+          <div style="position:absolute;left:0;right:0;bottom:0;height:35%;background:#7aa2f7;border-radius:11px"></div></div>
+        <div style="width:22px;height:74px;border-radius:11px;background:#252932;position:relative">
+          <div style="position:absolute;left:0;right:0;bottom:0;height:80%;background:#7aa2f7;border-radius:11px"></div></div>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>configurable hideDelay</dd></div>
+      <div><dt>Detects</dt><dd>Connections on its Audio singleton + monitor</dd></div>
+      <div><dt>Number</dt><dd class="red">no number at all</dd></div>
+      <div><dt>Mute</dt><dd>icon inside the filled slider</dd></div>
+      <div><dt>Startup</dt><dd>seeds values in Component.onCompleted</dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">whisker</div>
+    <div class="where">top centre &middot; 200&times;50</div>
+    <div class="stage top">
+      <div class="card" style="width:200px;flex-direction:row">
+        <span class="ic" style="font-size:20px">&#9834;</span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+            <span>Volume</span><span class="dim">62</span></div>
+          <div class="track"><div class="fill" style="width:62%"></div></div>
+        </div>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>3000 ms</dd></div>
+      <div><dt>Detects</dt><dd>PwObjectTracker + Connections on sink.audio</dd></div>
+      <div><dt>Number</dt><dd>yes &middot; bar</dd></div>
+      <div><dt>Mute</dt><dd>word &ldquo;Muted&rdquo; replaces the number, bar to 0</dd></div>
+      <div><dt>Startup</dt><dd class="red">none</dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">Ricelin</div>
+    <div class="where">top centre, notch pill morph</div>
+    <div class="stage top">
+      <div class="card" style="width:216px;border-radius:16px">
+        <span class="ic">&#9834;</span>
+        <div class="track" style="flex:1;height:4px"><div class="fill" style="width:48%"></div></div>
+        <span class="num">48%</span>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>1800 ms</dd></div>
+      <div><dt>Detects</dt><dd>onVolumesChanged; 1 Hz sysfs poll for backlight</dd></div>
+      <div><dt>Number</dt><dd>yes, tabular figures &middot; bar</dd></div>
+      <div><dt>Mute</dt><dd>bar keeps width, desaturated (same as mine)</dd></div>
+      <div><dt>Startup</dt><dd>armed flag, 1500 ms + &minus;1 sentinel</dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">snes19xx surface-dots</div>
+    <div class="where">bottom centre &middot; 300&times;110</div>
+    <div class="stage bot">
+      <div class="card" style="width:230px;flex-direction:column;align-items:stretch;gap:6px">
+        <div style="text-align:center"><span class="ic" style="font-size:18px">&#9834;</span>
+          <div class="num" style="margin-top:2px">45%</div></div>
+        <div class="track" style="height:7px"><div class="fill" style="width:45%"></div>
+          <span style="position:absolute;left:75%;top:-1px;width:2px;height:8px;background:#7c8796"></span></div>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>2600 ms</dd></div>
+      <div><dt>Detects</dt><dd class="red">FileView on a cache file written by a Hypr script only</dd></div>
+      <div><dt>Number</dt><dd>yes &middot; bar with ticks + thumb</dd></div>
+      <div><dt>Mute</dt><dd>word &ldquo;muted&rdquo;, bar dimmed to 35%, keeps width</dd></div>
+      <div><dt>Startup</dt><dd>_ready on FileView.onLoaded</dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">cxOrz dotfiles-hyprland</div>
+    <div class="where">bottom centre &middot; 300&times;52</div>
+    <div class="stage bot">
+      <div class="card" style="width:225px">
+        <span class="ic">&#9834;</span>
+        <div class="track" style="flex:1"><div class="fill" style="width:70%"></div></div>
+        <span class="num">70%</span>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>2000 ms</dd></div>
+      <div><dt>Detects</dt><dd>derived property + onCurrentVolumeChanged</dd></div>
+      <div><dt>Number</dt><dd>yes &middot; bar</dd></div>
+      <div><dt>Mute</dt><dd>word &ldquo;Muted&rdquo;, bar to 0, dimmed</dd></div>
+      <div><dt>Startup</dt><dd>_ready flag, 600 ms timer &mdash; the idiom I copied</dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">meloworld</div>
+    <div class="where">bottom centre &middot; 260&times;52</div>
+    <div class="stage bot">
+      <div class="card" style="width:220px;border:1px solid #7aa2f7">
+        <span class="ic">&#9834;</span>
+        <div class="track" style="flex:1"><div class="fill" style="width:58%"></div></div>
+        <span class="num">58</span>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>1800 ms</dd></div>
+      <div><dt>Detects</dt><dd>Connections on AudioState / BrightnessState</dd></div>
+      <div><dt>Number</dt><dd>yes, no % sign &middot; bar</dd></div>
+      <div><dt>Mute</dt><dd>bar hidden entirely, word &ldquo;Muted&rdquo; in its place</dd></div>
+      <div><dt>Startup</dt><dd class="red">none</dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">tripathiji1312</div>
+    <div class="where">top right &middot; 286&times;60</div>
+    <div class="stage top rgt">
+      <div class="card" style="width:215px;border-radius:16px">
+        <span class="ic">&#9834;</span>
+        <div class="track" style="flex:1;height:10px"><div class="fill" style="width:52%"></div>
+          <span style="position:absolute;left:52%;top:-1px;width:12px;height:12px;border-radius:50%;background:#7aa2f7;border:2px solid #252932"></span></div>
+        <span class="num">52%</span>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>configurable</dd></div>
+      <div><dt>Detects</dt><dd>onPercentageChanged on its Audio service</dd></div>
+      <div><dt>Number</dt><dd>yes &middot; bar with thumb</dd></div>
+      <div><dt>Mute</dt><dd>glyph + bar + thumb all faded to 40&ndash;55% alpha</dd></div>
+      <div><dt>Startup</dt><dd>prevVolume = &minus;1 sentinel, seeded onCompleted</dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">dhrruvsharma</div>
+    <div class="where">bottom centre &middot; 360&times;100</div>
+    <div class="stage bot">
+      <div class="card" style="width:235px;gap:9px">
+        <div style="width:26px;height:26px;border-radius:6px;background:#2f3a52;display:flex;align-items:center;justify-content:center"><span class="ic" style="font-size:13px">&#9834;</span></div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px"><span>Volume</span><span class="dim">75%</span></div>
+          <div class="track" style="height:8px"><div class="fill" style="width:75%"></div></div>
+        </div>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>1500 ms</dd></div>
+      <div><dt>Detects</dt><dd>singleton Osd.show() pushed by callers</dd></div>
+      <div><dt>Number</dt><dd>yes &middot; bar with shimmer</dd></div>
+      <div><dt>Mute</dt><dd>icon only</dd></div>
+      <div><dt>Startup</dt><dd class="red">n/a &mdash; push-driven</dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">doannc2212</div>
+    <div class="where">right edge &middot; 36&times;200 pill</div>
+    <div class="stage rgt">
+      <div style="width:30px;height:92px;border-radius:15px;background:#252932;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6px 0">
+        <span style="font-size:9px">72</span>
+        <div style="width:7px;flex:1;margin:5px 0;background:#3a3f4b;border-radius:4px;position:relative">
+          <div style="position:absolute;left:0;right:0;bottom:0;height:72%;background:#7aa2f7;border-radius:4px"></div></div>
+        <span class="ic" style="font-size:11px">&#9834;</span>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>1500 ms</dd></div>
+      <div><dt>Detects</dt><dd>Connections on sink.audio; FileView on sysfs backlight</dd></div>
+      <div><dt>Number</dt><dd>yes &middot; vertical bar</dd></div>
+      <div><dt>Mute</dt><dd>word &ldquo;Mute&rdquo;, bar to 0</dd></div>
+      <div><dt>Startup</dt><dd>brightness guarded, volume <span class="red">not</span></dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">Tide-island</div>
+    <div class="where">top notch &middot; arc, not a bar</div>
+    <div class="stage top">
+      <div class="card" style="width:150px;border-radius:20px;justify-content:space-between">
+        <span class="ic">&#9834;</span><span class="num" style="font-size:14px;font-weight:700">68%</span>
+        <svg width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="none" stroke="#3a3f4b" stroke-width="3.5"/><circle cx="15" cy="15" r="12" fill="none" stroke="#7aa2f7" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="51 75" transform="rotate(-90 15 15)"/></svg>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>1250 ms</dd></div>
+      <div><dt>Detects</dt><dd>C++: pactl subscribe + QFileSystemWatcher on sysfs</dd></div>
+      <div><dt>Number</dt><dd>yes &middot; <b>arc</b></dd></div>
+      <div><dt>Mute</dt><dd>glyph only, arc still shows real level</dd></div>
+      <div><dt>Startup</dt><dd class="red">none &mdash; pops on every launch</dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">Ambxst</div>
+    <div class="where">bottom strip &middot; 220&times;52</div>
+    <div class="stage bot">
+      <div class="card" style="width:210px;flex-direction:column;align-items:stretch;gap:5px">
+        <div style="display:flex;justify-content:space-between;font-size:10px"><span>Volume</span><span>38</span></div>
+        <div class="track" style="height:3px"><div class="fill" style="width:38%"></div></div>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>2500 ms</dd></div>
+      <div><dt>Detects</dt><dd>service re-emits PipeWire change as its own signal</dd></div>
+      <div><dt>Number</dt><dd>yes, no % sign &middot; bar</dd></div>
+      <div><dt>Mute</dt><dd>icon + bar colour, level unchanged</dd></div>
+      <div><dt>Startup</dt><dd>audio ok; <span class="red">brightness flashes</span></dd></div>
+    </dl>
+  </div>
+
+  <div class="cell">
+    <div class="name">anomshell</div>
+    <div class="where">bottom centre &middot; 232&times;52</div>
+    <div class="stage bot">
+      <div class="card" style="width:215px;flex-direction:column;align-items:stretch;gap:5px;position:relative">
+        <svg style="position:absolute;inset:0;opacity:.25" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 100 30"><path d="M0 24 Q8 8 16 20 T32 16 T48 6 T64 20 T80 12 T100 22" fill="none" stroke="#7aa2f7" stroke-width="2"/></svg>
+        <div style="display:flex;justify-content:space-between;font-size:10px;position:relative"><span>&#9834;</span><span>55%</span></div>
+        <div class="track" style="height:3px;position:relative"><div class="fill" style="width:55%"></div></div>
+      </div>
+    </div>
+    <dl>
+      <div><dt>Dwell</dt><dd>1400 ms</dd></div>
+      <div><dt>Detects</dt><dd class="red">nothing &mdash; keybinds push over IPC, wpctl read-back</dd></div>
+      <div><dt>Number</dt><dd>yes &middot; bar + cava waveform</dd></div>
+      <div><dt>Mute</dt><dd>red tone, bar zeroed &mdash; same as volume 0</dd></div>
+      <div><dt>Startup</dt><dd>n/a &mdash; nothing to suppress</dd></div>
+    </dl>
+  </div>
+
+</div>

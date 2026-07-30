@@ -63,15 +63,18 @@ gives you a *second* instance. Stop the unit first — `systemctl --user stop
 erikshell` — or the two fight over `org.freedesktop.Notifications` and the tray,
 and you will spend an hour measuring a bug that is really two shells.
 
-For anything beyond the sidebar, use `localDev` instead:
+For anything beyond the sidebar, swap the unit itself onto the working tree:
 
-```nix
-programs.erikshell.localDev.enable = true;   # in the dotfiles, per host
+```bash
+erikshell-dev on     # no rebuild; `erikshell-dev off` to undo, `erikshell-dev` to ask
 ```
 
-That points the unit itself at the working tree, so the shell that owns the
-D-Bus name is the one that hot-reloads. Notifications, the launcher, the OSD
-and the tray all become editable live. One rebuild each way. See README.md.
+That points `erikshell.service` at the working tree, so the shell that owns the
+D-Bus name is the one that hot-reloads. Notifications, the launcher, the OSD and
+the tray all become editable live, in one instance. It is a runtime systemd
+drop-in, so a reboot undoes it; `programs.erikshell.localDev.enable = true` in
+the dotfiles is the same swap made permanent, at one rebuild each way. See
+README.md.
 
 Take a screenshot after visual changes:
 

@@ -640,6 +640,9 @@ ShellRoot {
         function toggle(): void { launcher.open ? launcher.hide() : launcher.show(); }
     }
 
+    // The volume and brightness card at the bottom of the screen.
+    Osd {}
+
     // ---- popups -----------------------------------------------------------
     Variants {
         model: Quickshell.screens

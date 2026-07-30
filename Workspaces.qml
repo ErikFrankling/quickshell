@@ -110,6 +110,23 @@ ColumnLayout {
         return /^\d+$/.test(w.name) ? parseInt(w.name) : Infinity;
     }
 
+    // Not `w.activate()`. That sends `dispatch workspace <name>`, and to
+    // Hyprland a bare number is an *id*, never a name — so clicking the pill
+    // for the workspace created as `name:5`, which carries id -1337, asked for
+    // id 5 instead. Hyprland duly made a second, empty workspace that also
+    // calls itself "5", focused that, and left the real one and its windows
+    // behind; stepping off the empty one destroyed it again, which is why the
+    // pill vanished and the keybind — `workspace name:5`, the one form that
+    // means the name — brought everything back. `name:` is the only selector
+    // that says "the workspace called this", so say it. Special workspaces are
+    // not reachable that way at all and have their own dispatcher.
+    function goTo(w) {
+        if (w.name.startsWith("special:"))
+            Hyprland.dispatch("togglespecialworkspace " + w.name.slice(8));
+        else
+            Hyprland.dispatch("workspace name:" + w.name);
+    }
+
     Repeater {
         // Hyprland hands workspaces back in the order it created them, so they
         // have to be sorted or the rail is in a random order. ScriptModel diffs
@@ -225,7 +242,7 @@ ColumnLayout {
                 anchors.margins: -Math.ceil(Theme.slotGap / 2)
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: ws.modelData.activate()
+                onClicked: root.goTo(ws.modelData)
             }
         }
     }

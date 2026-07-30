@@ -31,10 +31,12 @@ tick it. This file exists because requirements were being forgotten between turn
 
 - [x] Left sidebar, Noctalia design language
 - [ ] Concave corners connecting the rail to open panels
-      *(regressed on purpose: panels are now floating cards with a gap to the
-      rail, so there is no junction to fillet. Re-open if the cards are ever
-      attached to the rail again — `ConcaveCorner.qml` draws a lens, not a
-      fillet, and would need fixing first.)*
+      *(REOPENED. An agent detached the cards and called the corners obsolete,
+      but Erik asked for both in one sentence: "the menu only as tall and wide
+      as the content that fills it and then those rounded corners to connect
+      it — it is noctalia, this is what noctalia is good at". Dropping them was
+      a design decision recorded as a consequence. `ConcaveCorner.qml` is dead
+      code today and draws a lens, not a fillet; it needs fixing first.)*
 - [x] Workspaces show the number and the real icon of the app running there
 - [x] Icons sit to the right of the number so numbers stay close together
 - [x] Workspaces always in numerical order — Hyprland reports them unordered

@@ -26,9 +26,19 @@ Singleton {
     readonly property color bg: c("base00", "#16181d")
     readonly property color bgAlt: c("base01", "#1d2027")
     readonly property color bgHi: c("base02", "#252932")
-    readonly property color line: c("base03", "#2c313b")
     readonly property color dim: c("base04", "#7c8796")
     readonly property color fg: c("base05", "#d3dae3")
+
+    // Borders and hairlines. Not a base16 slot: base03 means "comments", a grey
+    // that has to be *readable* against base00, and a border that readable is a
+    // scar. So a theme names its border itself, the way it names its accent, and
+    // base03 is left to mean what the spec says it means — this shell used to
+    // keep the border in base03 and publish it as the comment colour, which every
+    // application reading the palette correctly then got wrong. A palette that
+    // names no border still falls back to base03: it is the dimmest colour in a
+    // base16 scheme that is meant to be seen at all, and it is where the border
+    // used to live, so palettes saved before the split still draw as they did.
+    readonly property color line: c("line", c("base03", "#2c313b"))
     readonly property color bad: c("base08", "#f7768e")
     readonly property color warn: c("base0A", "#e0af68")
     readonly property color good: c("base0B", "#9ece6a")

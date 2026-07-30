@@ -114,24 +114,64 @@ ShellRoot {
                     onActivated: win.page = ""
                 }
 
+                // Where the card centres itself: the middle of the rail item
+                // that opened the page, in this window's coordinates. -1 means
+                // nothing claimed a position and the card falls back to the
+                // middle of the screen.
+                //
+                // Resolved once, on the click, and stored — mapToItem sets up
+                // no binding dependency on the source item's position (Ricelin
+                // says the same in its VFader), so a live binding would go
+                // stale the moment the rail relaid itself out.
+                property real anchorY: -1
+
+                // `item` is the rail item that was clicked, or null for a
+                // keybind, in which case the rail is asked whether this page
+                // has a button pinned on it after all. Noctalia does the same
+                // lookup by name — SmartPanel.open() hands its buttonName to
+                // BarService.lookupWidget() — and centres on the screen when
+                // the widget is not on the bar.
+                function openAt(item, name) {
+                    const src = item ?? win.railItem(name);
+                    win.anchorY = (src && src.visible)
+                        ? src.mapToItem(null, 0, src.height / 2).y : -1;
+                    win.page = win.page === name ? "" : name;
+                }
+
+                // The rail item a page belongs to, if it is on the rail at all.
+                function railItem(name) {
+                    if (name === "monitor")
+                        return ringBox;
+                    if (name === "widgets")
+                        return chevron;
+                    for (let i = 0; i < cluster.count; i++) {
+                        const l = cluster.itemAt(i);
+                        if (l && l.modelData.id === name)
+                            return l;
+                    }
+                    return null;
+                }
+
                 // One function per page: quickshell 0.3 does not pass arguments
                 // through `qs ipc call`, and this reads better in a keybind anyway.
                 IpcHandler {
                     target: "panel"
-                    function notifs(): void { win.page = win.page === "notifs" ? "" : "notifs"; }
-                    function monitor(): void { win.page = win.page === "monitor" ? "" : "monitor"; }
-                    function audio(): void { win.page = win.page === "audio" ? "" : "audio"; }
-                    function network(): void { win.page = win.page === "network" ? "" : "network"; }
-                    function bluetooth(): void { win.page = win.page === "bluetooth" ? "" : "bluetooth"; }
-                    function player(): void { win.page = win.page === "player" ? "" : "player"; }
-                    function looks(): void { win.page = win.page === "looks" ? "" : "looks"; }
-                    function widgets(): void { win.page = win.page === "widgets" ? "" : "widgets"; }
+                    function notifs(): void { win.openAt(null, "notifs"); }
+                    function monitor(): void { win.openAt(null, "monitor"); }
+                    function audio(): void { win.openAt(null, "audio"); }
+                    function network(): void { win.openAt(null, "network"); }
+                    function bluetooth(): void { win.openAt(null, "bluetooth"); }
+                    function player(): void { win.openAt(null, "player"); }
+                    function looks(): void { win.openAt(null, "looks"); }
+                    function widgets(): void { win.openAt(null, "widgets"); }
                     function close(): void { win.page = ""; }
                 }
 
                 // A row in the flyout opens the widget's own panel. Only the
                 // window actually showing the flyout answers — the others are
-                // on other screens and were never asked.
+                // on other screens and were never asked. anchorY is left where
+                // the chevron put it: the new page takes the flyout's place
+                // rather than jumping somewhere else on the way.
                 Connections {
                     target: Pins
                     function onActivate(id: string): void {
@@ -181,23 +221,26 @@ ShellRoot {
                     Component {
                         id: bLooks
                         Btn {
+                            id: looksBtn
                             glyph: "󰸉"
                             active: win.page === "looks"
-                            onClicked: win.page = win.page === "looks" ? "" : "looks"
+                            onClicked: win.openAt(looksBtn, "looks")
                         }
                     }
                     Component {
                         id: bAudio
                         Btn {
+                            id: audioBtn
                             glyph: Audio.muted ? "󰝟" : Audio.vol > 0.66 ? "󰕾" : Audio.vol > 0.33 ? "󰖀" : "󰕿"
                             active: win.page === "audio"
                             tint: Audio.muted ? Theme.bad : Theme.fg
-                            onClicked: win.page = win.page === "audio" ? "" : "audio"
+                            onClicked: win.openAt(audioBtn, "audio")
                         }
                     }
                     Component {
                         id: bNetwork
                         Btn {
+                            id: networkBtn
                             // Four states, four shapes, and a dot that stays lit
                             // on VPN — he wants to see that without opening
                             // anything.
@@ -208,37 +251,40 @@ ShellRoot {
                             badge: win.vpn ? 1 : 0
                             tint: win.vpn ? Theme.good
                                 : Sys.net === "" ? Theme.bad : Theme.fg
-                            onClicked: win.page = win.page === "network" ? "" : "network"
+                            onClicked: win.openAt(networkBtn, "network")
                         }
                     }
                     Component {
                         id: bBluetooth
                         Btn {
+                            id: btBtn
                             glyph: Bluetooth.defaultAdapter?.enabled ? "󰂯" : "󰂲"
                             active: win.page === "bluetooth"
                             tint: !Bluetooth.defaultAdapter?.enabled ? Theme.dim
                                 : Bluetooth.devices.values.some(d => d.connected) ? Theme.good : Theme.fg
-                            onClicked: win.page = win.page === "bluetooth" ? "" : "bluetooth"
+                            onClicked: win.openAt(btBtn, "bluetooth")
                         }
                     }
                     Component {
                         id: bPlayer
                         Btn {
+                            id: playerBtn
                             glyph: Mpris.players.values.some(p => p.isPlaying) ? "󰝚" : "󰎊"
                             active: win.page === "player"
                             tint: Mpris.players.values.some(p => p.isPlaying) ? Theme.good : Theme.dim
-                            onClicked: win.page = win.page === "player" ? "" : "player"
+                            onClicked: win.openAt(playerBtn, "player")
                         }
                     }
                     Component {
                         id: bNotifs
                         Btn {
+                            id: notifsBtn
                             glyph: "󰂚"
                             active: win.page === "notifs"
                             badge: Notifs.unread
                             tint: Notifs.unread > 0 ? Theme.accent : Theme.dim
                             onClicked: {
-                                win.page = win.page === "notifs" ? "" : "notifs";
+                                win.openAt(notifsBtn, "notifs");
                                 if (win.page === "notifs") Notifs.markSeen();
                             }
                         }
@@ -292,7 +338,7 @@ ShellRoot {
                                 cursorShape: Qt.PointingHandCursor
                                 onEntered: ringBox.hovering = true
                                 onExited: ringBox.hovering = false
-                                onClicked: win.page = win.page === "monitor" ? "" : "monitor"
+                                onClicked: win.openAt(ringBox, "monitor")
                             }
                         }
 
@@ -332,9 +378,10 @@ ShellRoot {
                             // this, as it does behind Windows' taskbar chevron
                             // and Plasma's ExpanderArrow.
                             Btn {
+                                id: chevron
                                 glyph: "󰅂"
                                 active: win.page === "widgets"
-                                onClicked: win.page = win.page === "widgets" ? "" : "widgets"
+                                onClicked: win.openAt(chevron, "widgets")
                             }
 
                             Repeater {
@@ -460,16 +507,43 @@ ShellRoot {
                     id: card
 
                     readonly property int inset: Theme.pad + 4
-                    readonly property int room: win.height - (Theme.pad + Theme.radius) * 2
+                    // The gap the fillets need: an inverted corner is drawn a
+                    // whole radius outside the card, so the card has to stop
+                    // that much short of the screen edge or the curve is cut.
+                    readonly property int edge: Theme.pad + Theme.radius
+                    readonly property int room: win.height - card.edge * 2
                     x: Theme.rail
+                    // Centred on the rail item that opened the page, so the
+                    // junction lands on the button you pressed, then clamped
+                    // into `room`. That is the sum noctalia does for a vertical
+                    // bar in SmartPanel's setPosition(): centre on the button,
+                    // then Math.max(top, Math.min(y, bottom - height)), with
+                    // the screen centre standing in when there is no button.
+                    //
                     // Whole pixels: a half-pixel card edge puts a seam of
                     // antialiasing where the fillet meets the rail.
-                    y: Math.round((win.height - height) / 2)
+                    y: {
+                        const mid = win.anchorY >= 0 ? win.anchorY : win.height / 2;
+                        return Math.round(Math.max(card.edge,
+                            Math.min(mid - card.height / 2,
+                                     win.height - card.edge - card.height)));
+                    }
                     width: Theme.panel * win.p
                     // The floor keeps a page that has not reported a size yet
                     // from flashing past as a sliver.
                     height: Math.min(room, Math.max(200,
                         (body.item ? body.item.implicitHeight : 0) + inset * 2))
+
+                    // Content grows while the card is open — a wifi scan
+                    // landing, a notification arriving. Centred on a button
+                    // that moves both edges, so ease it instead of jumping;
+                    // noctalia animates the same resize, its height Behavior
+                    // running at animationNormal whenever the panel is not
+                    // mid-open. Off during the roll so it cannot fight it.
+                    Behavior on height {
+                        enabled: win.p === 1
+                        NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                    }
 
                     visible: win.p > 0
 

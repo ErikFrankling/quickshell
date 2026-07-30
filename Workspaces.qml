@@ -95,15 +95,31 @@ ColumnLayout {
     }
 
 
+    // A workspace has two identities and they do not agree. `name` is what the
+    // pill shows; `id` is Hyprland's internal handle, and anything created as
+    // `workspace, name:3` (which is how the keybinds are written) shows "3" but
+    // gets id -1337, -1338, ... in creation order. Sorting on id therefore
+    // scrambles the rail. Sort on the number that is actually on screen.
+    function label(w) {
+        return w.name.replace(/^special:/, "");
+    }
+
+    // Only plain digits are numbered workspaces; named and special ones have no
+    // place on the number line, so they go after, in alphabetical order.
+    function rank(w) {
+        return /^\d+$/.test(w.name) ? parseInt(w.name) : Infinity;
+    }
+
     Repeater {
         // Hyprland hands workspaces back in the order it created them, so they
-        // have to be sorted or the rail is in a random order. Named/special
-        // workspaces carry negative ids; keep them after the numbered ones.
-        // ScriptModel diffs by identity, so one workspace appearing or going
-        // away does not rebuild every other pill.
+        // have to be sorted or the rail is in a random order. ScriptModel diffs
+        // by identity, so one workspace appearing or going away does not
+        // rebuild every other pill.
         model: ScriptModel {
-            values: [...Hyprland.workspaces.values]
-                .sort((a, b) => (a.id < 0) - (b.id < 0) || a.id - b.id)
+            values: [...Hyprland.workspaces.values].sort((a, b) => {
+                const x = root.rank(a), y = root.rank(b);
+                return x === y ? root.label(a).localeCompare(root.label(b)) : x - y;
+            })
         }
 
         Rectangle {
@@ -138,9 +154,9 @@ ColumnLayout {
                 spacing: 4
 
                 Text {
-                    // Special workspaces are named "special:scratch"; only the
-                    // part after the colon fits in the rail.
-                    text: ws.modelData.name.replace(/^special:/, "")
+                    // Same label the sort ranks on, so the rail always reads in
+                    // the order of the numbers it is showing.
+                    text: root.label(ws.modelData)
                     color: ws.here ? Theme.accent : Theme.dim
                     font.pixelSize: 11
                     font.weight: ws.here ? Font.Bold : Font.Normal

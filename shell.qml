@@ -8,7 +8,6 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Bluetooth
-import Quickshell.Services.Mpris
 import Quickshell.Services.SystemTray
 import "panels" as Panels
 
@@ -325,12 +324,10 @@ ShellRoot {
                                 onClicked: win.openAt(btBtn, "bluetooth")
                             }
 
-                            Btn {
+                            RailPlayer {
                                 id: playerBtn
-                                glyph: Mpris.players.values.some(p => p.isPlaying) ? "󰝚" : "󰎊"
                                 active: win.page === "player"
-                                tint: Mpris.players.values.some(p => p.isPlaying) ? Theme.good : Theme.dim
-                                onClicked: win.openAt(playerBtn, "player")
+                                onActivated: win.openAt(playerBtn, "player")
                             }
 
                             Btn {

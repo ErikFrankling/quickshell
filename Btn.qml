@@ -1,11 +1,23 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Hover is held in an explicit property set from entered/exited rather than
-// read from containsMouse, which drops transiently and makes the highlight
-// flicker while the pointer is still inside. The visual rect is centred at a
-// fixed size rather than filling, so a relayout cannot resize it under the
-// cursor. Both idioms taken from noctalia's NIconButton.
+// The hover ground is one rectangle that is both what you see and what the
+// pointer hits: the MouseArea and the Rectangle both fill the item, so they can
+// never disagree about where the button is. Every button component worth
+// copying does this — noctalia's NIconButton, whisker's StyledButton, skwd's
+// and doannc2212's IconButton all fill the root with the MouseArea and draw the
+// ground at the same size.
+//
+// Two things about the colour matter and both were wrong before:
+//
+//  * The idle colour is the hover colour at zero alpha, not "transparent".
+//    "transparent" is transparent *black*, and ColorAnimation interpolates the
+//    channels, so fading in from it washes the button dark before it arrives —
+//    a visible flash on every enter and exit.
+//  * The hover colour is Theme.line, not Theme.bgHi. Group draws its ground in
+//    bgHi, so a bgHi highlight on the rail is invisible; line is the step above
+//    it and reads on bg, bgAlt and bgHi alike. It is the same colour the rail
+//    already uses to light the metrics group under the pointer.
 Item {
     id: root
 
@@ -13,7 +25,11 @@ Item {
     property bool active: false
     property int badge: 0
     property color tint: Theme.dim
-    property bool hovering: false
+    property color hoverColor: Theme.line
+
+    // Read from the MouseArea rather than latched by entered/exited, so it
+    // cannot stick on when the button is hidden or reparented mid-hover.
+    readonly property bool hovering: ma.containsMouse
 
     signal clicked
 
@@ -23,11 +39,11 @@ Item {
 
     Rectangle {
         id: visual
-        width: root.implicitWidth
-        height: root.implicitHeight
-        anchors.centerIn: parent
+        anchors.fill: parent
         radius: Theme.radiusS
-        color: root.active ? Theme.accent : root.hovering ? Theme.bgHi : "transparent"
+        color: root.active ? Theme.accent
+             : root.hovering ? root.hoverColor
+             : Qt.alpha(root.hoverColor, 0)
 
         Behavior on color { ColorAnimation { duration: 110 } }
 
@@ -49,11 +65,10 @@ Item {
     }
 
     MouseArea {
+        id: ma
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onEntered: root.hovering = true
-        onExited: root.hovering = false
         onClicked: root.clicked()
     }
 }

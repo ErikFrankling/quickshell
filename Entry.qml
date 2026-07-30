@@ -1,7 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
 
-// A tappable row inside a panel. Same hover discipline as Btn.
+// A tappable row inside a panel. Same hover discipline as Btn: the MouseArea
+// fills the rectangle it colours, and the hover state is read from it rather
+// than latched, so it cannot stick on when the row scrolls out or the model
+// under it changes mid-hover.
 Rectangle {
     id: root
 
@@ -9,7 +12,8 @@ Rectangle {
     property string label: ""
     property string value: ""
     property bool on: false
-    property bool hovering: false
+
+    readonly property bool hovering: ma.containsMouse
 
     signal clicked
 
@@ -46,11 +50,10 @@ Rectangle {
     }
 
     MouseArea {
+        id: ma
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onEntered: root.hovering = true
-        onExited: root.hovering = false
         onClicked: root.clicked()
     }
 }

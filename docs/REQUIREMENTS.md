@@ -77,9 +77,17 @@ tick it. This file exists because requirements were being forgotten between turn
 
 - [x] Rings fill as the resource approaches its limit
 - [x] Reuse the existing waybar scripts rather than reimplementing them
-- [x] Graphs for every metric, not just CPU and memory
 - [x] Temperature, fan speed, swap usage, swap transfer rate, network throughput
 - [x] Capability detection — no GPU ring on a host without a GPU
+- [ ] Graph only what moves. Disk usage and battery are flat over a
+      two-minute window, so they get a number, not a graph. *(An earlier pass
+      graphed everything; that was too literal a reading of "graphs for every
+      metric".)*
+- [ ] Disk read and write throughput as a graph, like btop
+- [ ] Say on screen how far back the graphs go
+- [ ] Battery over 24h would be interesting but needs persisted history —
+      *explicitly out of scope: "that is an entirely different application,
+      won't be doing that now"*
 
 ## Theming
 
@@ -94,6 +102,19 @@ tick it. This file exists because requirements were being forgotten between turn
       see the note at the bottom. GTK cannot be recoloured at runtime by any
       file; only the portal's light/dark + single accent gets through.)*
 - [x] A theme is colour only here; fonts, spacing, radii stay hardcoded
+
+## Rail, continued
+
+- [ ] Windows-style widgets menu: a chevron flyout that decides which items sit
+      on the rail and which live behind it. `Pins.qml` and `panels/Widgets.qml`
+      exist but were never wired to anything.
+
+## Applications that should follow the theme
+
+- [x] kitty — already follows, via the OSC broadcast, with no config change
+- [ ] neovim — use the published palette when it exists, fall back to
+      tokyonight-night when it does not. Minimal change, in his `nvim` repo.
+- [ ] zellij — find out whether it can follow at all
 
 ## Launcher
 

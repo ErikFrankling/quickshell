@@ -50,6 +50,11 @@ tick it. This file exists because requirements were being forgotten between turn
 - [x] Theme button sits with the other buttons
 - [x] No launcher button in the rail
 - [ ] Rail is not cramped
+- [ ] The rail carries as many metrics as his waybar does. It currently shows
+      four of about eleven — fan, swap, both disks, VRAM and **battery** all
+      need a panel opened. On the laptop that is a regression against waybar.
+- [ ] Bluetooth panel clips its device list — the first row is cut by the
+      card edge
 
 ## Panels
 
@@ -102,6 +107,8 @@ tick it. This file exists because requirements were being forgotten between turn
       see the note at the bottom. GTK cannot be recoloured at runtime by any
       file; only the portal's light/dark + single accent gets through.)*
 - [x] A theme is colour only here; fonts, spacing, radii stay hardcoded
+- [ ] A toggle to match the theme to the wallpaper — *"a cute little toggle
+      you can turn on if you wanna try it"*. Off by default.
 
 ## Rail, continued
 

@@ -14,6 +14,10 @@
       runtimeDeps = with pkgs; [
         brightnessctl
         hyprpaper
+        # Only for the optional wallpaper-matching toggle, which is off by
+        # default. It needs -c lchansi -p ansidark16; every other palette
+        # reorders hues by salience and turns red into magenta.
+        wallust
       ];
 
       # Just the shell itself. The docs, the screenshots and the git history

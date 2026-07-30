@@ -18,6 +18,7 @@ Group 1.0 Group.qml
 LauncherWindow 1.0 LauncherWindow.qml
 NotifCard 1.0 NotifCard.qml
 Osd 1.0 Osd.qml
+RailClock 1.0 RailClock.qml
 RailPlayer 1.0 RailPlayer.qml
 Ring 1.0 Ring.qml
 Entry 1.0 Entry.qml

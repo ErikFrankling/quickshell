@@ -27,8 +27,7 @@ the prior-art surveys behind several of the choices below.
 - [x] `docs/gallery.html` — every screenshot found, star sort, tag filter,
       archived images, commit-pinned links
 - [x] `AGENTS.md` + `CLAUDE.md` carrying the two rules
-- [ ] Imported through Home Manager as part of the declarative config
-      *(deferred by Erik until the shell beats what he has now)*
+- [x] Imported through Home Manager as part of the declarative config
 - [x] Per-host options exposed to the NixOS config (`nix/hm-module.nix`)
 
 ## Rail (left sidebar)

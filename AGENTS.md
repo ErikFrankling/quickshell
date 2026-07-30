@@ -58,6 +58,21 @@ nix run .          # starts the shell from the working tree
 Edit any `.qml` file and it reloads live — same process, no rebuild. That is
 the whole development loop. Do not add a build step.
 
+This shell is installed and autostarted by `erikshell.service`, so `nix run .`
+gives you a *second* instance. Stop the unit first — `systemctl --user stop
+erikshell` — or the two fight over `org.freedesktop.Notifications` and the tray,
+and you will spend an hour measuring a bug that is really two shells.
+
+For anything beyond the sidebar, use `localDev` instead:
+
+```nix
+programs.erikshell.localDev.enable = true;   # in the dotfiles, per host
+```
+
+That points the unit itself at the working tree, so the shell that owns the
+D-Bus name is the one that hot-reloads. Notifications, the launcher, the OSD
+and the tray all become editable live. One rebuild each way. See README.md.
+
 Take a screenshot after visual changes:
 
 ```bash

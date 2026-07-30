@@ -7,15 +7,53 @@ Replaces waybar and a separate notification daemon with one process.
 
 ## Running
 
+This is the real desktop shell, started on login by `erikshell.service` from a
+store copy. It replaces waybar, wofi and the old AGS shell, and it owns
+`org.freedesktop.Notifications`.
+
+## Developing
+
+Two ways to iterate, and the second is the good one.
+
+**A second shell alongside the installed one:**
+
 ```bash
 nix run .
 ```
 
-Starts from the working tree. Edit any `.qml` file and it reloads live — same
-process, no rebuild. That's the development loop.
+Runs from the working tree and reloads any `.qml` file the moment it is saved.
+Stop the unit first, or the two fight over the notification name and the tray:
 
-Not wired into the system config yet. Once it's better than what it replaces,
-it gets a Home Manager module like everything else.
+```bash
+systemctl --user stop erikshell
+```
+
+That only gets you the sidebar and its panels, though. Notifications, the
+launcher and everything else that reaches the rest of the desktop still belong
+to whichever instance holds the D-Bus name.
+
+**The whole desktop, hot-reloading — `localDev`:**
+
+```nix
+programs.erikshell.localDev.enable = true;
+```
+
+In `hosts/<host>/home.nix` in the dotfiles. The unit's `ExecStart` then points
+at `~/projects/personal/quickshell` instead of the store, so the shell that
+comes up on login is the working tree. Save a file and the *live* desktop
+reloads — sidebar, notifications, launcher, OSD, tray, all of it, in the process
+that actually owns the D-Bus name.
+
+One rebuild to turn on, one to turn off. That is the whole cost, and it is why
+it is a flag rather than the default: a store path is what you want when you are
+using the machine, and the working tree is what you want when you are changing
+it.
+
+It reuses this flake's own `apps.default`, the same script `nix run .` invokes,
+so the development and production runtime environments cannot drift apart.
+
+The option is defined in `modules/home-manager/erikshell.nix` in the dotfiles,
+not here, because it names a path that only exists on Erik's machines.
 
 ## Layout
 

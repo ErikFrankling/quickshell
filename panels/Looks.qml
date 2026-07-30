@@ -13,6 +13,16 @@ ColumnLayout {
     property string wallDir: Quickshell.env("HOME") + "/Pictures/wallpapers"
     property list<string> walls: []
     property string current: ""
+    property string query: ""
+    property var hits: []
+    property bool busy: false
+
+    // One grid, two sources. Empty search box shows what is on disk; typing
+    // shows wallhaven. Clicking either sets the wallpaper, downloading first
+    // if it is not local yet.
+    readonly property var cells: root.query.trim() === ""
+        ? root.walls.map(w => ({ thumb: "file://" + w, full: w, id: "" }))
+        : root.hits
 
     readonly property var themes: [
         { name: "Tokyo Night", fav: true, p: { bg: "#16181d", bgAlt: "#1d2027", bgHi: "#252932", line: "#2c313b", fg: "#d3dae3", dim: "#7c8796", accent: "#7aa2f7", good: "#9ece6a", warn: "#e0af68", bad: "#f7768e" } },
@@ -34,6 +44,61 @@ ColumnLayout {
     }
 
     Process { id: wallProc }
+
+    // wallhaven's anonymous search API — SFW, general category, 1080p and up.
+    Process {
+        id: fetch
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.busy = false;
+                try {
+                    root.hits = JSON.parse(text).data.map(d => ({ thumb: d.thumbs.small, full: d.path, id: d.id }));
+                } catch (e) { root.hits = []; }
+            }
+        }
+    }
+
+    Timer {
+        id: debounce
+        interval: 350
+        onTriggered: {
+            const q = root.query.trim();
+            if (q === "") { root.hits = []; return; }
+            root.busy = true;
+            fetch.command = ["curl", "-fsS", "--max-time", "15",
+                "https://wallhaven.cc/api/v1/search?categories=100&purity=100" +
+                "&atleast=1920x1080&sorting=relevance&q=" + encodeURIComponent(q)];
+            fetch.running = false;
+            fetch.running = true;
+        }
+    }
+
+    onQueryChanged: debounce.restart()
+
+    Process {
+        id: dl
+        property string dest: ""
+        onExited: code => {
+            root.busy = false;
+            if (code === 0) { root.setWall(dl.dest); scan.running = true; }
+        }
+    }
+
+    function pick(cell) {
+        if (cell.id === "") {
+            root.setWall(cell.full);
+            return;
+        }
+        const dest = root.wallDir + "/wallhaven-" + cell.id +
+            (cell.full.toLowerCase().endsWith(".png") ? ".png" : ".jpg");
+        root.busy = true;
+        dl.dest = dest;
+        dl.command = ["sh", "-c",
+            "mkdir -p " + JSON.stringify(root.wallDir) +
+            " && { [ -s " + JSON.stringify(dest) + " ] || curl -fsSL --max-time 90 -o " +
+            JSON.stringify(dest) + " " + JSON.stringify(cell.full) + "; }"];
+        dl.running = true;
+    }
 
     // Start hyprpaper if it is not already up, then set the image. It ships in
     // this flake, so it is on PATH whether or not the system config has it.
@@ -109,47 +174,85 @@ ColumnLayout {
         }
     }
 
-    Text { text: "Wallpaper"; color: Theme.dim; font.pixelSize: 11; Layout.topMargin: 6 }
+    Text {
+        text: root.busy ? "Wallpaper  …" : "Wallpaper"
+        color: root.busy ? Theme.accent : Theme.dim
+        font.pixelSize: 11
+        Layout.topMargin: 6
+    }
 
-    GridLayout {
+    Rectangle {
         Layout.fillWidth: true
-        columns: 3
-        columnSpacing: 8
-        rowSpacing: 8
+        implicitHeight: 34
+        radius: Theme.radiusS
+        color: Theme.bgAlt
+        border.width: search.activeFocus ? 1 : 0
+        border.color: Theme.accent
 
-        Repeater {
-            model: root.walls
+        TextInput {
+            id: search
+            anchors.fill: parent
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            verticalAlignment: TextInput.AlignVCenter
+            color: Theme.fg
+            font.pixelSize: 13
+            onTextChanged: root.query = text
+            Keys.onEscapePressed: search.text = ""
+
+            Text {
+                anchors.fill: parent
+                verticalAlignment: Text.AlignVCenter
+                visible: search.text === ""
+                text: "Search wallhaven"
+                color: Theme.dim
+                font.pixelSize: 13
+            }
+        }
+    }
+
+    GridView {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        clip: true
+        cellWidth: Math.floor(width / 3)
+        cellHeight: Math.round(cellWidth * 9 / 16)
+        model: root.cells
+
+        delegate: Item {
+            id: cell
+            required property var modelData
+            width: GridView.view.cellWidth
+            height: GridView.view.cellHeight
+
             Rectangle {
-                required property string modelData
-                Layout.fillWidth: true
-                implicitHeight: 62
+                anchors.fill: parent
+                anchors.margins: 3
                 radius: Theme.radiusS
                 clip: true
                 color: Theme.bgAlt
-                border.width: root.current === modelData ? 2 : 0
+                border.width: root.current === cell.modelData.full ? 2 : 0
                 border.color: Theme.accent
 
                 Image {
                     anchors.fill: parent
-                    source: "file://" + parent.modelData
+                    source: cell.modelData.thumb
                     fillMode: Image.PreserveAspectCrop
                     sourceSize.width: 220
                     asynchronous: true
                 }
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: root.setWall(parent.modelData)
+                    onClicked: root.pick(cell.modelData)
                 }
             }
         }
     }
 
     Text {
-        visible: root.walls.length === 0
-        text: "No images in " + root.wallDir
+        visible: root.cells.length === 0
+        text: root.query.trim() === "" ? "No images in " + root.wallDir : "Nothing found"
         color: Theme.dim
         font.pixelSize: 12
     }
-
-    Item { Layout.fillHeight: true }
 }

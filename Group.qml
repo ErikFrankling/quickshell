@@ -12,30 +12,34 @@ import QtQuick.Layouts
 // separable. They are: the projects with the most deliberate outer shape are
 // also the ones that ground their clusters hardest.
 //
-// The colour is one opaque step up from the rail's own background, which is
-// what this is everywhere it is done at all. josecriane's bar is base01 and
-// every grounded cluster on it is base02 (ds/Foundations.qml:23-24, over
-// modules/bar/components/StatusIcons.qml:16 `color: Foundations.palette.base02`);
-// whisker steps m3background #111318 to m3surface_container #1e1f25 for the one
-// cluster it grounds (modules/bar/BarRight.qml:41); doannc2212 steps bgBase
-// #1a1b26 to bgSurface #24283b (bar/DefaultTheme.qml:4-5). Nobody grounds a
-// group with a border alone and nobody grounds one with an alpha wash — a wash
-// is what those same bars reserve for *hover*, at 7-12%, which is why Btn and
-// the workspace pills still light in Theme.line and are still visible doing it.
+// Theme.bgHi, the same ground the workspaces stand on, because that is the one
+// Erik pointed at — "like the workspaces have a different colour showing they
+// belong together". A quieter step was tried first and it was the wrong read of
+// the request: the point is that a cluster is visibly a cluster, not that the
+// ground is tasteful enough to disappear. So the four groups and the workspaces
+// all share one ground colour, and the rail reads in two tones.
 //
-// So the rail reads in three tones rather than two: Theme.bg is the rail,
-// Theme.bgAlt is a group standing on it, and Theme.bgHi is the workspaces —
-// one further step, because they are the block that carries the curve and runs
-// into the screen edges. Giving the privileged cluster exactly one extra step
-// is tripathiji1312's move for its centre pill, surfaceContainerHighest against
-// surfaceContainerHigh for everything else (modules/bar/Bar.qml:123 against
-// :71). Shape says the same thing twice over: the workspaces are full rail
-// width and square into the top and left edges, these are inset to
-// Theme.groupWidth and rounded on all four corners.
+// An opaque step is also what this is everywhere it is done at all. josecriane's
+// bar is base01 and every grounded cluster on it is base02 (ds/Foundations.qml:
+// 23-24, over modules/bar/components/StatusIcons.qml:16 `color: Foundations
+// .palette.base02`); whisker steps m3background #111318 to m3surface_container
+// #1e1f25 for the one cluster it grounds (modules/bar/BarRight.qml:41);
+// doannc2212 steps bgBase #1a1b26 to bgSurface #24283b (bar/DefaultTheme.qml:
+// 4-5). Nobody grounds a group with a border alone and nobody grounds one with
+// an alpha wash — a wash is what those same bars reserve for *hover*, at 7-12%,
+// which is why Btn and the workspace pills light in Theme.line, the step above
+// this ground, and are still visible doing it.
+//
+// The workspaces still read differently, by shape rather than by colour: they
+// are full rail width and run square into the top and left screen edges, and
+// they carry the 20px curve. These are inset to Theme.groupWidth and rounded on
+// all four corners. Grounding some clusters and shaping one of them apart is
+// josecriane's and Rexcrazy804's move both — neither distinguishes a section by
+// giving it a second ground colour.
 //
 // Theme.radiusS, not the 20 the workspaces carry, for the same reason those
-// bars keep group radius at or under bar radius — a group should never fight
-// the outline it sits inside.
+// bars keep group radius at or under bar radius: a group should never fight the
+// outline it sits inside.
 Rectangle {
     id: root
 
@@ -46,7 +50,7 @@ Rectangle {
     implicitWidth: Theme.groupWidth
     implicitHeight: col.implicitHeight + Theme.groupPad * 2
     radius: Theme.radiusS
-    color: Theme.bgAlt
+    color: Theme.bgHi
 
     ColumnLayout {
         id: col

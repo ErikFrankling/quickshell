@@ -307,12 +307,12 @@ ShellRoot {
 
                         // The workspaces, and the rail's one curve.
                         //
-                        // Its ground is the one the other groups are measured
-                        // against: Theme.bgHi, one step above the Theme.bgAlt
-                        // they stand on, because this is the block that carries
-                        // the curve. It is full width and runs square into the
-                        // top and left screen edges, and its bottom right
-                        // corner is the single curve — the boundary between
+                        // Its ground is the one every other group copies —
+                        // Theme.bgHi, see Group — so what sets this block apart
+                        // is its shape rather than its colour. It is full width
+                        // and runs square into the top and left screen edges,
+                        // and its bottom right corner is the single curve on the
+                        // rail's outline — the boundary between
                         // where he is and what the machine is doing. Zaphkiel
                         // stacks two rectangles into one block the same way,
                         // rounding the outside pair and squaring the pair where
@@ -499,9 +499,9 @@ ShellRoot {
                             implicitHeight: rings.implicitHeight + 12
                             radius: Theme.radiusS
                             color: ringBox.on
-                                 ? Qt.tint(Theme.bgAlt, Qt.alpha(Theme.accent, 0.12))
+                                 ? Qt.tint(Theme.bgHi, Qt.alpha(Theme.accent, 0.12))
                                  : ringMa.containsMouse ? Theme.line
-                                 : Theme.bgAlt
+                                 : Theme.bgHi
                             border.width: ringBox.on ? 1 : 0
                             border.color: Theme.accent
 
@@ -635,12 +635,11 @@ ShellRoot {
                                 model: ScriptModel { values: Pins.railTray.slice(0, rail.trayMax) }
                                 // Tray icons are a zoo of shapes and palettes; a
                                 // consistent circular ground makes the column read
-                                // as one set. Theme.bgHi, one step above the
-                                // group they stand in rather than one step above
-                                // the rail: they used to be Theme.bgAlt on the
-                                // bare rail, which is the colour the group's own
-                                // ground is now, and a cell the same colour as
-                                // the thing behind it is not a cell.
+                                // as one set. Theme.bgAlt reads as a cell against
+                                // the group's Theme.bgHi the same way it read
+                                // against the bare rail before the group came
+                                // back — a step away from what is behind it,
+                                // which is all a cell needs to be.
                                 Rectangle {
                                     id: cell
                                     required property var modelData
@@ -649,7 +648,7 @@ ShellRoot {
                                     implicitHeight: 26
                                     radius: 13
                                     property bool hovering: false
-                                    color: hovering ? Theme.accent : Theme.bgHi
+                                    color: hovering ? Theme.accent : Theme.bgAlt
 
                                     Behavior on color { ColorAnimation { duration: 110 } }
 
@@ -774,11 +773,12 @@ ShellRoot {
 
                         Item { implicitHeight: Theme.groupGap }
 
-                        // The clock, and the calendar behind it. Turned on its
-                        // side by RailClock, which is why this is a group of one
-                        // 36px slot rather than the 92px stack of five lines it
-                        // replaced — the tallest single thing on a rail that
-                        // overflows on a laptop, for a date nobody reads twice.
+                        // The clock, and the calendar behind it. Laid across the
+                        // rail by RailClock rather than down it, which is why
+                        // this is a group of one 30px slot rather than the 92px
+                        // stack of five lines it replaced — the tallest single
+                        // thing on a rail that overflows on a laptop, for a date
+                        // nobody could read twice.
                         Group {
                             id: clockGroup
                             RailClock {
@@ -804,34 +804,61 @@ ShellRoot {
                     id: card
 
                     readonly property int inset: Theme.pad + 4
-                    // The gap the fillets need: an inverted corner is drawn a
-                    // whole radius outside the card, so the card has to stop
-                    // that much short of the screen edge or the curve is cut.
-                    readonly property int edge: Theme.pad + Theme.radius
-                    readonly property int room: win.height - card.edge * 2
+                    // The room an inverted corner needs: it is drawn a whole
+                    // radius outside the card, so a card with less than this
+                    // between it and a screen edge cannot draw the one on that
+                    // side.
+                    readonly property int edge: Theme.radius
+                    // The card may run the whole screen. It used to stop
+                    // `Theme.pad + Theme.radius` short at each end so the
+                    // fillets always had room, which meant a tall panel was
+                    // shoved 34px off the bottom of the screen and left a
+                    // sliver of wallpaper under it. That sliver reads as a
+                    // mistake, and it is: the gap existed to protect a curve
+                    // that only matters when the card is floating. Against a
+                    // screen edge the honest shape is no curve at all.
+                    readonly property int room: win.height
                     x: Theme.rail
                     // Centred on the rail item that opened the page, so the
                     // junction lands on the button you pressed, then clamped
-                    // into `room`. That is the sum noctalia does for a vertical
-                    // bar in SmartPanel's setPosition(): centre on the button,
-                    // then Math.max(top, Math.min(y, bottom - height)), with
-                    // the screen centre standing in when there is no button.
-                    // Unlike noctalia's, which runs once and keeps the answer,
-                    // this is a binding all the way down to the opener.
+                    // to the screen. That is the sum noctalia does for a
+                    // vertical bar in SmartPanel's setPosition(): centre on the
+                    // button, then Math.max(top, Math.min(y, bottom - height)),
+                    // with the screen centre standing in when there is no
+                    // button. Unlike noctalia's, which runs once and keeps the
+                    // answer, this is a binding all the way down to the opener.
+                    //
+                    // The clamp is to 0 and win.height - height rather than to
+                    // an inset, so a card that has to move to fit arrives
+                    // *flush* against the edge it was moved off. Position stays
+                    // continuous across that transition: the clamp only engages
+                    // at the moment the free position equals the bound, so a
+                    // panel growing while open slides into the edge rather than
+                    // jumping to it.
                     //
                     // Whole pixels: a half-pixel card edge puts a seam of
                     // antialiasing where the fillet meets the rail.
                     y: {
                         const mid = win.anchorY >= 0 ? win.anchorY : win.height / 2;
-                        return Math.round(Math.max(card.edge,
+                        return Math.round(Math.max(0,
                             Math.min(mid - card.height / 2,
-                                     win.height - card.edge - card.height)));
+                                     win.height - card.height)));
                     }
                     width: Theme.panel * win.p
                     // The floor keeps a page that has not reported a size yet
                     // from flashing past as a sliver.
                     height: Math.min(room, Math.max(200,
-                        (body.item ? body.item.implicitHeight : 0) + inset * 2))
+                        (pageLoader.item ? pageLoader.item.implicitHeight : 0) + inset * 2))
+
+                    // Which fillets there is room to draw. A corner is dropped
+                    // exactly when the screen edge would start cutting it —
+                    // Erik's rule, "as soon as the gap is so small that the
+                    // inverted corner touches the end of the screen" — so a
+                    // fillet is never drawn clipped, and a card clamped at both
+                    // ends is full height with both squared off.
+                    readonly property bool squareTop: card.y < card.edge
+                    readonly property bool squareBottom:
+                        win.height - (card.y + card.height) < card.edge
 
                     // Content grows while the card is open — a wifi scan
                     // landing, a notification arriving. Centred on a button
@@ -857,6 +884,8 @@ ShellRoot {
                     CardShape {
                         cardWidth: card.width
                         cardHeight: card.height
+                        squareTop: card.squareTop
+                        squareBottom: card.squareBottom
                     }
 
                     // Swallow clicks so they do not reach the dismiss layer.
@@ -877,19 +906,102 @@ ShellRoot {
                             }
                         }
 
-                        Loader {
+                        // Scrolling belongs to the card, not to the pages.
+                        //
+                        // Only the wifi list scrolled before, because it is the
+                        // only page that thought to put a ListView in itself,
+                        // and every other page simply lost whatever did not fit
+                        // to the clip above. A page cannot be the right place to
+                        // decide this: how much room it has is the card's
+                        // business, it changes with the screen and with what the
+                        // page itself has loaded, and a page that forgets is a
+                        // page that silently hides content.
+                        //
+                        // So the card gives every page the height it asked for
+                        // and scrolls it when the screen cannot pay. Pages that
+                        // fit are untouched: `interactive` is false and the
+                        // Flickable is inert, exactly as the workspace list is
+                        // when the rail is not full.
+                        //
+                        // Two of the fifteen shells read do it at the container
+                        // like this — Brainitech's PopupPage.qml wraps a
+                        // `default property alias content` in a Flickable with
+                        // an as-needed scrollbar, and whisker's BaseMenu.qml
+                        // does the same for all ten of its settings pages.
+                        // Everyone else makes the page opt in, and noctalia
+                        // shows what that costs: its panel Loader
+                        // (SmartPanel.qml:1311-1317) neither scrolls nor clips,
+                        // each page has to reach for NScrollView itself, and
+                        // nine of its panels never do — so an oversized one
+                        // simply runs out of the box the clamp put it in.
+                        //
+                        // Giving the page `max(viewport, content)` also fixed
+                        // the calendar, which had no child absorbing slack and
+                        // so split the old fixed 976px between its two layout
+                        // children and pushed the month grid out of sight.
+                        Flickable {
                             id: body
+
                             x: card.inset
                             y: card.inset
                             width: Theme.panel - card.inset * 2
-                            height: card.room - card.inset * 2
-                            active: win.shown !== ""
-                            sourceComponent: win.shown === "monitor" ? cMonitor
-                                : win.shown === "network" ? cNetwork
-                                : win.shown === "bluetooth" ? cBluetooth
-                                : win.shown === "player" ? cPlayer
-                                : win.shown === "control" ? cControl
-                                : win.shown === "calendar" ? cCalendar : null
+                            height: card.height - card.inset * 2
+                            contentWidth: width
+                            contentHeight: pageLoader.item ? pageLoader.item.implicitHeight : 0
+                            clip: true
+                            interactive: contentHeight > height
+                            boundsBehavior: Flickable.StopAtBounds
+
+                            // A fresh page starts at the top, and a page that
+                            // shrinks under a scrolled viewport is pulled back
+                            // into it rather than left showing empty space.
+                            Connections {
+                                target: win
+                                function onShownChanged() { body.contentY = 0; }
+                            }
+                            onContentHeightChanged: returnToBounds()
+
+                            Loader {
+                                id: pageLoader
+                                width: body.width
+                                // The page is as tall as it asked to be, or as
+                                // tall as the viewport when it asked for less —
+                                // the second half is what lets a page put a
+                                // fillHeight spacer in itself and have it mean
+                                // "the rest of the card" rather than "the rest
+                                // of the screen".
+                                height: Math.max(body.height, body.contentHeight)
+                                active: win.shown !== ""
+                                sourceComponent: win.shown === "monitor" ? cMonitor
+                                    : win.shown === "network" ? cNetwork
+                                    : win.shown === "bluetooth" ? cBluetooth
+                                    : win.shown === "player" ? cPlayer
+                                    : win.shown === "control" ? cControl
+                                    : win.shown === "calendar" ? cCalendar : null
+                            }
+                        }
+
+                        // The scrollbar, and only when there is something to
+                        // scroll. Erik asked for one by name; the rail's own
+                        // overflow uses chevrons because a 28px column has no
+                        // room for a bar, but a 430px card does.
+                        Rectangle {
+                            id: scrollBar
+
+                            readonly property real track: body.height - 8
+                            readonly property real frac:
+                                body.contentHeight > 0
+                                    ? Math.min(1, body.height / body.contentHeight) : 1
+
+                            visible: body.interactive
+                            width: 3
+                            radius: 1.5
+                            color: Theme.line
+                            x: body.x + body.width + 5
+                            height: Math.max(24, scrollBar.track * scrollBar.frac)
+                            y: body.y + 4 + (scrollBar.track - height)
+                               * (body.contentHeight > body.height
+                                  ? body.contentY / (body.contentHeight - body.height) : 0)
                         }
                     }
 

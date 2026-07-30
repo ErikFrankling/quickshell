@@ -133,7 +133,19 @@ ColumnLayout {
             implicitWidth: 44
             implicitHeight: 24
             radius: Theme.radiusS
-            color: ws.here ? Qt.alpha(Theme.accent, 0.22) : hover.containsMouse ? Theme.bgHi : "transparent"
+            // Idle is the hover colour at zero alpha, never "transparent":
+            // "transparent" is transparent *black*, and ColorAnimation walks
+            // every channel, so fading in from it drags the fill through a
+            // half-opaque near-black — a dark pulse on enter and another on
+            // exit, which is what the flicker was. The hover colour is
+            // Theme.line for the same reason Btn uses it: Group draws its
+            // ground in bgHi, so a bgHi highlight on the rail is invisible and
+            // the dark pulse was the only thing left to see. The focused pill
+            // keeps its accent and deepens it under the pointer, so every pill
+            // acknowledges the cursor without ever leaving its own hue.
+            color: ws.here ? Qt.alpha(Theme.accent, hover.containsMouse ? 0.34 : 0.22)
+                 : hover.containsMouse ? Theme.line
+                 : Qt.alpha(Theme.line, 0)
 
             Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -188,8 +200,17 @@ ColumnLayout {
 
             MouseArea {
                 id: hover
+                // The pills stand 3px apart, so a hit area that stops at the
+                // visual leaves a dead strip between every pair: dragging down
+                // the rail fires exit and enter at each boundary and the
+                // highlight drops out and comes back on the way past. Reaching
+                // into the gap makes the areas tile, which is what every rail
+                // worth copying does — bjarneo -2, josecriane and tripathiji
+                // -4, noctalia a full-height container behind a smaller pill.
                 anchors.fill: parent
+                anchors.margins: -2
                 hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
                 onClicked: ws.modelData.activate()
             }
         }

@@ -141,9 +141,10 @@ ColumnLayout {
             // every channel, so fading in from it drags the fill through a
             // half-opaque near-black — a dark pulse on enter and another on
             // exit, which is what the flicker was. The hover colour is
-            // Theme.line for the same reason Btn uses it: Group draws its
-            // ground in bgHi, so a bgHi highlight on the rail is invisible and
-            // the dark pulse was the only thing left to see. The focused pill
+            // Theme.line for the same reason Btn uses it: these pills stand on
+            // the workspace block's own bgHi ground, so a bgHi highlight is
+            // invisible and the dark pulse was the only thing left to see.
+            // line is the step above every ground the rail draws. The focused pill
             // keeps its accent and deepens it under the pointer, so every pill
             // acknowledges the cursor without ever leaving its own hue.
             color: ws.here ? Qt.alpha(Theme.accent, hover.containsMouse ? 0.34 : 0.22)

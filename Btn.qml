@@ -14,10 +14,12 @@ import QtQuick.Layouts
 //    "transparent" is transparent *black*, and ColorAnimation interpolates the
 //    channels, so fading in from it washes the button dark before it arrives —
 //    a visible flash on every enter and exit.
-//  * The hover colour is Theme.line, not Theme.bgHi. Group draws its ground in
-//    bgHi, so a bgHi highlight on the rail is invisible; line is the step above
-//    it and reads on bg, bgAlt and bgHi alike. It is the same colour the rail
-//    already uses to light the metrics group under the pointer.
+//  * The hover colour is Theme.line, not one of the ground colours. A button on
+//    the rail sits inside a Group, whose ground is bgAlt, and the workspaces
+//    stand on bgHi, so a highlight in either of those is invisible somewhere.
+//    line is the step above both and reads on bg, bgAlt and bgHi alike. It is
+//    the same colour the rail already uses to light the metrics group under the
+//    pointer.
 Item {
     id: root
 

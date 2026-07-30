@@ -164,6 +164,7 @@ ShellRoot {
                     case "network": return networkBtn;
                     case "bluetooth": return btBtn;
                     case "control": return chevron;
+                    case "calendar": return clockCol;
                     }
                     return null;
                 }
@@ -177,10 +178,9 @@ ShellRoot {
                     function bluetooth(): void { win.openAt(null, "bluetooth"); }
                     function player(): void { win.openAt(null, "player"); }
                     function control(): void { win.openAt(null, "control"); }
+                    function calendar(): void { win.openAt(null, "calendar"); }
                     function close(): void { win.page = ""; }
                 }
-
-                SystemClock { id: clock; precision: SystemClock.Minutes }
 
                 // Waybar's network-status.sh calls it VPN when tun0 is up, so
                 // the rail agrees with the bar he already reads.
@@ -208,10 +208,18 @@ ShellRoot {
 
                 // ---- rail ---------------------------------------------------
                 // The rail is a slab: square into all four screen edges, with
-                // exactly one curve on it, where the workspaces end. It used to
-                // round its own two right corners and then stand five rounded
-                // groups on top of that, so the top hundred pixels alone showed
-                // three curves and none of them meant anything.
+                // exactly one curve on its outline, where the workspaces end. It
+                // used to round its own two right corners as well, so the top
+                // hundred pixels showed three curves against the screen and none
+                // of them meant anything.
+                //
+                // That is a statement about the rail's silhouette and only about
+                // its silhouette. The clusters inside it keep their rounded
+                // grounds — see Group — because "where does this surface end"
+                // and "which of these controls belong together" are two
+                // questions and a bar has to answer both. Squaring the outline
+                // is what stops the rail looking like a floating card; grounding
+                // the clusters is what stops it looking like one long strip.
                 //
                 // Square is what a vertical bar gets everywhere it is thought
                 // about. bjarneo's bar rounds only when it is horizontal —
@@ -261,12 +269,19 @@ ShellRoot {
                     readonly property int inner: rail.height - 8
                     // The part of the rail that is not negotiable: the metrics,
                     // what is playing, the arrow and the two radios, the clock,
-                    // and the four 8px gaps between them.
+                    // and the four gaps between those groups.
+                    //
+                    // The three groups below the spacer are measured by their
+                    // grounds, not by their contents, because the ground is what
+                    // occupies the rail — Theme.groupPad of air above and below
+                    // each cluster is height the workspaces cannot have.
                     readonly property int fixed: ringBox.implicitHeight
-                        + playerBtn.implicitHeight + clockCol.implicitHeight
+                        + playerGroup.implicitHeight + clockGroup.implicitHeight
                         // The arrow, wifi and bluetooth, which are three slots
-                        // of bottomCol whatever the tray does.
-                        + Theme.slot * 3 + Theme.slotGap * 2 + 32
+                        // of bottomGroup whatever the tray does, plus that
+                        // group's own ground.
+                        + Theme.slot * 3 + Theme.slotGap * 2 + Theme.groupPad * 2
+                        + Theme.groupGap * 4
                     // What the two things that grow on their own have to share.
                     readonly property int elastic: Math.max(0, rail.inner - rail.fixed)
                     // The tray is served first but never all of it: one
@@ -292,8 +307,10 @@ ShellRoot {
 
                         // The workspaces, and the rail's one curve.
                         //
-                        // This is the only thing left on the rail with a ground
-                        // of its own. It is full width and runs square into the
+                        // Its ground is the one the other groups are measured
+                        // against: Theme.bgHi, one step above the Theme.bgAlt
+                        // they stand on, because this is the block that carries
+                        // the curve. It is full width and runs square into the
                         // top and left screen edges, and its bottom right
                         // corner is the single curve — the boundary between
                         // where he is and what the machine is doing. Zaphkiel
@@ -446,9 +463,20 @@ ShellRoot {
                         // So the ground barely moves and the edge does the
                         // talking: a 12% wash and a hairline in the accent.
                         // That reads as selected from across the room and costs
-                        // the numbers about a fifth of their contrast rather
-                        // than six sevenths — 9.8:1, 3.1:1 and 6.5:1 against
-                        // idle figures of 12.0, 3.8 and 7.8.
+                        // the numbers almost none of their contrast, because
+                        // the wash is 12% of one step rather than a swap to a
+                        // fully saturated fill.
+                        //
+                        // This block *is* the metrics group's ground — it is
+                        // already Theme.groupWidth wide, Theme.radiusS round and
+                        // padded Theme.groupPad, which is a Group in everything
+                        // but name — so it rests at the group colour rather than
+                        // at nothing, and the wash is composited over that
+                        // ground with Qt.tint rather than left to blend with the
+                        // bare rail behind it. A half-transparent accent laid
+                        // straight over an opaque resting colour would render
+                        // *darker* than the resting colour, so opening the panel
+                        // would dim the block instead of lighting it.
                         //
                         // Btn keeps its solid fill: it inverts its glyph to
                         // Theme.bg along with it, and it is one 28px slot
@@ -470,9 +498,10 @@ ShellRoot {
                             implicitWidth: Theme.groupWidth
                             implicitHeight: rings.implicitHeight + 12
                             radius: Theme.radiusS
-                            color: ringBox.on ? Qt.alpha(Theme.accent, 0.12)
+                            color: ringBox.on
+                                 ? Qt.tint(Theme.bgAlt, Qt.alpha(Theme.accent, 0.12))
                                  : ringMa.containsMouse ? Theme.line
-                                 : Qt.alpha(Theme.line, 0)
+                                 : Theme.bgAlt
                             border.width: ringBox.on ? 1 : 0
                             border.color: Theme.accent
 
@@ -521,18 +550,21 @@ ShellRoot {
                             }
                         }
 
-                        Item { implicitHeight: 8 }
+                        Item { implicitHeight: Theme.groupGap }
 
                         // What is playing, straight under the metrics, because
                         // both are things he wants to read off the rail without
                         // touching it.
-                        RailPlayer {
-                            id: playerBtn
-                            active: win.page === "player"
-                            onActivated: win.openAt(playerBtn, "player")
+                        Group {
+                            id: playerGroup
+                            RailPlayer {
+                                id: playerBtn
+                                active: win.page === "player"
+                                onActivated: win.openAt(playerBtn, "player")
+                            }
                         }
 
-                        Item { implicitHeight: 8 }
+                        Item { implicitHeight: Theme.groupGap }
 
                         // The bottom cluster, and the whole of what the rail
                         // keeps permanently: the arrow, the tray he pinned, and
@@ -549,10 +581,8 @@ ShellRoot {
                         // two that stayed. Everything else moved behind the
                         // arrow, which is now the control centre, or out of the
                         // shell entirely: looks is its own overlay window.
-                        ColumnLayout {
-                            id: bottomCol
-                            Layout.alignment: Qt.AlignHCenter
-                            spacing: Theme.slotGap
+                        Group {
+                            id: bottomGroup
 
                             // Everything without a slot of its own lives behind
                             // this, as it does behind Windows' taskbar chevron
@@ -605,7 +635,12 @@ ShellRoot {
                                 model: ScriptModel { values: Pins.railTray.slice(0, rail.trayMax) }
                                 // Tray icons are a zoo of shapes and palettes; a
                                 // consistent circular ground makes the column read
-                                // as one set.
+                                // as one set. Theme.bgHi, one step above the
+                                // group they stand in rather than one step above
+                                // the rail: they used to be Theme.bgAlt on the
+                                // bare rail, which is the colour the group's own
+                                // ground is now, and a cell the same colour as
+                                // the thing behind it is not a cell.
                                 Rectangle {
                                     id: cell
                                     required property var modelData
@@ -614,7 +649,7 @@ ShellRoot {
                                     implicitHeight: 26
                                     radius: 13
                                     property bool hovering: false
-                                    color: hovering ? Theme.accent : Theme.bgAlt
+                                    color: hovering ? Theme.accent : Theme.bgHi
 
                                     Behavior on color { ColorAnimation { duration: 110 } }
 
@@ -737,43 +772,19 @@ ShellRoot {
                             }
                         }
 
-                        Item { implicitHeight: 8 }
+                        Item { implicitHeight: Theme.groupGap }
 
-                        ColumnLayout {
-                            id: clockCol
-                            Layout.alignment: Qt.AlignHCenter
-                            spacing: 0
-                            Text {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: Qt.formatDateTime(clock.date, "HH")
-                                color: Theme.fg
-                                font.pixelSize: 15
-                                font.weight: Font.DemiBold
-                            }
-                            Text {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: Qt.formatDateTime(clock.date, "mm")
-                                color: Theme.fg
-                                font.pixelSize: 15
-                            }
-                            Rectangle {
-                                Layout.alignment: Qt.AlignHCenter
-                                Layout.topMargin: 5
-                                Layout.bottomMargin: 4
-                                width: 16; height: 1
-                                color: Theme.line
-                            }
-                            Text {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: Qt.formatDateTime(clock.date, "dd")
-                                color: Theme.dim
-                                font.pixelSize: 11
-                            }
-                            Text {
-                                Layout.alignment: Qt.AlignHCenter
-                                text: Qt.formatDateTime(clock.date, "MM")
-                                color: Theme.dim
-                                font.pixelSize: 11
+                        // The clock, and the calendar behind it. Turned on its
+                        // side by RailClock, which is why this is a group of one
+                        // 36px slot rather than the 92px stack of five lines it
+                        // replaced — the tallest single thing on a rail that
+                        // overflows on a laptop, for a date nobody reads twice.
+                        Group {
+                            id: clockGroup
+                            RailClock {
+                                id: clockCol
+                                active: win.page === "calendar"
+                                onActivated: win.openAt(clockCol, "calendar")
                             }
                         }
                     }
@@ -877,7 +888,8 @@ ShellRoot {
                                 : win.shown === "network" ? cNetwork
                                 : win.shown === "bluetooth" ? cBluetooth
                                 : win.shown === "player" ? cPlayer
-                                : win.shown === "control" ? cControl : null
+                                : win.shown === "control" ? cControl
+                                : win.shown === "calendar" ? cCalendar : null
                         }
                     }
 
@@ -885,6 +897,7 @@ ShellRoot {
                     Component { id: cNetwork; Panels.Network {} }
                     Component { id: cBluetooth; Panels.Bluetooth {} }
                     Component { id: cPlayer; Panels.Player {} }
+                    Component { id: cCalendar; Panels.Calendar {} }
                     // The control centre's tray rows open the same menu the
                     // rail's icons do, and its Looks button opens the overlay
                     // window. Neither is reachable from a panel's own scope, so

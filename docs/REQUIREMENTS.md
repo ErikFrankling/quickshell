@@ -60,7 +60,7 @@ tick it. This file exists because requirements were being forgotten between turn
 - [x] Wifi panel
 - [x] Bluetooth panel
 - [x] Brightness slider (laptop only)
-- [ ] Audio: per-application volume, and input and output device selection
+- [x] Audio: per-application volume, and input and output device selection
 - [x] Media player: what is playing, and track switching
 - [x] Notification centre
 

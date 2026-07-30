@@ -86,12 +86,12 @@ tick it. This file exists because requirements were being forgotten between turn
 - [x] Reuse the existing waybar scripts rather than reimplementing them
 - [x] Temperature, fan speed, swap usage, swap transfer rate, network throughput
 - [x] Capability detection — no GPU ring on a host without a GPU
-- [ ] Graph only what moves. Disk usage and battery are flat over a
+- [x] Graph only what moves. Disk usage and battery are flat over a
       two-minute window, so they get a number, not a graph. *(An earlier pass
       graphed everything; that was too literal a reading of "graphs for every
       metric".)*
-- [ ] Disk read and write throughput as a graph, like btop
-- [ ] Say on screen how far back the graphs go
+- [x] Disk read and write throughput as a graph, like btop
+- [x] Say on screen how far back the graphs go
 - [ ] Battery over 24h would be interesting but needs persisted history —
       *explicitly out of scope: "that is an entirely different application,
       won't be doing that now"*

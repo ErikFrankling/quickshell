@@ -55,8 +55,6 @@ tick it. This file exists because requirements were being forgotten between turn
 - [ ] The rail carries as many metrics as his waybar does. It currently shows
       four of about eleven — fan, swap, both disks, VRAM and **battery** all
       need a panel opened. On the laptop that is a regression against waybar.
-- [ ] Bluetooth panel clips its device list — the first row is cut by the
-      card edge
 
 ## Panels
 
@@ -109,12 +107,12 @@ tick it. This file exists because requirements were being forgotten between turn
       see the note at the bottom. GTK cannot be recoloured at runtime by any
       file; only the portal's light/dark + single accent gets through.)*
 - [x] A theme is colour only here; fonts, spacing, radii stay hardcoded
-- [ ] A toggle to match the theme to the wallpaper — *"a cute little toggle
+- [x] A toggle to match the theme to the wallpaper — *"a cute little toggle
       you can turn on if you wanna try it"*. Off by default.
 
 ## Rail, continued
 
-- [ ] Windows-style widgets menu: a chevron flyout that decides which items sit
+- [x] Windows-style widgets menu: a chevron flyout that decides which items sit
       on the rail and which live behind it. `Pins.qml` and `panels/Widgets.qml`
       exist but were never wired to anything.
 
@@ -152,7 +150,7 @@ his system; these are proposals.
 ## Research, for discussion rather than implementation
 
 All three answered in `docs/keyboard.md` — yes to each. That file exists because
-these were ticked for a month with nothing durable behind them: the research had
+these were ticked with nothing durable behind them: the research had
 happened but lived only in agent transcripts.
 
 - [x] Can the QMK/Vial layout of the Dactyl be rendered as a cheatsheet?

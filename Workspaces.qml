@@ -95,26 +95,16 @@ ColumnLayout {
     }
 
 
-    // Hyprland hands workspaces back in whatever order it last touched them,
-    // so they must be sorted or the rail reshuffles as you move around.
-    // Named/special workspaces carry negative ids; keep them after the numbered
-    // ones rather than at the front.
-    readonly property var ordered: {
-        const ws = [...Hyprland.workspaces.values];
-        ws.sort((a, b) => {
-            if (a.id > 0 && b.id > 0)
-                return a.id - b.id;
-            if (a.id > 0)
-                return -1;
-            if (b.id > 0)
-                return 1;
-            return a.id - b.id;
-        });
-        return ws;
-    }
-
     Repeater {
-        model: root.ordered
+        // Hyprland hands workspaces back in the order it created them, so they
+        // have to be sorted or the rail is in a random order. Named/special
+        // workspaces carry negative ids; keep them after the numbered ones.
+        // ScriptModel diffs by identity, so one workspace appearing or going
+        // away does not rebuild every other pill.
+        model: ScriptModel {
+            values: [...Hyprland.workspaces.values]
+                .sort((a, b) => (a.id < 0) - (b.id < 0) || a.id - b.id)
+        }
 
         Rectangle {
             id: ws
@@ -148,10 +138,14 @@ ColumnLayout {
                 spacing: 4
 
                 Text {
-                    text: ws.modelData.name
+                    // Special workspaces are named "special:scratch"; only the
+                    // part after the colon fits in the rail.
+                    text: ws.modelData.name.replace(/^special:/, "")
                     color: ws.here ? Theme.accent : Theme.dim
                     font.pixelSize: 11
                     font.weight: ws.here ? Font.Bold : Font.Normal
+                    elide: Text.ElideRight
+                    Layout.maximumWidth: 34
                 }
 
                 Repeater {

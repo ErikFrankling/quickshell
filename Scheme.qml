@@ -23,6 +23,17 @@ Singleton {
     // The bright half repeats the normal half; only black and white differ.
     readonly property var ansi: ["base00", "base08", "base0B", "base0A", "base0D", "base0E", "base0C", "base05", "base03", "base08", "base0B", "base0A", "base0D", "base0E", "base0C", "base07"]
 
+    // Perceived luminance of the default background. base16 backgrounds sit at
+    // the ends of the range — Gruvbox light is 0.94, Gruvbox dark 0.12 — so the
+    // midpoint is nowhere near anything real.
+    function isLight(hex) {
+        const c = String(hex).replace("#", "");
+        const r = parseInt(c.slice(0, 2), 16) / 255;
+        const g = parseInt(c.slice(2, 4), 16) / 255;
+        const b = parseInt(c.slice(4, 6), 16) / 255;
+        return 0.299 * r + 0.587 * g + 0.114 * b > 0.5;
+    }
+
     function publish(p) {
         if (!p.base00)
             return;
@@ -57,7 +68,11 @@ Singleton {
 
             // The scheme itself in tinted-theming's base16 format, which is
             // what the few hundred base16 app templates are all built from.
-            "colors-base16.yaml": 'system: "base16"\nname: "' + p.name + '"\nvariant: "dark"\npalette:\n' + Object.keys(p).filter(k => k.startsWith("base")).sort().map(k => '  ' + k + ': "' + p[k] + '"').join("\n"),
+            "colors-base16.yaml": // Derived from base00, which is the default background by definition.
+// Hardcoding "dark" here published a light scheme as dark and made every
+// consumer that trusts the field render unreadably.
+'system: "base16"\nname: "' + p.name + '"\nvariant: "'
+                + (root.isLight(p.base00) ? "light" : "dark") + '"\npalette:\n' + Object.keys(p).filter(k => k.startsWith("base")).sort().map(k => '  ' + k + ': "' + p[k] + '"').join("\n"),
 
             // 4;n palette, 10 foreground, 11 background, 12 cursor, 17/19 selection.
             "sequences": c.map((v, i) => esc("4;" + i, v)).join("") + esc(10, fg) + esc(11, bg) + esc(12, fg) + esc(17, p.base02) + esc(19, fg)

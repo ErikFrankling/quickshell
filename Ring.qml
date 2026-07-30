@@ -9,6 +9,11 @@ Item {
     property real value: 0        // 0..100
     property string text: ""      // centre text; defaults to rounded value
 
+    // What the colour is keyed off, when that is not the fill. Battery is the
+    // one metric here where a full ring is the good news, so it hands over
+    // 100 - charge and goes red on the way to empty rather than on the way up.
+    property real heat: value
+
     Layout.alignment: Qt.AlignHCenter
     implicitWidth: 30
     implicitHeight: 30
@@ -33,7 +38,7 @@ Item {
                 ctx.beginPath();
                 // start at 12 o'clock
                 ctx.arc(w / 2, w / 2, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
-                ctx.strokeStyle = Theme.heat(root.value);
+                ctx.strokeStyle = Theme.heat(root.heat);
                 ctx.stroke();
             }
         }
@@ -41,6 +46,7 @@ Item {
 
     // Canvas does not repaint on property change by itself.
     onValueChanged: c.requestPaint()
+    onHeatChanged: c.requestPaint()
 
     Text {
         anchors.centerIn: parent

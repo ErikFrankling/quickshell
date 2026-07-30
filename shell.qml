@@ -255,10 +255,18 @@ ShellRoot {
 
                                 Behavior on color { ColorAnimation { duration: 110 } }
 
+                                // Every ring but the first two is conditional,
+                                // because every one of them can be a number no
+                                // sensor on this host produces. /proc/stat and
+                                // /proc/meminfo answer everywhere, so cpu and
+                                // ram are the only two that need no permission.
                                 Ring { label: "cpu"; value: Sys.cpu }
                                 Ring { label: "ram"; value: Sys.mem }
-                                Ring { label: "gpu"; value: Sys.gpu; visible: Sys.hasGpu ?? true }
-                                Ring { label: "°c"; value: Sys.temp; text: Sys.temp }
+                                Ring { label: "gpu"; value: Sys.gpu; visible: Sys.hasGpu }
+                                Ring { label: "°c"; value: Sys.temp; text: Sys.temp; visible: Sys.hasTemp }
+                                Ring { label: "fan"; value: fan.pct; visible: Sys.hasFan }
+                                // Full is the good end of this one.
+                                Ring { label: "bat"; value: Sys.battery; heat: 100 - Sys.battery; visible: Sys.hasBattery }
                             }
 
                             MouseArea {
@@ -575,6 +583,45 @@ ShellRoot {
                     Component { id: cLooks; Panels.Looks {} }
                     Component { id: cWidgets; Panels.Widgets {} }
                 }
+            }
+        }
+    }
+
+    // ---- fan ---------------------------------------------------------------
+    // A ring wants a fraction and rpm is not one. Under fw-fanctrl Sys.fan is
+    // already a percentage of maximum — that is what the waybar config prints
+    // and it is passed straight through. hwmon reports rpm instead, which only
+    // means something against a ceiling, in this order: fan1_max where the
+    // driver publishes one (amdgpu does, 3300 on the desktop), otherwise the
+    // fastest this fan has ever been seen to spin, starting from a figure low
+    // enough that a typical case fan at full tilt reads as full. The ceiling
+    // only ever grows, so an early guess corrects itself and never un-corrects,
+    // and it is never zero, so the division is always safe.
+    Scope {
+        id: fan
+
+        readonly property int pct: Caps.fanSource === "fw" ? Sys.fan
+            : Math.min(100, Math.round(100 * Sys.fan / ceiling))
+
+        property int ceiling: 2000
+
+        Process {
+            running: true
+            command: ["sh", "-c", "cat /sys/class/hwmon/hwmon*/fan1_max 2>/dev/null | sort -rn | head -1"]
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    const max = parseInt(text) || 0;
+                    if (max > fan.ceiling)
+                        fan.ceiling = max;
+                }
+            }
+        }
+
+        Connections {
+            target: Sys
+            function onFanChanged() {
+                if (Caps.fanSource !== "fw" && Sys.fan > fan.ceiling)
+                    fan.ceiling = Sys.fan;
             }
         }
     }

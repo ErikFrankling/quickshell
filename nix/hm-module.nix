@@ -45,6 +45,7 @@ in
       temp = metric "Show CPU temperature.";
       swap = metric "Show swap usage and swap I/O.";
       net = metric "Show network throughput.";
+      diskio = metric "Show disk read and write throughput.";
       cores = metric "Show the per-core CPU strip.";
       battery = metric "Show battery charge.";
       backlight = metric "Show the backlight slider.";

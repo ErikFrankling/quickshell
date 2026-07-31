@@ -100,6 +100,20 @@ Item {
         function onPaletteChanged() { ring.requestPaint(); }
     }
 
+    // The ground that says the player panel is up, the same one every other rail
+    // control that opens a panel now draws. Sized from the Group this stands in
+    // rather than from the widget, which is only 34px wide inside a 46px ground:
+    // the clock does the same, so the two open states down here are the same
+    // 42px box and not two different ones. Anchored rather than laid out, so the
+    // implicitHeight above is still the column's and the rail's height budget
+    // has not moved — measured open and shut, the widget is 151px either way.
+    OpenGround {
+        anchors.centerIn: parent
+        width: Theme.groupWidth - 4
+        height: parent.height + Theme.groupPad
+        on: root.active
+    }
+
     ColumnLayout {
         id: col
         anchors.centerIn: parent
@@ -240,8 +254,16 @@ Item {
                 rotation: -90
                 width: slot.height
                 text: root.title
-                color: root.active ? Theme.accent
-                     : root.playing ? Theme.fg : Theme.dim
+                // It used to go the accent while the panel was open, which is a
+                // job the ground has taken over — and the accent is now the
+                // colour of the wash and the hairline it would be sitting in the
+                // middle of. Drawn on that wash it measures 4.31 on his Gruvbox,
+                // 3.82 on Everforest, 4.67 on Tokyo Night and 2.81 on Rosé Pine
+                // Dawn, where Theme.fg is 7.79, 4.52, 8.35 and 5.40. This is
+                // eleven pixels of rotated text, the hardest thing on the rail
+                // to read, so it takes the brighter one and keeps the accent for
+                // the ring beside it, which is what the accent means here.
+                color: root.active || root.playing ? Theme.fg : Theme.dim
                 // Back to 11px. 10px was not distorted — rendered, its caps
                 // measured 7px and its stems 1px, exactly Ring's value and the
                 // clock's date at the same nominal size — it was just a point

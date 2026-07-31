@@ -529,45 +529,39 @@ ShellRoot {
                         // the wash is 12% of one step rather than a swap to a
                         // fully saturated fill.
                         //
-                        // This block *is* the metrics group's ground — it is
+                        // Erik pointed at that and asked for it on the other
+                        // four things down the rail that open a panel, so the
+                        // drawing lives in OpenGround now and this is one of its
+                        // five callers rather than the only one. The shells read
+                        // for it agree there is no single answer — whisker fills
+                        // a quick-toggle with the primary colour (QuickPanel
+                        // .qml:21-78), Zaphkiel scales the active glyph 1.6x and
+                        // draws no ground at all (CentralSwipable.qml:52-67),
+                        // and noctalia's bar pill has no open-panel state
+                        // whatsoever, only hover (BarPillVertical.qml:62-65) —
+                        // and none of them has a block this tall to fill: this
+                        // one measures 262px on his desktop.
+                        //
+                        // This block *is* the metrics group's ground: it is
                         // already Theme.groupWidth wide, Theme.radiusS round and
                         // padded Theme.groupPad, which is a Group in everything
-                        // but name — so it rests at the group colour rather than
-                        // at nothing, and the wash is composited over that
-                        // ground with Qt.tint rather than left to blend with the
-                        // bare rail behind it. A half-transparent accent laid
-                        // straight over an opaque resting colour would render
-                        // *darker* than the resting colour, so opening the panel
-                        // would dim the block instead of lighting it.
-                        //
-                        // Btn keeps its solid fill: it inverts its glyph to
-                        // Theme.bg along with it, and it is one 28px slot
-                        // rather than a 190px block — a badge, not a wall. The
-                        // shells read for this agree there is no single answer.
-                        // whisker fills a quick-toggle with the primary colour
-                        // (QuickPanel.qml:21-78), Zaphkiel scales the active
-                        // glyph 1.6x and draws no ground at all
-                        // (CentralSwipable.qml:52-67), and noctalia's bar pill
-                        // has no open-panel state whatsoever, only hover
-                        // (BarPillVertical.qml:62-65). None of them fills a
-                        // block this tall, because none of them has one.
-                        Rectangle {
+                        // but name. So it hands OpenGround Theme.bgHi as its
+                        // resting colour rather than nothing, and the wash is
+                        // composited over that ground rather than left to blend
+                        // with the bare rail behind it. A half-transparent
+                        // accent laid straight over an opaque resting colour
+                        // would render *darker* than the resting colour, so
+                        // opening the panel would dim the block instead of
+                        // lighting it.
+                        OpenGround {
                             id: ringBox
-
-                            readonly property bool on: win.page === "monitor"
 
                             Layout.alignment: Qt.AlignHCenter
                             implicitWidth: Theme.groupWidth
                             implicitHeight: rings.implicitHeight + 12
-                            radius: Theme.radiusS
-                            color: ringBox.on
-                                 ? Qt.tint(Theme.bgHi, Qt.alpha(Theme.accent, 0.12))
-                                 : ringMa.containsMouse ? Theme.line
-                                 : Theme.bgHi
-                            border.width: ringBox.on ? 1 : 0
-                            border.color: Theme.accent
-
-                            Behavior on color { ColorAnimation { duration: 110 } }
+                            on: win.page === "monitor"
+                            ground: Theme.bgHi
+                            hovering: ringMa.containsMouse
 
                             ColumnLayout {
                                 id: rings
@@ -869,7 +863,7 @@ ShellRoot {
                                 // was on a VPN — and REQUIREMENTS asks for all
                                 // four at once.
                                 glyph: Net.glyph
-                                active: win.page === "network"
+                                open: win.page === "network"
                                 tint: Net.online ? Theme.fg : Theme.bad
                                 onClicked: win.openAt(networkBtn, "network")
 
@@ -917,10 +911,21 @@ ShellRoot {
                                     }
                                     text: "󰌾"
                                     font.pixelSize: 9
-                                    // Btn floods the slot with the accent while
-                                    // its panel is open and draws the glyph in
-                                    // bg; the lock has to follow or it vanishes.
-                                    color: networkBtn.active ? Theme.bg : Theme.good
+                                    // One colour, in every state. It used to
+                                    // repaint itself Theme.bg while the panel
+                                    // was open, because the button flooded solid
+                                    // accent underneath it and Theme.good on the
+                                    // accent is 1.00:1 on Everforest, 1.02 on
+                                    // Nord, 1.20 on his Gruvbox — the lock
+                                    // disappeared. The disc washes now instead
+                                    // of flooding, and green on the washed disc
+                                    // is 5.80 on Gruvbox, 4.33 on Everforest,
+                                    // 7.24 on Tokyo Night and 3.01 on Gruvbox
+                                    // Light, which is within a fifth of a point
+                                    // of what it reads when the panel is shut.
+                                    // So the branch goes, and the lock is green
+                                    // for the same reason it always was.
+                                    color: Theme.good
                                 }
                             }
 
@@ -928,7 +933,7 @@ ShellRoot {
                                 id: btBtn
                                 disc: true
                                 glyph: Bluetooth.defaultAdapter?.enabled ? "󰂯" : "󰂲"
-                                active: win.page === "bluetooth"
+                                open: win.page === "bluetooth"
                                 tint: !Bluetooth.defaultAdapter?.enabled ? Theme.dim
                                     : Bluetooth.devices.values.some(d => d.connected) ? Theme.good : Theme.fg
                                 onClicked: win.openAt(btBtn, "bluetooth")

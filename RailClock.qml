@@ -73,6 +73,15 @@ Item {
 
     // The date's one colour, in one place: the digits and nothing else move,
     // so the diagonal stays the hairline it is and the tint stays a message.
+    //
+    // All three still read on the wash the ground takes while the panel is open.
+    // Theme.fg is 7.79 on his Gruvbox, 4.52 on Everforest, 8.35 on Tokyo Night
+    // and 4.44 on Gruvbox Light, against 9.57 / 5.57 / 10.34 / 5.14 unwashed.
+    // The accent is the one to watch, because it is being drawn on a 12% wash of
+    // itself: 4.31, 3.82, 4.67 and 3.32, against 5.29 / 4.70 / 5.78 / 3.85. It
+    // stays the loudest of the three on every scheme, which is what the unread
+    // count needs of it, and it never approaches the 1.3:1 that the solid accent
+    // fill this replaces would have put it at.
     readonly property color dateFg: root.badge > 0 ? Theme.accent
         : root.active ? Theme.fg : Theme.dim
 
@@ -86,6 +95,20 @@ Item {
     SystemClock {
         id: clock
         precision: SystemClock.Minutes
+    }
+
+    // The ground that says the control centre is up, the same one every other
+    // rail control that opens a panel now draws. Sized from the Group this
+    // stands in rather than from the clock: the clock is 42px of digits in a
+    // 46px ground with Theme.groupPad above and below, so 2px inside the first
+    // and half of the second keeps the hairline clear of the group's own edge.
+    // It is anchored rather than laid out, so the implicitHeight above is still
+    // the time's and the rail's height budget has not moved.
+    OpenGround {
+        anchors.centerIn: parent
+        width: Theme.groupWidth - 4
+        height: parent.height + Theme.groupPad
+        on: root.active
     }
 
     Column {

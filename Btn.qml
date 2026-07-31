@@ -8,7 +8,9 @@ import QtQuick.Layouts
 // and doannc2212's IconButton all fill the root with the MouseArea and draw the
 // ground at the same size.
 //
-// Two things about the colour matter and both were wrong before:
+// The ground itself is an OpenGround, which owns the resting, hover and open
+// colours and the animation between them. Two things about them matter and both
+// were wrong before:
 //
 //  * The idle colour is the hover colour at zero alpha, not "transparent".
 //    "transparent" is transparent *black*, and ColorAnimation interpolates the
@@ -23,10 +25,25 @@ Item {
     id: root
 
     property string glyph: ""
+
+    // Two ways of being on, because they are two different things.
+    //
+    // `active` is a toggle that is set: the pinned row in the widget list, the
+    // playing track's pause button, the tab the control centre is on. It floods
+    // the slot with the accent and inverts the glyph to Theme.bg, which measures
+    // 3.5 to 8.4:1 — fine, because it is one glyph and the glyph flips with the
+    // ground.
+    //
+    // `open` is this button's *panel* being the one showing, which is the state
+    // the whole rail now says the same way — see OpenGround. It cannot flood,
+    // because the glyph has to keep its own colour: the wifi glyph is Theme.bad
+    // when the link is down and the bluetooth one is Theme.good when something
+    // is paired, and the flood threw both away exactly while their panel was
+    // open. Nothing sets both.
     property bool active: false
-    property int badge: 0
+    property bool open: false
+
     property color tint: Theme.dim
-    property color hoverColor: Theme.line
 
     // A ground that is there when the button is idle, and round, instead of a
     // rounded square that only appears under the pointer.
@@ -54,6 +71,19 @@ Item {
     // Light, 2.20 on Atelier Dune), which is the bluetooth-connected tint and the
     // VPN padlock. That was already below the floor before this change, at 2.55
     // and 1.10, and it is a light-scheme green problem rather than a disc one.
+    //
+    // The 12% wash `open` lays over that disc was measured the same way, on the
+    // nine curated schemes. It costs a glyph about half a point: Theme.fg is
+    // 8.72 washed against 10.75 resting on his Gruvbox, 5.13 against 6.40 on
+    // Everforest, 9.39 against 11.57 on Tokyo Night, 5.46 against 6.43 on
+    // Gruvbox Light. Theme.dim — the bluetooth glyph with the radio off — is the
+    // weakest, 2.36 washed against 2.88 resting on Kanagawa, 3.26 against 4.02
+    // on Gruvbox. That is a glyph the shell is deliberately drawing quiet, it
+    // was already under the floor before the wash, and a heavier wash would make
+    // it worse rather than better: the wash moves the ground *towards* the
+    // accent, which on every dark scheme here is the direction dim already lies
+    // in. What it replaces was not better — the flood repainted that glyph
+    // Theme.bg and said nothing about the radio at all.
     property bool disc: false
 
     // Read from the MouseArea rather than latched by entered/exited, so it
@@ -66,22 +96,25 @@ Item {
     implicitWidth: Theme.slot
     implicitHeight: Theme.slot
 
-    Rectangle {
-        id: visual
+    OpenGround {
         anchors.centerIn: parent
         width: root.disc ? 26 : parent.width
         height: root.disc ? 26 : parent.height
         radius: root.disc ? width / 2 : Theme.radiusS
+
+        on: root.open
+        // The flood outranks the pointer, the way it did when both were one
+        // ternary here.
+        hovering: root.hovering && !root.active
         // A disc is never absent, so its resting colour is a real colour rather
         // than the hover colour at zero alpha — and the animation still runs
         // between two real colours either way, which is the whole reason the
-        // zero-alpha idiom is there.
-        color: root.active ? Theme.accent
-             : root.hovering ? root.hoverColor
-             : root.disc ? Theme.bgAlt
-             : Qt.alpha(root.hoverColor, 0)
-
-        Behavior on color { ColorAnimation { duration: 110 } }
+        // zero-alpha idiom is there. It is also the only shape a button that
+        // opens a panel takes, so it is the only resting colour `open` above
+        // ever has to wash, and the one case OpenGround needs opaque.
+        ground: root.active ? Theme.accent
+              : root.disc ? Theme.bgAlt
+              : Qt.alpha(Theme.line, 0)
 
         Text {
             anchors.centerIn: parent
@@ -89,15 +122,6 @@ Item {
             color: root.active ? Theme.bg : root.tint
             font.pixelSize: Theme.icon
         }
-    }
-
-    Rectangle {
-        visible: root.badge > 0 && !root.active
-        anchors { top: visual.top; right: visual.right; margins: 3 }
-        width: 8
-        height: 8
-        radius: 4
-        color: Theme.accent
     }
 
     MouseArea {

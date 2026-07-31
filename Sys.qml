@@ -5,10 +5,10 @@ import Quickshell.Io
 import QtQuick
 
 // Quickshell has no module for any of this. CPU, memory, swap, temperature,
-// network throughput and swap churn come from /proc and /sys; GPU and the
-// network label reuse the scripts already driving the waybar config, so there
-// is one implementation of each, not two. Nothing here decides what to show —
-// that is Caps, whose answers are re-exported so a widget needs one import.
+// the fan and the two throughputs come from /proc and /sys, read as files;
+// the GPU reuses the scripts already driving the waybar config, so there is
+// one implementation of it, not two. Nothing here decides what to show — that
+// is Caps, whose answers are re-exported so a widget needs one import.
 Singleton {
     id: root
 
@@ -33,7 +33,6 @@ Singleton {
     property int battery: 0
     property bool charging: true
     property int brightness: -1
-    property string net: ""
 
     property real memUsedGb: 0
     property real memTotalGb: 0
@@ -47,11 +46,31 @@ Singleton {
     property real diskWrite: 0
     property var disks: []              // [{ path, pct, usedGb, sizeGb }]
 
-    // One sample every two seconds, sixty kept, so every graph in the panel
-    // covers the same two minutes. The panel says so on screen, reading it from
-    // here, so the label cannot drift away from the thing it describes.
-    readonly property int pollMs: 2000
-    readonly property int samples: 60
+    // How often each thing is asked. Not one rate, and the thing that separates
+    // them is not how fast the number moves — it is what asking costs. Timed on
+    // this machine: the shell pipeline that used to fetch the temperature and
+    // the fan cost 16.5 ms of CPU every time it ran, and the two sysfs files it
+    // read cost 0.02 ms — eight hundred times less. So everything that is a
+    // file read is on the half second, and everything that still has to start a
+    // process stays on the two seconds it was already on. Raising the rate at
+    // all is what moving those two readings off `sh` bought.
+    //
+    // Half a second because that is what he asked for: he wants to watch the
+    // fan answer a temperature rise, and at two seconds the ring reached a step
+    // 0.94 s late on average and 1.84 s late at worst. Ricelin's dials run
+    // their /proc and hwmon reads at exactly this rate and say why —
+    // "so a slow source never stalls the dials" (Sysmon.qml:9-13) — and
+    // noctalia runs CPU at one second ungated (SystemStatService.qml:340).
+    readonly property int pollMs: 500
+    readonly property int procMs: 2000
+    readonly property int diskMs: 30000
+
+    // Still two minutes, and still one window for every graph in the panel:
+    // four times as many samples at a quarter of the spacing. The panel prints
+    // this on screen, reading it from here, so the label cannot drift away from
+    // the thing it describes — which is exactly what raising the rate without
+    // raising the count would have done to it.
+    readonly property int samples: 240
     readonly property int historySec: samples * pollMs / 1000
 
     // History, keyed by metric name. The panel graphs them all the same way, so
@@ -95,11 +114,20 @@ Singleton {
     property var prevSwap: ({ t: 0, i: 0, o: 0 })
     property var prevDisk: ({ t: 0, r: 0, w: 0 })
 
-    FileView { id: stat; path: "/proc/stat" }
-    FileView { id: meminfo; path: "/proc/meminfo" }
-    FileView { id: netdev; path: "/proc/net/dev" }
-    FileView { id: vmstat; path: "/proc/vmstat" }
-    FileView { id: diskstats; path: "/proc/diskstats" }
+    // Parsed where the content arrives, not where it was asked for. reload() is
+    // asynchronous — the read runs on a thread and text() keeps returning the
+    // old contents until it lands (Quickshell's own fileview.hpp:261 says so) —
+    // and the tick used to call reload() and text() on the next line, so every
+    // number here was computed from the snapshot the *previous* tick fetched.
+    // Measured before the change: 233 ticks out of 233 parsed content a mean of
+    // 1.81 s old, while the fresh content landed 2.2 ms after being asked for.
+    // That is where four of the five seconds between pinning the CPU and the
+    // ring admitting it went.
+    FileView { id: stat; path: "/proc/stat"; onLoaded: root.readCpu(text()) }
+    FileView { id: meminfo; path: "/proc/meminfo"; onLoaded: root.readMem(text()) }
+    FileView { id: netdev; path: "/proc/net/dev"; onLoaded: root.readNet(text()) }
+    FileView { id: vmstat; path: "/proc/vmstat"; onLoaded: root.readSwapIo(text()) }
+    FileView { id: diskstats; path: "/proc/diskstats"; onLoaded: root.readDiskIo(text()) }
 
     // Busy is the change in non-idle jiffies over the change in total, per line.
     function readCpu(text) {
@@ -121,6 +149,18 @@ Singleton {
                 cores.push(pct);
         }
         root.cores = cores;
+    }
+
+    function readMem(text) {
+        const mTotal = root.kb(text, "MemTotal");
+        if (mTotal > 0) {
+            root.memTotalGb = mTotal / 1048576;
+            root.memUsedGb = (mTotal - root.kb(text, "MemAvailable")) / 1048576;
+            root.mem = Math.round(100 * root.memUsedGb / root.memTotalGb);
+        }
+        const sTotal = root.kb(text, "SwapTotal");
+        if (sTotal > 0)
+            root.swap = Math.round(100 * (1 - root.kb(text, "SwapFree") / sTotal));
     }
 
     // Only interfaces with real hardware behind them, so a VPN tunnel riding on
@@ -180,28 +220,88 @@ Singleton {
         root.prevDisk = { t: t, r: rd, w: wr };
     }
 
-    // --- shelled-out readings, grouped so each tick forks as little as it can
+    // --- the sensors, as files ----------------------------------------------
+    //
+    // Which files, worked out once. hwmon numbering is fixed for the life of a
+    // boot, so the search that used to run on every single sample — a shell, a
+    // loop, and a cat per hwmon directory — runs once at startup and leaves a
+    // couple of paths behind. Everything after that is a read().
+    property string tempPath: ""
+    property var fanPaths: []
+
     Process {
-        id: sensorProc
+        id: sensorProbe
+        running: true
         // The CPU package sensor by name, not whichever hwmon happens to be
-        // hottest — under load that would silently become the GPU.
-        command: ["sh", "-c", 'for h in /sys/class/hwmon/hwmon*; do case "$(cat $h/name 2>/dev/null)" in k10temp|coretemp|zenpower) t=$(cat $h/temp1_input); break;; esac; done\n'
-            + '[ -n "$t" ] || t=$(cat /sys/class/hwmon/hwmon*/temp1_input 2>/dev/null | sort -rn | head -1)\n'
-            + 'echo "$t"\n' + root.fanCmd]
+        // hottest — under load that would silently become the GPU. Where no
+        // named sensor answers, the hottest is the fallback it always was, but
+        // chosen now, once, rather than re-chosen every tick: picking it afresh
+        // each time is what let the reading hop between chips in the first place.
+        command: ["sh", "-c",
+            'for h in /sys/class/hwmon/hwmon*; do case "$(cat $h/name 2>/dev/null)" in k10temp|coretemp|zenpower) echo "temp=$h/temp1_input"; break;; esac; done\n'
+            + 'grep -H . /sys/class/hwmon/hwmon*/temp1_input 2>/dev/null | sort -t: -k2 -rn | head -1 | sed "s|^|hot=|; s|:.*||"\n'
+            + 'echo "fans=$(ls /sys/class/hwmon/hwmon*/fan1_input 2>/dev/null | tr "\\n" " ")"']
         stdout: StdioCollector {
             onStreamFinished: {
-                const l = text.split("\n");
-                if (Caps.hasTemp)
-                    root.temp = Math.round((parseInt(l[0]) || 0) / 1000);
-                if (Caps.hasFan)
-                    root.fan = parseInt(l[1]) || 0;
+                const v = {};
+                for (const line of text.split("\n")) {
+                    const i = line.indexOf("=");
+                    if (i > 0)
+                        v[line.slice(0, i)] = line.slice(i + 1).trim();
+                }
+                root.tempPath = v.temp || v.hot || "";
+                root.fanPaths = (v.fans || "").split(/\s+/).filter(p => p.length > 0);
             }
         }
     }
 
-    readonly property string fanCmd: Caps.fanSource === "fw"
-        ? "fw-fanctrl --output-format JSON print speed 2>/dev/null | jq -r .speed"
-        : "cat /sys/class/hwmon/hwmon*/fan1_input 2>/dev/null | sort -rn | head -1"
+    // Gated on the capability rather than on the file existing, so a host that
+    // turns the metric off in metrics.json is not read anyway.
+    FileView {
+        id: tempFile
+        path: Caps.hasTemp ? root.tempPath : ""
+        printErrors: false
+        onLoaded: root.temp = Math.round((parseInt(text()) || 0) / 1000)
+    }
+
+    // A machine can expose more than one fan and the ring shows the fastest of
+    // them, which is what the old `sort -rn | head -1` did. One reader per file
+    // says the same thing without the pipeline; under fw-fanctrl there are no
+    // such files and the process below answers instead.
+    property var fanRpm: []
+
+    Instantiator {
+        id: fanFiles
+        model: Caps.hasFan ? root.fanPaths : []
+
+        FileView {
+            required property int index
+            required property string modelData
+            path: modelData
+            printErrors: false
+            onLoaded: {
+                const v = root.fanRpm.slice();
+                v[index] = parseInt(text()) || 0;
+                root.fanRpm = v;
+                root.fan = Math.max.apply(null, [0].concat(v.map(x => x || 0)));
+            }
+        }
+    }
+
+    // --- readings that still have to fork ------------------------------------
+    //
+    // fw-fanctrl is a Python client talking to a daemon over a socket, so this
+    // one cannot join the fast tier however much the fan ring would like it to:
+    // it is the most expensive reading the shell takes, and it is taken on the
+    // laptop, which is the machine whose battery is the reason to care. It
+    // stays exactly where it was.
+    Process {
+        id: fwFanProc
+        command: ["sh", "-c", "fw-fanctrl --output-format JSON print speed 2>/dev/null | jq -r .speed"]
+        stdout: StdioCollector {
+            onStreamFinished: root.fan = parseInt(text) || 0
+        }
+    }
 
     Process {
         id: gpuProc
@@ -215,20 +315,6 @@ Singleton {
                     root.vramUsedGb = n[1];
                     root.vramTotalGb = n[2];
                     root.vram = Math.round(100 * n[1] / n[2]);
-                }
-            }
-        }
-    }
-
-    Process {
-        id: netProc
-        command: ["sh", "-c", "$HOME/.local/bin/network-status.sh 2>/dev/null"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    root.net = JSON.parse(text).text.replace(/^\s*\S*\s*/, "").trim() || "net";
-                } catch (e) {
-                    root.net = "";
                 }
             }
         }
@@ -347,6 +433,9 @@ Singleton {
     }
 
     // --- polling ------------------------------------------------------------
+    //
+    // The fast tier: five files in /proc, the sensor files in /sys, and not one
+    // process.
     Timer {
         interval: root.pollMs
         running: Caps.probed
@@ -358,39 +447,57 @@ Singleton {
             netdev.reload();
             vmstat.reload();
             diskstats.reload();
-            sensorProc.running = Caps.hasTemp || Caps.hasFan;
+            if (tempFile.path !== "")
+                tempFile.reload();
+            for (let i = 0; i < fanFiles.count; i++)
+                fanFiles.objectAt(i).reload();
+            sample.restart();
+        }
+    }
+
+    // The sample that the graphs draw, taken a moment after the tick rather
+    // than inside it. Every read above lands on a worker thread a millisecond
+    // or two later, so a sample taken in the tick itself is a sample of what
+    // the *last* tick found — which is precisely why the temperature ring and
+    // the temperature graph beside it never agreed. Measured on the old code, a
+    // step in the CPU temperature reached the ring 0.94 s after the sensor saw
+    // it and the graph 3.42 s after, so for two and a half seconds out of every
+    // two the two disagreed, by as much as twelve degrees on a ramp.
+    //
+    // 50 ms is eight times the slowest read observed and a tenth of the tick,
+    // so the sample is both settled and, on screen, simultaneous.
+    Timer {
+        id: sample
+        interval: 50
+        repeat: false
+        onTriggered: root.record({ cpu: root.cpu, mem: root.mem, temp: root.temp,
+            fan: root.fan, gpu: root.gpu, vram: root.vram,
+            swapIn: root.swapIn, swapOut: root.swapOut,
+            netDown: root.netDown, netUp: root.netUp,
+            diskRead: root.diskRead, diskWrite: root.diskWrite })
+    }
+
+    // The slow tier: everything that still starts a process. None of these is a
+    // number he watches move — the GPU scripts, the charge, the backlight — and
+    // each of them costs a fork, so they stay on the two seconds they were on
+    // before any of this. Raising the fast tier was affordable exactly because
+    // it left this list alone.
+    Timer {
+        interval: root.procMs
+        running: Caps.probed
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            fwFanProc.running = Caps.fanSource === "fw";
             gpuProc.running = Caps.hasGpu;
-            netProc.running = Caps.hasNet;
             powerProc.running = Caps.hasBattery || Caps.hasBacklight;
-
-            root.readCpu(stat.text());
-            root.readNet(netdev.text());
-            root.readSwapIo(vmstat.text());
-            root.readDiskIo(diskstats.text());
-
-            const mi = meminfo.text();
-            const mTotal = kb(mi, "MemTotal");
-            if (mTotal > 0) {
-                root.memTotalGb = mTotal / 1048576;
-                root.memUsedGb = (mTotal - kb(mi, "MemAvailable")) / 1048576;
-                root.mem = Math.round(100 * root.memUsedGb / root.memTotalGb);
-            }
-            const sTotal = kb(mi, "SwapTotal");
-            if (sTotal > 0)
-                root.swap = Math.round(100 * (1 - kb(mi, "SwapFree") / sTotal));
-
-            root.record({ cpu: root.cpu, mem: root.mem, temp: root.temp,
-                fan: root.fan, gpu: root.gpu, vram: root.vram,
-                swapIn: root.swapIn, swapOut: root.swapOut,
-                netDown: root.netDown, netUp: root.netUp,
-                diskRead: root.diskRead, diskWrite: root.diskWrite });
         }
     }
 
     // Disks move slowly and df is a syscall storm; once every half minute is
     // plenty — unless the set of mounts to watch just changed under us.
     Timer {
-        interval: 30000
+        interval: root.diskMs
         running: Caps.probed
         repeat: true
         triggeredOnStart: true

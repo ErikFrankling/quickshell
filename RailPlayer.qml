@@ -219,29 +219,20 @@ Item {
         // that opens the panel. shub39's rail swaps the slot's width and height
         // around the label (PlayingMedia.qml:65-83); the swap is spelled out
         // here because the slot's width must stay a literal 34 rather than
-        // become whatever the text measures. Only the height answers to the
-        // title, and height is what the rail has to give.
+        // become whatever the text measures.
+        //
+        // The height is a constant, not the measured title. Sizing to the text
+        // meant every track change moved everything below it — the rail is a
+        // fixed piece of furniture and a song name is not a reason to relayout
+        // it. With nothing playing the slot goes away entirely and the widget
+        // is just the ring, which is the one case where the height may change.
         Item {
             id: slot
 
             Layout.alignment: Qt.AlignHCenter
             implicitWidth: 34
-            implicitHeight: Math.min(112, Math.ceil(metrics.advanceWidth))
+            implicitHeight: 112
             visible: root.title !== ""
-
-            // Measured unconstrained, so the slot can size to the text without
-            // the text sizing to the slot — reading the label's own width back
-            // into the slot that sets it is the loop this avoids. xenon-shell
-            // uses TextMetrics the same way (Modules/Bar/Widgets/Media.qml:
-            // 92-98). advanceWidth, not width: width rounds down to whole
-            // pixels, and a label given its own rounded-down width elides —
-            // "The Spins" measured 59 and needed 59.34, so every title lost
-            // its last two characters to a third of a pixel.
-            TextMetrics {
-                id: metrics
-                font: label.font
-                text: root.title
-            }
 
             Text {
                 id: label

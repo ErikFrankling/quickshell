@@ -43,6 +43,58 @@ Singleton {
     // ListModel role crashes once the server destroys it.
     property var live: ({})
 
+    // One string in, one url out, "" for "draw nothing".
+    //
+    // The empty answer is the whole point. Only `hicolor` is installed here, so
+    // most theme names miss, and a miss must draw nothing: iconPath with one
+    // argument answers every name, with the provider's magenta-and-green
+    // placeholder for the ones it cannot find, which is the checkerboard the
+    // tray menu already had to work around (TrayMenu.qml:85-96). The second
+    // argument is the check-exists flag and returns "" instead — measured on
+    // this machine, not assumed: iconPath("spotify", true) is "" while
+    // iconPath("spotify-client", true) is "image://icon/spotify-client".
+    function icon(name) {
+        if (!name)
+            return "";
+        // Unwrapped first. This libnotify no longer puts --icon in the
+        // app_icon field at all — it sends it as the image-path hint — and
+        // Quickshell hands that back already wrapped as "image://icon/<hint>",
+        // whatever the hint was. So an unchecked name arrives looking like a
+        // resolved url, and the name has to come back out to be checked.
+        const prefix = "image://icon/";
+        const bare = name.startsWith(prefix) ? name.slice(prefix.length) : name;
+        // A file, or inline image data, is its own answer: neither can be
+        // checked here, and the card asks Image instead.
+        if (bare.startsWith("/"))
+            return "file://" + bare;
+        if (bare.includes("://"))
+            return bare;
+        return Quickshell.iconPath(bare, true);
+    }
+
+    // The sending application's logo, resolved once, on arrival.
+    //
+    // appIcon first because it is the app saying who it is — and Quickshell has
+    // already done the desktop-entry lookup behind it, which is worth knowing:
+    // a notification carrying only `desktop-entry=spotify` arrives here with
+    // appIcon "spotify-client", because nothing called "spotify" is installed
+    // and spotify.desktop's `Icon=` line is what connects the two. The explicit
+    // entry lookup below is still not redundant; it covers an app that names an
+    // icon of its own that nobody has installed.
+    //
+    // `image` is last because it is the content hint — album art, an avatar —
+    // and Erik asked for the application's logo, so a track change should show
+    // the Spotify mark and not the sleeve. It is in the chain at all because
+    // this libnotify's --icon lands there, which makes it the only thing a
+    // plain `notify-send --icon=firefox` sets.
+    function iconFor(n) {
+        const entry = n.desktopEntry ? DesktopEntries.byId(n.desktopEntry) : null;
+        return root.icon(n.appIcon)
+            || root.icon(entry ? entry.icon : "")
+            || root.icon((n.appName || "").toLowerCase())
+            || root.icon(n.image);
+    }
+
     function snapshot(n) {
         return {
             key: String(n.id) + ":" + Date.now(),
@@ -50,6 +102,11 @@ Singleton {
             app: n.appName || "unknown",
             summary: n.summary || "",
             body: n.body || "",
+            icon: root.iconFor(n),
+            // Milliseconds the sender asked to be left up. -1 is "the server
+            // decides" and is what notify-send sends unless given -t; 0 is
+            // "never expire". Both were being thrown away — see shell.qml.
+            timeout: n.expireTimeout,
             urgency: n.urgency === NotificationUrgency.Critical ? "critical"
                    : n.urgency === NotificationUrgency.Low ? "low" : "normal",
             actions: n.actions.map(a => ({ id: a.identifier, label: a.text })),
@@ -116,16 +173,24 @@ Singleton {
     }
 
     // A reloaded entry is a corpse: its D-Bus id died with the last process, so
-    // its actions cannot be invoked and it carries no image or icon path that
-    // could outlive the sender's temp file — snapshot() never stored one, and
-    // nothing here draws one, so there is no broken-image square to hit. The
-    // actions do have to go, or the card offers buttons that quietly do
-    // nothing. vast-shell drops ephemeral image:// urls on load for the same
-    // reason (Qml/Services/Notifs.qml:193-196).
+    // its actions cannot be invoked. Those have to go, or the card offers
+    // buttons that quietly do nothing.
+    //
+    // The icon is the same question asked of a string. A themed one is an
+    // "image://icon/<name>" url that resolves against the installed themes
+    // every time it is drawn, so it is as good tomorrow as it was today; a
+    // path is whatever the sender had lying around when it fired, usually
+    // under /tmp, and by now it is very likely gone. So the themed ones are
+    // kept and the paths are dropped, which is what vast-shell does with
+    // ephemeral urls on load for the same reason
+    // (Qml/Services/Notifs.qml:193-196).
     //
     // Anything that arrived before the file came back is kept in front of it.
     function load(text) {
-        const old = JSON.parse(text).map(n => Object.assign({}, n, { actions: [] }));
+        const old = JSON.parse(text).map(n => Object.assign({}, n, {
+            actions: [],
+            icon: (n.icon || "").startsWith("image://icon/") ? n.icon : ""
+        }));
         root.history = root.prune(root.history.concat(old));
     }
 

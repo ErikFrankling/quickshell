@@ -28,6 +28,27 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
+            spacing: 6
+
+            // The sending application's logo, beside its name. Notifs.iconFor
+            // already asked whether the name resolves, so an unresolvable one
+            // arrives here as "" and this draws nothing at all rather than the
+            // icon provider's placeholder — most names miss on a machine with
+            // only hicolor installed, so the empty case is the common one.
+            //
+            // `status === Ready` and not `source !== ""` because a path the
+            // sender gave us can be a temp file that has since gone. A local
+            // file loads synchronously, so a resolvable icon is Ready before
+            // the first frame and the name beside it never shifts sideways.
+            Image {
+                source: root.n.icon || ""
+                visible: status === Image.Ready
+                sourceSize.width: 16
+                sourceSize.height: 16
+                Layout.preferredWidth: 16
+                Layout.preferredHeight: 16
+            }
+
             Text {
                 text: root.n.app
                 color: root.n.urgency === "critical" ? Theme.bad : Theme.accent

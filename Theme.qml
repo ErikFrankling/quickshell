@@ -79,7 +79,35 @@ Singleton {
 
     // A group's rounded ground: how far it is inset from the rail, and how much
     // air it keeps around its column.
-    readonly property int groupWidth: 46
+    //
+    // 50, not the 46 it was, because the widest thing standing on this ground
+    // had stopped fitting on it. Design 9's captions put the metric's name and
+    // its total on one row (docs/surveys/metric-centred.md) and the longest of
+    // them, `data 2.0T`, lays down 43px of ink: on a 46px ground that is one
+    // pixel of air on the left and two on the right, which Erik read off the
+    // rail as the caption running out of its own background. Ink does not
+    // touch a ground it belongs to.
+    //
+    // 50 is what the rail can afford. The rail is 58 and is not moving — it is
+    // the exclusive zone, and a panel attaches flush to its right edge and
+    // tucks one pixel under it (CardShape.qml:91) — so every pixel a group
+    // gains is a pixel of that edge given up. At 50 the ground sits 4px inside
+    // the rail on each side and the widest caption gets 3px of air on the left
+    // and 4 on the right, three to four times what it had. 52 was drawn too
+    // and buys one further pixel of air for a quarter of the rail's channel: 3px
+    // between a 10px corner radius and the seam a panel attaches to is no
+    // longer a margin, it is a hairline, and the group would read as having
+    // slipped off the rail rather than as sitting on it.
+    //
+    // Every group inherits this — Group.qml:50, plus the metrics block at
+    // shell.qml:560, which is a Group in all but name — so this is the number
+    // that keeps the five grounds down a 58px strip on one vertical line, and
+    // widening only the rings' would put one of five out of true. The two
+    // groups that size themselves from it, RailPlayer.qml:112 and
+    // RailClock.qml:109, follow at `groupWidth - 4` and are better for it: the
+    // clock's open-state ground was 42px around 42px of digits, hairline hard
+    // against the glyphs, and is now 46 around the same 42.
+    readonly property int groupWidth: 50
     readonly property int groupPad: 6
     readonly property int groupGap: 8
 

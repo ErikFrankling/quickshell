@@ -201,6 +201,25 @@ Item {
     // widest thing the ring draws — 44px for "data 2.0T" against the ring's
     // own 28 — and it is the reason the rings group's spacing is 9 where every
     // other group on the rail uses Theme.slotGap.
+    //
+    // Sideways it is now inside its ground with room to spare: Theme.groupWidth
+    // went 46 → 50 so the widest of these has 3px of ground on its left and 4
+    // on its right instead of 1 and 2, which is what Erik was pointing at when
+    // he said the caption was going too far.
+    //
+    // Downwards it still is not, and that is the open half of the same
+    // complaint. This hangs about 11px below the ring while a group only pads
+    // Theme.groupPad = 6 under its last child, so the *last* ring in the group
+    // — the battery on a laptop, the last disk on this desktop — draws its
+    // caption over the group's bottom edge and its outer characters land on
+    // bare rail, past the 10px corner radius. Measured on the live rail: the
+    // caption's ink runs rows y666..672 while the ground's bottom edge is y670
+    // and its corners have been eating the ends since y662. Closing it
+    // costs about 6px of rail height, which rail.fixed and the overflow ladder
+    // in shell.qml are not free to spend without a decision — the height-free
+    // version is to take the 6px off the rings' 9px spacing and give it to the
+    // bottom pad, which tightens the overhang between rings to buy it. See
+    // docs/surveys/metric-centred.md.
     Text {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.bottom

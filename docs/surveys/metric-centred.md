@@ -242,11 +242,13 @@ them would not fit on a 44px one.
 **`Theme.groupWidth` is not the rings' number to give back.** It is one value
 shared by every group on the rail — `Group.qml:49` is `implicitWidth:
 Theme.groupWidth` and every group inherits it. The widest thing standing on it
-is not the ring but the **44px workspace pill** (`Workspaces.qml:158`), which
-has exactly the same one pixel of air a side that design 9 does. Narrowing 46
-would clip the pills, and narrowing only the rings' ground would put one group
-out of line with the other four down a 58px strip, where a 3px misalignment is
-the width of the stroke on the ring next to it.
+is not the ring but the caption itself. ~~The **44px workspace pill**
+(`Workspaces.qml:158`) has exactly the same one pixel of air a side that design
+9 does.~~ **That was wrong, and it is corrected below** — the pill does not
+stand on this ground at all. Narrowing 46 would still be wrong for the second
+reason given here: narrowing only the rings' ground would put one group out of
+line with the other four down a 58px strip, where a 3px misalignment is the
+width of the stroke on the ring next to it.
 
 **And it would buy nothing that is scarce.** The rail is 58px wide whatever the
 ground does; narrowing the ground returns **0px of rail height**, and height is
@@ -306,9 +308,12 @@ over a 1.5 TB disk, which is the sort of number you have to distrust before you
 can act on it and the whole reason this ring reads in gigabytes rather than in
 percent. Buying a guaranteed 34px means lying about a third of a disk.
 
-The 44px is also not a new precedent here. It is the width of the workspace pill
-(`Workspaces.qml:158`), which has stood on this same 46px ground with the same
-pixel of air a side since it was drawn. And `/mnt/data` on the last sheet was not
+~~The 44px is also not a new precedent here. It is the width of the workspace
+pill (`Workspaces.qml:158`), which has stood on this same 46px ground with the
+same pixel of air a side since it was drawn.~~ **Struck: the pill is not on this
+ground.** See "The ground was widened" below — the pill is 44px on the
+*full-width* workspaces block and has 7px of rail a side, so it never was the
+precedent quoted here. And `/mnt/data` on the last sheet was not
 rejected *for* being 44px — `metric-fraction.md:76` records design 13 as "fits by
 1px a side" and the reason given at `:172-177` is that a mount **path** does not
 belong on the rail. The 44 was quoted in that argument, not the argument.
@@ -457,3 +462,133 @@ second-most expensive, to produce a figure that swings by tens of minutes with
 the load, for a row the caption does not have anyway: `bat 2h14` is 34px and
 would have to displace the charge to get there. The bolt says it is charging;
 the panel is a click away and 430px wide.
+
+## The ground was widened: `Theme.groupWidth` 46 → 50
+
+Erik, on the shipped rail: *"see here needs to be extended a bit, that
+background colour — 'bat' text is going too far."* The sheet above had already
+measured why. `data 2.0T` puts down 43px of ink in a 44px advance box on a 46px
+ground: **1px of air on the left, 2 on the right.** Ink that close to the edge of
+the surface it stands on does not read as fitting, it reads as overflowing, and
+the sheet's own answer at the time — keep 46, the pill lives there too — rested
+on a fact that turns out not to be true.
+
+**The ground is 50 now, and nothing else moved.**
+
+### What 50 buys, measured on the live rail
+
+Gruvbox dark, 1920×1080, ink bounding boxes read off `grim` captures of the
+`0,0 58x1080` strip and counted per pixel column, not off the layout.
+
+| | ground x | rail either side | `data 2.0T` ink x | air L / R |
+|---|---|---|---|---|
+| before, `groupWidth` 46 | 6..51 | 6, 6 | 7..49 | **1 / 2** |
+| after, `groupWidth` 50 | 4..53 | 4, 4 | 7..49 | **3 / 4** |
+
+The caption does not move — it is centred on a ring that is centred on a group
+that is centred on the rail, so all three share x=28.5 and the ground grows
+symmetrically around the ink. Every other caption gains the same 2px a side:
+`root 947` goes from 4/3 to 6/5, `ram 31` from 9/8 to 11/10, and the naked ones
+(`cpu`, `fan`, `°c`) were never close.
+
+All four grounds still start and end on the same x — 4..53 for the metrics, the
+player, the radios and the clock — measured in the same capture. The workspaces
+block is full rail width and is a different shape on purpose (see `Group.qml`).
+
+### Why 50 and not 52, and not 48
+
+The rail is **58 and is not moving**: it is the exclusive zone, and a panel
+attaches flush to its right edge and tucks a pixel under it
+(`CardShape.qml:91`, `x: -overlap`). So every pixel the ground takes is a pixel
+of rail channel given up, and the only question is where that trade stops
+paying.
+
+- **48** gives the caption 2/3 and leaves 5px of rail. It is half a fix — one
+  pixel more than the state Erik complained about.
+- **50** gives 3/4 and leaves 4px of rail. Three to four times the air, and 4px
+  is still a channel: it is wider than the 3px stroke the rings are drawn with,
+  so the eye still reads a rail with grounds on it.
+- **52** gives 4/5 and leaves 3px. One further pixel of air for a quarter of the
+  channel, with a 10px corner radius (`Theme.radiusS`) curving into a 3px gap
+  and the panel seam a pixel beyond that. At that point the group reads as
+  having slipped off the rail rather than as sitting on it.
+
+### The rail did not move
+
+Read live off the running instance, before and after, same host, same tray, no
+VPN:
+
+| | ringBox | playerGroup | clockGroup | rail.fixed | inner | elastic | trayMax | rail |
+|---|---|---|---|---|---|---|---|---|
+| before | 262 | 163 | 48 | 595 | 1072 | 477 | 14 | 58×1080 |
+| after | 262 | 163 | 48 | 595 | 1072 | 477 | 14 | 58×1080 |
+
+`hyprctl monitors` reads `reserved: [58,0,0,0]` after the change, with one shell
+instance running. Width is the only thing that changed and no height depends on
+it.
+
+### The two groups that size themselves from it are better for it
+
+`RailPlayer.qml:112` and `RailClock.qml:109` both draw their open-panel ground
+at `Theme.groupWidth - 4`, so it went 42 → 46 with no edit. Measured with each
+panel open: the box is x 6..51 inside a ground at 4..53, still exactly 2px in on
+each side, which is what those comments say it is for. The clock is the one that
+gains: its digits are 42px wide, so the old 42px box put the wash's edge
+*exactly* on the outermost glyphs and the new one leaves 2px of ground between
+them. Their comments still say "46px ground" and now mean the box rather than
+the ground; neither file was in scope to re-word.
+
+### Correction: the workspace pill is not on this ground
+
+Two passages of this sheet — the struck sentences under "Is the 9px flank
+wasted" and "The total is not abbreviated" — both said the 44px pill
+(`Workspaces.qml:158`) stands on the same 46px ground with the same pixel of air
+a side, and used that as the precedent for leaving the caption at 44. **It does
+not.** The pill is
+inside `wsBlock`, which is `Layout.fillWidth: true` on a 58px rail — it is the
+one block that is deliberately full width and runs square into two screen edges.
+Measured: the pills render at x 7..50, which is 44px with **7px of rail on each
+side**, before and after this change, untouched by `Theme.groupWidth` in either
+direction. Nothing in `Workspaces.qml` needs adjusting for a wider ground, and
+the pill was never the thing that was short of room.
+
+### Still open: the last ring's caption hangs off the *bottom* of the ground
+
+Widening fixes the direction Erik's words point in — the caption had no air
+sideways — but the ring he named is the one that shows the other direction, and
+this sheet should say so rather than leave it to be rediscovered.
+
+The caption is anchored to the ring's bottom edge and hangs about 11px below it
+(`Ring.qml`), which the 9px spacing between rings pays for. The **last** ring in
+the group has no next ring under it, only `Theme.groupPad` = 6 of ground and
+then a 10px corner radius. So its caption is drawn partly on bare rail. Measured
+on the live rail, last ring `data 2.0T`:
+
+| row | ground x | caption ink x |
+|---|---|---|
+| y666 | 6..51 | 10..49 |
+| y667 | 7..50 | 8..48 |
+| y668 | 26..49 | 7..48 |
+| y669 | 20..46 | 7..48 |
+| y670 | 20..39 | 7..48 |
+| y671 | — | 7..48 |
+| y672 | — | 8..48 |
+
+Five of the caption's seven ink rows have ends outside the ground, and its last
+two rows have no ground under them at all. On a laptop the last ring is the
+battery, so the caption that does this is `bat` — which is the word Erik used,
+and which at 29px cannot be the one that is too wide.
+
+Two ways to close it, neither taken here because both need a decision this pass
+did not have:
+
+1. **Pad the bottom of the group.** `ringBox.implicitHeight` is
+   `rings.implicitHeight + 12`; about `+6` on the bottom side puts the whole
+   caption on the ground with a pixel to spare. It costs 6px of `rail.fixed`,
+   which the overflow ladder spends out of the workspaces' room, and the height
+   budget was frozen for this change.
+2. **Height-free: move the 6px rather than add it.** The rings' spacing is 9 and
+   there are six gaps between seven rings; at 8 that is exactly the 6px the
+   bottom needs, so `ringBox` stays 262 and `rail.fixed` stays 595. The cost is
+   that the overhang between rings tightens from 1px of slack to 2px of overlap,
+   which is a look question and wants an eye on it, not a table.

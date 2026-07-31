@@ -589,7 +589,7 @@ ShellRoot {
                                 // total was unknown, which meant the one ring
                                 // that could say what it was never did. It says
                                 // both now, on one caption row: "ram 31", 29px
-                                // of 8px type on a 46px ground.
+                                // of 8px type on a 50px ground.
                                 Ring {
                                     label: Sys.memTotalGb > 0
                                         ? "ram " + Math.round(Sys.memTotalGb)
@@ -628,17 +628,27 @@ ShellRoot {
                                 // is a click away and 430px wide.
                                 //
                                 // "data 2.0T" is the widest caption on the rail
-                                // at 44px, with one pixel of air each side of
-                                // the 46px ground, and it stays 2.0T. Writing
-                                // it "2T" measures 34 and buys the look of room
-                                // rather than room: "data 1.5T" is 44px again,
-                                // so the abbreviation only helps a disk whose
-                                // size happens to round to a whole terabyte —
-                                // and rounding it for real would print "2T" over
-                                // a 1.5 TB disk, which is the unactionable
-                                // number this ring reads in gigabytes to avoid.
-                                // 44px is also not new here: the workspace pill
-                                // is 44 on the same ground (Workspaces.qml:158).
+                                // at 44px of advance carrying 43px of ink, and
+                                // it stays 2.0T. Writing it "2T" measures 34 and
+                                // buys the look of room rather than room: "data
+                                // 1.5T" is 44px again, so the abbreviation only
+                                // helps a disk whose size happens to round to a
+                                // whole terabyte — and rounding it for real
+                                // would print "2T" over a 1.5 TB disk, which is
+                                // the unactionable number this ring reads in
+                                // gigabytes to avoid.
+                                //
+                                // What was done instead is that the ground grew
+                                // to meet it: Theme.groupWidth is 50 and this
+                                // caption now sits 3px in from its left edge and
+                                // 4px from its right, where on the old 46 it
+                                // sat 1px and 2px in and read as spilling. The
+                                // workspace pill was quoted here as the
+                                // precedent for 44px on this ground and it is
+                                // not one — it is 44px on the *full-width*
+                                // workspaces block (Workspaces.qml:158 inside
+                                // wsBlock above, which is Layout.fillWidth), so
+                                // it has 7px of rail either side and always had.
                                 Repeater {
                                     model: Sys.disks
                                     Ring {

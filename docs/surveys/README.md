@@ -26,6 +26,7 @@ relevant one before rewriting the widget it covers.
 | `requirements-audit-2.md` | Same, redone against all 86 extracted user messages in order — the fuller and later of the two. |
 | `requirements-audit-3.md` | The current one, written after seven background agents stopped mid-task: what each of them had actually finished, and every doubtful box re-derived from the code instead of from the two audits above. Also records two claimed bugs that do not exist, and why exact-colour pixel counting cannot see 11px text. |
 | `graph-axis.md` | How do other shells draw a history graph, and does anybody label its Y axis? Six do the first, none the second — and two moved off `Canvas` deliberately, which is why keeping it here had to be justified rather than assumed. |
+| `glyph-centring.md` | Why every rail glyph sat half a pixel left of its disc, measured off the live rail for all nine shapes the two disc buttons can show. Not side bearings: `anchors.centerIn` snaps an odd-sized item to the pixel grid, which the 15px tray `Image` proves by doing the same thing. What ten shells do about it (nothing), and the two obvious fixes that measured worse — including filling the ground and aligning, which centres the advance and throws the wifi glyph 2.8px the other way. |
 
 The `.html` and `.qml` files are the sources the contact sheets were rendered
 from. All of them are scrollable and searchable, and all of them can be

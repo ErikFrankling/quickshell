@@ -116,8 +116,50 @@ Item {
               : root.disc ? Theme.bgAlt
               : Qt.alpha(Theme.line, 0)
 
+        // The glyph, half a pixel further right than QML would put it on its
+        // own.
+        //
+        // `anchors.centerIn` does not centre an odd-sized item. Qt's own
+        // hcenter() helper in qquickanchors.cpp returns (width + 1) / 2 when
+        // the width is odd, which snaps the item to the pixel grid and leaves
+        // it half a pixel left of centre — and every one of these glyphs lays
+        // out odd: 15px for the four wifi shapes, 13 for ethernet and the
+        // globe, 11 for bluetooth-off, 9 for bluetooth. Against a bare rail
+        // there was nothing to be off-centre from, so nobody could see it. The
+        // disc made it measurable, which is when Erik pointed at it.
+        //
+        // Measured on his rail, ink bounding box against disc centre, before
+        // and after: every glyph sat 0.5 to 1.0px left and now sits 0.19 to
+        // 0.45px left, which is the ceiling of what is available — Qt rounds a
+        // Text's contentWidth up to a whole pixel while the ink inside it is
+        // fractional (12.48px of ethernet in a 13px box), so half of that
+        // rounding is a leftward lean no anchor can undo. Nor can measuring it
+        // at runtime: TextMetrics.tightBoundingRect comes back integer, so it
+        // cannot see the fraction either.
+        //
+        // Vertically there is nothing to fix and nothing to fear: the Nerd Font
+        // patcher centres these Material Design glyphs on the midpoint of the
+        // font's own ascent and descent — ink centre 360 units, (1020 - 300) / 2
+        // is 360 — so the ink already lands within 0.1px of the disc's middle,
+        // and the box is an even 20px tall, which centerIn gets exactly right.
+        //
+        // Two things that look like the fix are not. Filling the ground and
+        // setting horizontalAlignment centres the *advance* rather than the
+        // ink, and these glyphs carry 14.55px of ink on a 9px advance, all of
+        // it overhanging right: measured, it throws the wifi glyph 2.8px the
+        // other way. And a per-glyph offset table would be five numbers nobody
+        // will maintain, wrong the day a glyph changes, for a correction that
+        // is the same half pixel in all five cases.
+        //
+        // The reference shells are no help here because none of them has this
+        // problem in view: noctalia, whisker, skwd, Zaphkiel, vast-shell,
+        // josecriane and four others all centre the box and live with it, and
+        // the one that fills and aligns instead — diinki's — would be off the
+        // way measured above. Only Ricelin actually solves it, by giving up on
+        // fonts and centring the bounding box of a baked SVG path.
         Text {
             anchors.centerIn: parent
+            anchors.alignWhenCentered: false
             text: root.glyph
             color: root.active ? Theme.bg : root.tint
             font.pixelSize: Theme.icon

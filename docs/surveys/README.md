@@ -10,8 +10,8 @@ relevant one before rewriting the widget it covers.
 | `player-survey.qml` / `player-survey.png` | How do ten shells fit a now-playing widget into a narrow vertical rail — art, title, transport controls, and what they drop when there is no room? |
 | `clock-survey.qml` / `.md` / `.png` | How do thirteen shells fit hours, minutes, day and month into a 58px vertical strip, and what does each design actually cost in pixels of rail height? |
 | `clock-compact.qml` / `.md` / `.png` | Can the same four fields go *below* 36px? Fifteen new designs measured for height and width against the shipped `RailClock` — including the ones that fail, and why turning the clock's reading direction costs 124px. |
-| `metric-fraction.qml` / `.md` / `.png` | A ring says two things and memory and the disks have three — a name, a used value and a total. Twenty-one layouts drawn at the rail's true 58px and measured for what they claim, what they draw and what they cost the rail; plus what six other shells do with two numbers in a narrow strip, and why the mount path stays in the monitor panel. |
 | `hover-survey.md` | How do sixteen projects colour and animate the workspace pill on hover, and where does the hover state live (`MouseArea` vs `HoverHandler`)? |
+| `pill-bounds.qml` / `.md` | What tells you where one workspace pill ends and the next begins — nineteen designs at the rail's true 58px, on the group's real ground, with the empty workspace and the two-digit one drawn as well as the easy cases. Measured in CIE L\* rather than a WCAG ratio because the ratio compresses at the light end and calls two very different borders the same. Also: why every filled-ground design loses to the hover colour, why a separator rule between pills is cheaper ink and still the wrong answer, and why the shell's own border token cannot be the border here. |
 | `vpn-glyph.md` | Which glyph reads as "VPN" at the rail's 15px — what five shells use, and every candidate rendered at that size, including why the Nerd Font glyph actually named `vpn` cannot be used. |
 | `network-glyph.qml` / `.md` / `.png` | Can the link type *and* the tunnel fit in one 28px rail slot — sixteen designs measured for how many of the slot's 784 pixels change, how thin the changing mark is, and whether ethernet, wifi and offline stay apart while the tunnel is up. Also: does the tunnel matcher catch OpenVPN as well as WARP, proved with the real binary in a network namespace, and both at once. |
 | `control-centre.md` | When sixteen shells put several unrelated things behind one button, how do they page between them and how does the panel size itself — and where did each of them put the settings GUI? Also: does a vertical bar round its corners, and how do they mark the bar button whose panel is open? |
@@ -36,7 +36,11 @@ ships, and they import the shell by absolute path, so fix the path if the repo
 moves. `clock-survey.qml` measures each mock rather than labelling it, so the
 heights under it stay honest if a font changes; `clock-compact.qml` measures
 width the same way, because once a clock goes horizontal the rail runs out
-sideways before it runs out of height. `metric-fraction.qml` goes one further
-and *prints* its measurements: it walks every built mock once the scene has
-settled and writes the whole table to stdout as a TSV, so the sheet can be
-checked, diffed and quoted by somebody who cannot see the picture.
+sideways before it runs out of height. `pill-bounds.qml` *prints* rather than
+draws, because the thing it decides cannot be drawn: a survey harness has its
+own ShellId and therefore its own empty `theme.json`, so it can only ever be
+seen in one scheme, and the question is how a mark behaves across all of them.
+It instantiates `Themes.qml` unseen, reads its `curated` list and writes every
+design against every curated palette to stdout — so the cross-theme numbers
+come from the one place the palettes live rather than from a second copy that
+can drift, and the sheet can be quoted by somebody who cannot see the picture.

@@ -84,13 +84,6 @@ ColumnLayout {
         { k: "Public address", v: !Net.online ? "" : Net.publicIp || "…" }
     ].filter(f => f.v)
 
-    Text {
-        text: "Network"
-        color: Theme.fg
-        font.pixelSize: 18
-        font.weight: Font.DemiBold
-    }
-
     // The link carrying the default route, named by what it is.
     Entry {
         glyph: Net.glyph

@@ -46,13 +46,6 @@ ColumnLayout {
         }
     }
 
-    Text {
-        text: "Audio"
-        color: Theme.fg
-        font.pixelSize: 18
-        font.weight: Font.DemiBold
-    }
-
     Mix {
         node: Audio.sink
         glyph: "󰕾"

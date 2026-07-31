@@ -101,13 +101,6 @@ ColumnLayout {
         onTriggered: root.scanWhenReady = false
     }
 
-    Text {
-        text: "Bluetooth"
-        color: Theme.fg
-        font.pixelSize: 18
-        font.weight: Font.DemiBold
-    }
-
     Entry {
         glyph: "󰂯"
         label: "Bluetooth"

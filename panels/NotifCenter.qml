@@ -8,13 +8,22 @@ ColumnLayout {
 
     property bool showSaved: false
 
+    // The one heading here was doing two jobs. Naming the panel is the job it
+    // did not need — you opened it — but it was also the only thing saying
+    // which of the two lists the ☆ button had left you looking at, and the
+    // button cannot say that itself: its glyph is what the press will do, not
+    // where you are. So the name goes and the count takes over the line, and
+    // the count now names the list it is counting. That is a fact rather than
+    // a label, it is a line the panel was spending anyway, and it tells you
+    // more than "Saved" did — an empty saved list and an empty history read
+    // differently now.
     RowLayout {
         Layout.fillWidth: true
         Text {
-            text: root.showSaved ? "Saved" : "Notifications"
-            color: Theme.fg
-            font.pixelSize: 18
-            font.weight: Font.DemiBold
+            text: root.showSaved ? Notifs.saved.length + " saved"
+                                 : Notifs.history.length + " in history"
+            color: Theme.dim
+            font.pixelSize: 12
             Layout.fillWidth: true
         }
         Btn {
@@ -25,13 +34,6 @@ ColumnLayout {
             glyph: "✕"
             onClicked: root.showSaved ? null : Notifs.clearHistory()
         }
-    }
-
-    Text {
-        visible: !root.showSaved
-        text: Notifs.history.length + " in history"
-        color: Theme.dim
-        font.pixelSize: 12
     }
 
     ListView {

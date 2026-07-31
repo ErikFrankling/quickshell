@@ -18,13 +18,6 @@ ColumnLayout {
     // cannot reach it from here. x and y are screen coordinates.
     signal menuRequested(var item, real x, real y)
 
-    Text {
-        text: "Tray icons"
-        color: Theme.fg
-        font.pixelSize: 18
-        font.weight: Font.DemiBold
-    }
-
     Repeater {
         // ScriptModel, not the bare array: a tray item that quits while the
         // flyout is open would otherwise have Qt rebuild every delegate from

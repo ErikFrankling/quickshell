@@ -25,6 +25,7 @@ relevant one before rewriting the widget it covers.
 | `requirements-audit.md` | Which ticked boxes in `REQUIREMENTS.md` were not actually done, checked against the code and the running shell rather than against the document? |
 | `requirements-audit-2.md` | Same, redone against all 86 extracted user messages in order — the fuller and later of the two. |
 | `requirements-audit-3.md` | The current one, written after seven background agents stopped mid-task: what each of them had actually finished, and every doubtful box re-derived from the code instead of from the two audits above. Also records two claimed bugs that do not exist, and why exact-colour pixel counting cannot see 11px text. |
+| `graph-axis.md` | How do other shells draw a history graph, and does anybody label its Y axis? Six do the first, none the second — and two moved off `Canvas` deliberately, which is why keeping it here had to be justified rather than assumed. |
 
 The `.html` and `.qml` files are the sources the contact sheets were rendered
 from. All of them are scrollable and searchable, and all of them can be

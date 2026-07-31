@@ -200,11 +200,13 @@ Two things to be honest about:
 
 1. **It is 44px wide on a 46px ground** — one pixel of air a side, and that is
    the same 44px that got `/mnt/data` rejected on the last sheet. The width
-   comes entirely from `data 2.0T`; `ram 31` is 30px and `root 947` is 33px. If
-   that pixel matters, writing the terabyte total as `2T` rather than `2.0T`
-   brings the worst row to 34px, which is inside design 7's 39 and design 3's 39
-   and comfortable. That is a one-character change to the formatter, not a
-   design change.
+   comes entirely from `data 2.0T`; `ram 31` is 29px and `root 947` is 39px —
+   the 30 and the 33 this line first carried were wrong, and the corrected
+   numbers are re-measured off the built items and off the rendered rail in
+   "What shipped" below. If that pixel matters, writing the terabyte total as
+   `2T` rather than `2.0T` brings the worst row to 34px, which is inside design
+   7's 39 and design 3's 39 and comfortable. That is a one-character change to
+   the formatter, not a design change.
 2. **The slash is gone.** Every caption under these rings currently begins with
    one. `ram 31` reads as "13 of ram's 31" only because the number above it is
    13; on its own the caption is a name and a number with a space between them.
@@ -256,3 +258,202 @@ everything is, is not a trade.
 The honest version of the original claim, then, is that the 9px flank was never
 "doing nothing". It was doing what the caption needed and had 5px left over,
 and the last sheet spent the 5px rather than the 9.
+
+## What shipped
+
+**Design 9, unabbreviated, without the slash, plus a charging mark on the
+battery.** `Ring.qml`'s turned name is gone and with it the whole flank idea;
+the caption is now the only place a ring says anything in words, and it carries
+one word or two.
+
+Rendered on the live rail, ink bounding box read off a screenshot rather than
+off the layout, Gruvbox dark on a 1920×1080 output:
+
+| ring | caption | advance box | rendered ink | x on the 46px ground |
+|---|---|---|---|---|
+| cpu, gpu, fan | `cpu` | 15 | 14 | 22..35 |
+| °c | `°c` | 10 | 10 | 24..33 |
+| ram | `ram 31` | 29 | 29 | 15..43 |
+| disk `/` | `root 947` | 39 | 39 | 10..48 |
+| disk `/mnt/data` | **`data 2.0T`** | **44** | **43** | **7..49** |
+| battery, on battery | `bat` | 15 | 15 | 22..36 |
+| battery, on mains | `bat 70` | 29 | 27 | 15..41 |
+
+The widest row on the rail is `data 2.0T`: a 44px advance box carrying 43px of
+ink, standing on a 46px ground, so one pixel of air on the left and two on the
+right. `TextMetrics.advanceWidth` says 43.17 and the screenshot says 43 lit
+pixels; both agree with the sheet's 44.
+
+**The rail did not move.** Measured live off `ringBox.implicitHeight` and
+`rail.fixed`, before and after, on the same host with the same tray and no VPN:
+
+| | ringBox | rail.fixed | rail.inner | elastic | trayMax |
+|---|---|---|---|---|---|
+| before | 262 | 595 | 1072 | 477 | 14 |
+| after | 262 | 595 | 1072 | 477 | 14 |
+
+262 is also what the group measures on screen — the rings' ground runs y=409..670
+in the capture, which is 262 rows. Seven rings at 28 with six 9px gaps and 6px of
+pad each side is 262 exactly, and the caption still hangs outside all of it.
+
+### The total is not abbreviated
+
+`data 2.0T` stays `2.0T`. `data 2T` measures 34 and looks like ten pixels of
+headroom, but it is not headroom: **`data 1.5T` measures 44 as well.** Stripping
+a trailing zero only helps a disk whose size happens to round to a whole
+terabyte, and rounding for real — `(1500/1000).toFixed(0)` — would print `2T`
+over a 1.5 TB disk, which is the sort of number you have to distrust before you
+can act on it and the whole reason this ring reads in gigabytes rather than in
+percent. Buying a guaranteed 34px means lying about a third of a disk.
+
+The 44px is also not a new precedent here. It is the width of the workspace pill
+(`Workspaces.qml:158`), which has stood on this same 46px ground with the same
+pixel of air a side since it was drawn. And `/mnt/data` on the last sheet was not
+rejected *for* being 44px — `metric-fraction.md:76` records design 13 as "fits by
+1px a side" and the reason given at `:172-177` is that a mount **path** does not
+belong on the rail. The 44 was quoted in that argument, not the argument.
+
+### The slash is dropped
+
+Measured: `ram/31` and `ram 31` are both 29px, `data/2.0T` and `data 2.0T` both
+44. The font is monospaced, so a slash and a space are the same cell and the
+choice is free in every direction.
+
+It goes because the caption is no longer a fraction. The numerator is inside the
+ring; a slash between a *name* and a total asserts a ratio between two things
+that are not in one. And the battery now writes `bat 87` in the same row, where
+the second number is the current charge rather than a total — a slash there
+would be a plain lie, and one caption grammar across every ring is worth more
+than an ambiguity a slash does not actually resolve.
+
+## The charging mark
+
+`Sys.charging` already existed and nothing drew it. Erik: "the battery thing
+needs a charging indicator — needs to show clearly when it's charging."
+
+**While on mains the two facts trade places: a bolt takes the ring's middle at
+14px and the charge drops into the caption's second word.** `bat 87`, in the
+grammar design 9 has just given every other ring. Nothing else changes — the arc
+still runs on the charge, the ground still washes on the warning level, and the
+blink is still gated off by the same `!Sys.charging` it always was.
+
+### What the reference shells do
+
+Thirteen trees with a battery widget, and the charging cue falls into three
+schools:
+
+| school | projects |
+|---|---|
+| **overlay a bolt on the level graphic** | noctalia (`Modules/Bar/Widgets/NBattery.qml:187-204`), tripathiji1312 (`modules/bar/components/Battery.qml:182-197`) |
+| **replace the level glyph** | Zaphkiel `BatteryPill.qml`, Brainitech `BatteryStatus.qml:72-80`, liixini `TopBar.qml:1004-1006`, josecriane `StatusIcons.qml:261-291`, doannc2212 `SystemInfo.qml:80`, bjarneo `Bar.qml:573-591` |
+| **recolour the fill, no glyph at all** | myamusashi vast-shell (`Qml/Widgets/Battery.qml:59-68`) |
+
+Every one of them puts a *shape* on it except vast-shell. Several animate — glyph
+frame-cycling at 600–650ms (Brainitech `:72-80`, Zaphkiel `:82-91`), a shimmer
+sliding across the fill (Ricelin `Osd.qml:483-502`), a fill sweeping past the
+true level to 100% and snapping back (vast-shell `:103-163`).
+
+**And his own waybar answered this exact question with a glyph and nothing
+else.** The bolt is hard-coded into the AC-side format string —
+`"format": " {icon} {capacity}%"`, `config.jsonc:55` — `format-charging` is never
+set, and there is no `#battery.charging` rule anywhere in `style.css`. So on
+mains at 25% that bar still went orange and simply stopped blinking. This ring
+now does the same thing, with the same glyph: **nf-fa-bolt, U+F0E7**, the
+character in that config line.
+
+### Why a glyph and not a colour, and why not an animation
+
+**A hue would be unreadable on two of the nine palettes he wears.** Measured off
+`Themes.qml`'s own curated list: `Theme.good` and `Theme.accent` are *the same
+colour* on Everforest — `#a7c080` both — and 1.02:1 apart on Nord. A ring that
+said "charging" by turning its arc green would say nothing at all on either.
+
+| | Tokyo Night | Gruvbox | Catppuccin | Gruvbox Light | Rosé Pine Dawn | Nord | Rosé Pine | Everforest | Kanagawa |
+|---|---|---|---|---|---|---|---|---|---|
+| good vs accent | 1.38 | 1.20 | 1.42 | 1.36 | 1.61 | **1.02** | 1.23 | **1.00** | 1.27 |
+
+**And a green bolt would spend contrast the wash has already claimed** — the way
+designs 6, 12 and 19 died. `Theme.good` at the ring's centre floors at 2.83:1 on
+a plain ground and **1.86:1** under the critical wash, which is the state a
+charging low battery is actually in. Drawn in `Theme.fg` the mark introduces no
+new (ink, ground) pair at all: it is the same ink in the same place as the number
+it replaces, so it inherits that number's measured budget exactly and there is
+nothing new to score.
+
+**No animation, deliberately.** Six of the reference shells move something while
+charging. This rail already has one rule about motion, and it is his:
+`warning-states.md` — blink what he can answer, colour what he cannot, which is
+why `#memory` in his own stylesheet carries the timing properties and is never
+given a keyframe. Charging is not a thing to answer. A mark that moves whenever
+the laptop is plugged in is a mark that is moving most of the time, and the whole
+value of the blink is that it is rare.
+
+### It composes with the warning states
+
+Charging at 8% is a real state and it is the one that had to be got right.
+Captured on the live rail with the states forced through
+`~/.config/erikshell/metrics.json` and faked values, ground colour read out of
+the screenshot at the ring's centre:
+
+| state | ring ground | middle | caption | blink |
+|---|---|---|---|---|
+| 70%, on battery | `#32302f` — plain | `70` | `bat` | no |
+| 70%, on mains | `#32302f` — plain | **bolt** | `bat 70` | no |
+| 8%, on mains | `#623730` — **full** critical wash | **bolt** | `bat 8` | no, held steady |
+| 8%, on battery | `#503430` — mid-breath | `8` | `bat` | yes |
+
+`#623730` is `Theme.bad` at 0.24 over `Theme.bgHi` to the byte, which is the
+check that the charging ring is wearing the *full* wash rather than a softened
+one: the ground still shouts the charge, and the bolt over it says which way it
+is going. Nothing was taken off the warning to make room for the mark.
+
+The two grounds never argue because they answer different questions. The wash is
+how much is left. The middle is which way it is moving. And the caption is the
+number, wherever it happens to be sitting.
+
+### Contrast, plain and washed
+
+The mark is `Theme.fg` at 14px in the ring's middle, so it stands where the
+centre number stands and scores as the centre number scores. The caption is
+`Theme.dim` at 8px and — verified by pixel, not by assumption — **never stands on
+a wash**: at 8% charging the caption ground sampled `#32302f` at both ends while
+the ring's own middle was `#623730`. The wash is a disc on the 28px ring box and
+the caption is anchored below its bottom edge.
+
+| ink / ground | Gruvbox dark | Everforest | Tokyo Night | Gruvbox Light | floor over all nine |
+|---|---|---|---|---|---|
+| centre number or bolt, plain | 9.57 | 5.57 | 10.34 | 5.14 | **5.14** |
+| centre number or bolt, warning wash | 6.38 | 3.98 | 7.14 | 4.50 | **3.98** |
+| centre number or bolt, critical wash | 7.31 | 4.14 | 6.97 | 3.37 | **3.37** |
+| caption, plain ground — its only ground | 3.58 | 2.90 | 4.00 | 3.80 | 2.41 |
+| *rejected:* a `Theme.good` bolt, plain | 6.36 | 4.70 | 7.97 | 2.83 | **2.83** |
+| *rejected:* a `Theme.good` bolt, critical wash | 4.86 | 3.49 | 5.37 | 1.86 | **1.86** |
+
+3.37 is the same floor `warning-states.md` measured across all 335 schemes and
+the same one the sheet above measured across the curated nine, unmoved: the
+charging state adds no ink this rail was not already carrying. The caption's 2.41
+is the shell's existing caption floor on a plain ground and is not this sheet's
+to relitigate; what matters is that the charging state does not move it either.
+
+### Two things to know about it
+
+**`Sys.charging` means "not discharging", not "Charging".** `Sys.qml:378` reads
+`v.st !== "Discharging"`, so the bolt is up at `Full` and at the `Not charging` a
+laptop held at a charge limit reports. That is the same fact the blink and the
+low-battery notification are already gated on, and splitting it would mean two
+names for one reading in three places. If he wants a strict `Charging`,
+`Sys.qml` needs `readonly property bool onMains: v.st !== "Discharging"` kept as
+it is and a new `charging: v.st === "Charging"` beside it, with the ring reading
+the second and the blink and the notification keeping the first — one property,
+one line in the same `onStreamFinished` block that already parses `st`.
+
+**Time-to-full is not worth a fork and is not cheap from sysfs.** Every reference
+shell that shows one — Ricelin `Singletons/Battery.qml:37-38`, whisker
+`services/Power.qml:20-28`, josecriane `modules/popups/Battery.qml:37`, Zaphkiel
+`PowerInfo.qml:47-50` — takes it from UPower's `timeToFull`, and **not one of the
+thirteen computes it from `charge_now`/`current_now`**. Doing that arithmetic
+here would mean two more sysfs reads on a poll that is already the shell's
+second-most expensive, to produce a figure that swings by tens of minutes with
+the load, for a row the caption does not have anyway: `bat 2h14` is 34px and
+would have to displace the charge to get there. The bolt says it is charging;
+the panel is a click away and 430px wide.

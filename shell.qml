@@ -588,12 +588,12 @@ ShellRoot {
                                 // The word "ram" used to appear only when the
                                 // total was unknown, which meant the one ring
                                 // that could say what it was never did. It says
-                                // both now: the name in the flank, the total in
-                                // the caption.
+                                // both now, on one caption row: "ram 31", 29px
+                                // of 8px type on a 46px ground.
                                 Ring {
-                                    name: "ram"
                                     label: Sys.memTotalGb > 0
-                                        ? "/" + Math.round(Sys.memTotalGb) : ""
+                                        ? "ram " + Math.round(Sys.memTotalGb)
+                                        : "ram"
                                     value: Sys.mem
                                     text: Math.round(Sys.memUsedGb)
                                 }
@@ -610,24 +610,35 @@ ShellRoot {
                                 // Gigabytes rather than a percentage, for the
                                 // same reason memory reads in gigabytes: "95" is
                                 // a number you have to convert before you can
-                                // act on it and "845" over "/947" is not. The
-                                // arc keeps the percentage, because df's Use% is
-                                // what says how much more can be written.
+                                // act on it and "845" under "root 947" is not.
+                                // The arc keeps the percentage, because df's
+                                // Use% is what says how much more can be
+                                // written.
                                 //
-                                // The mount is the name and it goes in the
-                                // flank, because with two disks the question the
-                                // ring has to answer first is which disk. Root
-                                // is spelled out: the caption under every one of
-                                // these already starts with a slash, and a lone
-                                // "/" turned on its side is a backslash.
+                                // The mount leads the caption, because with two
+                                // disks the question the ring has to answer
+                                // first is which disk. Root is still spelled out
+                                // rather than left as "/": nothing is turned any
+                                // more so a lone slash is legal again and would
+                                // save 4px, but "root 947" is a name and a size
+                                // and "/ 947" is a slash with a gap in it.
                                 //
                                 // Only the last path segment, never the path.
-                                // "/mnt/data" is 44px of 8px caption on a 46px
-                                // ground — it fits, with one pixel of air a side,
-                                // which is a measurement rather than a design
-                                // (docs/surveys/metric-fraction.md, design 13).
                                 // The whole path is in the monitor panel, which
                                 // is a click away and 430px wide.
+                                //
+                                // "data 2.0T" is the widest caption on the rail
+                                // at 44px, with one pixel of air each side of
+                                // the 46px ground, and it stays 2.0T. Writing
+                                // it "2T" measures 34 and buys the look of room
+                                // rather than room: "data 1.5T" is 44px again,
+                                // so the abbreviation only helps a disk whose
+                                // size happens to round to a whole terabyte —
+                                // and rounding it for real would print "2T" over
+                                // a 1.5 TB disk, which is the unactionable
+                                // number this ring reads in gigabytes to avoid.
+                                // 44px is also not new here: the workspace pill
+                                // is 44 on the same ground (Workspaces.qml:158).
                                 Repeater {
                                     model: Sys.disks
                                     Ring {
@@ -636,17 +647,20 @@ ShellRoot {
                                         // Three characters is what the middle
                                         // holds, so a disk past a terabyte reads
                                         // in terabytes and takes its caption
-                                        // with it — 1.8/2.0T rather than a
-                                        // four-digit number in a 20px hole.
+                                        // with it — 1.8 under "data 2.0T"
+                                        // rather than a four-digit number in a
+                                        // 20px hole.
                                         function short(gb: real): string {
                                             return gb >= 1000 ? (gb / 1000).toFixed(1)
                                                               : Math.round(gb);
                                         }
 
-                                        name: modelData.path === "/" ? "root"
+                                        readonly property string mount:
+                                            modelData.path === "/" ? "root"
                                             : modelData.path.replace(/.*\//, "")
+
                                         text: short(modelData.usedGb)
-                                        label: "/" + short(modelData.sizeGb)
+                                        label: mount + " " + short(modelData.sizeGb)
                                              + (modelData.sizeGb >= 1000 ? "T" : "")
                                         value: modelData.pct
                                         warnAt: 90
@@ -657,8 +671,31 @@ ShellRoot {
                                 // Full is the good end of this one, so it hands
                                 // the ring the distance to empty and names its
                                 // lines in the charge he reads off it.
+                                //
+                                // And on mains the two facts trade places: the
+                                // bolt takes the middle and the charge takes
+                                // the caption's second word, in the same
+                                // "name value" grammar the memory and disk rings
+                                // now read in. "bat 100" is 34px, well inside
+                                // the 44 the disks already spend.
+                                //
+                                // The glyph is nf-fa-bolt, U+F0E7 — the exact
+                                // one his waybar prefixed to the AC-side format
+                                // string (config.jsonc:55) and the only charging
+                                // affordance that bar ever had, since style.css
+                                // has no #battery.charging rule at all.
+                                //
+                                // Sys.charging is "not discharging" rather than
+                                // strictly "Charging" (Sys.qml:378), so the bolt
+                                // means on mains: it stays up at Full and at the
+                                // "Not charging" a charge limit reports. That is
+                                // the same fact the blink is already gated on,
+                                // and one fact with one name is worth more here
+                                // than a finer distinction spelled two ways.
                                 Ring {
-                                    label: "bat"
+                                    label: Sys.charging
+                                        ? "bat " + Math.round(Sys.battery) : "bat"
+                                    glyph: Sys.charging ? "" : ""
                                     value: Sys.battery
                                     heat: 100 - Sys.battery
                                     warnAt: 100 - Sys.batWarn

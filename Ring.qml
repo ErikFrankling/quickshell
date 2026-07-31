@@ -5,39 +5,71 @@ import QtQuick.Layouts
 Item {
     id: root
 
+    // The caption under the ring, and the only place a ring says anything in
+    // words. A ring with one thing to say puts one word here — "cpu", "°c",
+    // "fan". A ring with two puts both on the same row, separated by a space:
+    // "ram 31", "root 947", "data 2.0T".
+    //
+    // That second word is the whole of what shipped from
+    // docs/surveys/metric-centred.md, design 9, and it replaces the previous
+    // answer to the same question — the metric's name turned −90° into the
+    // 9px flank, which a01a930 shipped and Erik rejected on sight: "i hate how
+    // you did this, they should be centralised." So nothing here is rotated
+    // and nothing sits beside the ring. Twenty-three centred layouts were
+    // drawn and measured against this one; sixteen of them survived the 8px
+    // type floor, the contrast floor and the overhang budget, and design 9 is
+    // the only survivor that says all three facts for **zero** extra rail
+    // height: claim 28 and ink 38, which is exactly what a two-fact ring
+    // already costs. The row it uses is the row the ring was already paying
+    // for.
+    //
+    // The slash the caption used to begin with is gone with the flank, and
+    // that is a choice rather than a saving — measured, "ram/31" and "ram 31"
+    // are both 29px, because the font is monospaced and a slash and a space
+    // are the same cell. It goes because the caption is no longer a fraction.
+    // The numerator is inside the ring; a slash between a *name* and a total
+    // asserts a ratio between two things that are not in one, and the battery
+    // says "bat 87" in the same grammar, where a slash would be a plain lie.
+    // One caption row, one reading: a name, then its second number.
     property string label: ""
     property real value: 0        // 0..100
     property string text: ""      // centre text; defaults to rounded value
 
-    // The metric's name, stood on its side in the flank.
+    // A mark that stands in the middle instead of a number.
     //
-    // Most rings have two things to say and two places to put them: a number in
-    // the middle and a name under it. Memory and the disks have three — a name,
-    // a used value and a total — and the ring's clear middle is 20px across,
-    // which is three characters at the 10px the centre already uses. So the
-    // third fact has to go somewhere that costs no height, and the only such
-    // place left is sideways: a 28px ring on a 46px group leaves 9px down each
-    // side, and until now the rail spent it on nothing.
+    // Empty on every ring but one. The battery's charge is the one reading on
+    // this rail where *which way it is going* matters as much as the number,
+    // and the ring had nowhere to say so: the clear middle is 20px across and
+    // the number is already in it, the arc is already spoken for by the charge
+    // and the ground by the warning level.
     //
-    // This is a borrowed move rather than a new one — RailClock turns the date
-    // into the margin its stacked time leaves (RailClock.qml:100-118) and
-    // RailPlayer turns the track title the same way (RailPlayer.qml:222-238) —
-    // but it is borrowed from inside this shell, not from outside it. Six other
-    // shells were read and none of them labels a *metric* with turned text:
-    // rotation is reserved everywhere for long free text like a track title
-    // (shub39_dotfiles/quickshell/bar/PlayingMedia.qml:67-80) or a date
-    // (Rexcrazy804_Zaphkiel/dots/quickshell/kurukurubar/Widgets/CalendarView.qml:51).
-    // What they do instead is stack — Ricelin puts the used value in the ring,
-    // the name under it and "/ total" under that (Gakuseei_Ricelin/configs/
-    // quickshell/pill/SysmonSurface.qml:244-250, 142-166), and Brainitech puts
-    // the name *above* the arc with "11.2 / 16 GB" under the centre
-    // (Brainitech_Brain_Shell/src/components/Speedometer.qml:4-7). Measured at
-    // this rail's scale both cost 10px a ring, which is 30px of rail over the
-    // three metrics that need it. The flank costs nothing. docs/surveys/
-    // metric-fraction.md has all twenty-one measurements.
+    // So while it is charging the two swap places — the bolt takes the middle
+    // at 14px and the charge drops into the caption's second word, which
+    // design 9 has just taught every ring on this rail to read. Nothing else
+    // about the ring changes: the arc still runs on the charge, the ground
+    // still washes on the warning level, and the blink is still gated off by
+    // the same !Sys.charging it always was.
     //
-    // Empty on every ring that has nothing to add, which is most of them.
-    property string name: ""
+    // Three reasons this is a glyph and not a colour. His own waybar answered
+    // this exact question with a glyph and nothing else — the bolt is hard
+    // coded into the AC-side format string (config.jsonc:55) and there is no
+    // #battery.charging rule anywhere in style.css — so this is the affordance
+    // he had for years, not a new opinion. A hue would be unreadable on two of
+    // the nine palettes he wears: Theme.good and Theme.accent are the *same
+    // colour* on Everforest (#a7c080 both) and 1.02:1 apart on Nord, so a ring
+    // that said "charging" by turning its arc green would say nothing at all
+    // there. And drawn in Theme.fg the mark introduces no new (ink, ground)
+    // pair to score — it is the same ink at the same place as the number it
+    // replaces, so it holds the number's own 5.14 plain / 3.98 warning / 3.37
+    // critical across the curated nine and the wash question does not reopen.
+    //
+    // Prior art puts the bolt in the same place: noctalia overlays it dead
+    // centre on the battery body (Modules/Bar/Widgets/NBattery.qml:187-204)
+    // and tripathiji1312 the same (modules/bar/components/Battery.qml:182-197).
+    // noctalia has to *alternate* it with the percentage on a 4s timer
+    // (:104-110) because a 22×14 body holds one or the other. This ring does
+    // not: it has a caption row, and design 9 just gave that row a second word.
+    property string glyph: ""
 
     // What the colour is keyed off, when that is not the fill. Battery is the
     // one metric here where a full ring is the good news, so it hands over
@@ -143,14 +175,32 @@ Item {
     onValueChanged: c.requestPaint()
     onToneChanged: c.requestPaint()
 
+    // The middle. 14px for a mark, 10px DemiBold for a number, because a glyph
+    // has to carry across a desk on its shape where a number is read up close
+    // and only has to fit: the bolt lays out 11px of ink across and 14 down,
+    // which clears the 20px hole by three pixels on its tight axis and reads
+    // as a shape rather than as a character at arm's length.
+    //
+    // alignWhenCentered off for the same reason Btn.qml turns it off
+    // (Btn.qml:119-162): Qt's hcenter() rounds an odd-width item half a pixel
+    // left to snap it to the grid, and this font lays the bolt out 9px wide
+    // and every digit string even, so the flag moves the mark and moves no
+    // number.
     Text {
         anchors.centerIn: parent
-        text: root.text !== "" ? root.text : Math.round(root.value)
+        anchors.alignWhenCentered: false
+        text: root.glyph !== "" ? root.glyph
+            : root.text !== "" ? root.text : Math.round(root.value)
         color: Theme.fg
-        font.pixelSize: 10
-        font.weight: Font.DemiBold
+        font.pixelSize: root.glyph !== "" ? 14 : 10
+        font.weight: root.glyph !== "" ? Font.Normal : Font.DemiBold
     }
 
+    // Anchored to the ring's bottom *edge*, so it hangs outside the 28px box
+    // the layout is told about and costs the rail nothing. It is also the
+    // widest thing the ring draws — 44px for "data 2.0T" against the ring's
+    // own 28 — and it is the reason the rings group's spacing is 9 where every
+    // other group on the rail uses Theme.slotGap.
     Text {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.bottom
@@ -158,34 +208,5 @@ Item {
         text: root.label
         color: Theme.dim
         font.pixelSize: 8
-    }
-
-    // Measured unconstrained and read back transposed, the way both the other
-    // turned labels on this rail are sized. Two details are load-bearing:
-    //
-    // advanceWidth, not width — width is rounded down, and a turned label given
-    // its own rounded-down length elides the glyph that did not fit.
-    //
-    // And the box is the flank, 9px, rather than the text's own line height,
-    // which at 8px is 11. The three extra pixels are leading and carry no ink,
-    // so letting them fall outside the box moves no glyph and keeps the label
-    // inside the group's ground instead of three pixels off the edge of it.
-    Item {
-        visible: root.name !== ""
-        anchors.right: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: 9
-        implicitHeight: Math.ceil(nameMetrics.advanceWidth)
-
-        TextMetrics { id: nameMetrics; font: nameText.font; text: root.name }
-
-        Text {
-            id: nameText
-            anchors.centerIn: parent
-            rotation: -90
-            text: root.name
-            color: Theme.dim
-            font.pixelSize: 8
-        }
     }
 }

@@ -170,6 +170,31 @@ ColumnLayout {
 
             Behavior on color { ColorAnimation { duration: 120 } }
 
+            // An outline on every pill, so an idle workspace is a box with a
+            // number in it rather than a number in mid-air. A border and not a
+            // rule between pills: a rule says where a pill stops vertically
+            // and nothing about how wide it is, and the pill that needed help
+            // most is the *empty* one, which between two hairlines is still a
+            // floating digit.
+            //
+            // Not Theme.line, which is what a border in this shell normally
+            // is. line is the hairline against Theme.bg, and these pills stand
+            // on the bgHi a Group draws: against that ground it is 3.7 units
+            // of CIE L* on Tokyo Night — invisible — and 13.4 on Kanagawa,
+            // near the 14.8 of the focused pill's own fill. It is also already
+            // spent here as the hover colour. dim instead, at a quarter,
+            // because dim is what the idle number is already drawn in, so box
+            // and label are one ink at two strengths: 6.3 to 12.1 L* over all
+            // nine curated schemes, under the focused fill in every one of
+            // them, and it does not collapse on the light ones the way an
+            // fg-derived border does. docs/surveys/pill-bounds.md has the
+            // other eighteen and their numbers.
+            //
+            // A constant, on its own property: the fill's animation and the
+            // flicker fix under it are untouched.
+            border.width: 1
+            border.color: Qt.alpha(Theme.dim, 0.25)
+
             Rectangle {
                 visible: ws.here
                 anchors { left: parent.left; verticalCenter: parent.verticalCenter }

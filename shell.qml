@@ -187,21 +187,12 @@ ShellRoot {
                 // then owned by the panel's own tab strip.
                 property string controlPage: "notifs"
 
-                // Waybar's network-status.sh calls it VPN when tun0 is up, so
-                // the rail agrees with the bar he already reads.
-                property bool vpn: false
-                Process {
-                    id: vpnProbe
-                    command: ["ip", "link", "show", "tun0", "up"]
-                    onExited: code => win.vpn = code === 0
-                }
-                Timer {
-                    interval: 5000
-                    running: true
-                    repeat: true
-                    triggeredOnStart: true
-                    onTriggered: vpnProbe.running = true
-                }
+                // A tunnel is any link with no hardware under it, which is
+                // what Net matches on. `ip link show tun0` was one interface
+                // name out of the several a tunnel can have, and on this
+                // machine — where the tunnel is CloudflareWARP — it answered
+                // no while the VPN was up.
+                readonly property bool vpn: Net.vpn
 
                 // Click anywhere off the card to dismiss. Declared first so the
                 // rail and the card sit above it.
@@ -746,10 +737,9 @@ ShellRoot {
                                 // tell him wifi from ethernet was the moment he
                                 // was on a VPN — and REQUIREMENTS asks for all
                                 // four at once.
-                                glyph: Sys.net === "" ? "󰤮"
-                                    : Sys.net.toLowerCase().indexOf("eth") >= 0 ? "󰈀" : "󰤨"
+                                glyph: Net.glyph
                                 active: win.page === "network"
-                                tint: Sys.net === "" ? Theme.bad : Theme.fg
+                                tint: Net.online ? Theme.fg : Theme.bad
                                 onClicked: win.openAt(networkBtn, "network")
 
                                 // Right button only, so the left one is

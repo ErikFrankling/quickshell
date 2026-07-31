@@ -141,9 +141,24 @@ Flickable {
                 Layout.bottomMargin: 2
                 verticalAlignment: Text.AlignBottom
             }
+            // The link this machine actually reaches the internet on.
+            //
+            // This read `Sys.net`, which Sys fills from the output of
+            // ~/.local/bin/network-status.sh — a waybar script that does not
+            // exist on this machine. The Process fails, the catch sets the
+            // property to "", and the panel therefore said "offline" in
+            // Theme.bad over a live gigabit link, permanently. The rail was
+            // moved onto the Net singleton in 64d5e6a; this readout was the
+            // last thing left behind on the old script.
+            //
+            // Net works the interface out from the default route rather than
+            // from whichever card exists, so this and the rail glyph are now
+            // answering from one source and cannot disagree.
             Text {
-                text: Sys.net !== "" ? Sys.net : "offline"
-                color: Sys.net !== "" ? Theme.dim : Theme.bad
+                text: Net.online
+                    ? Net.link + (Net.rate !== "" ? " · " + Net.rate : "")
+                    : "offline"
+                color: Net.online ? Theme.dim : Theme.bad
                 font.pixelSize: 11
             }
         }

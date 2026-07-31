@@ -1,6 +1,6 @@
 //@ pragma ShellId pillbounds
 
-// Contact sheet. Eighteen ways to say where one workspace pill ends and the
+// Contact sheet. Twenty ways to say where one workspace pill ends and the
 // next begins, every one of them drawn at the rail's true 58px width, on the
 // real Theme.bgHi ground the pills actually stand on, with the content that is
 // actually in his rail: a focused pill with two icons, an idle pill with one,
@@ -79,10 +79,15 @@ ShellRoot {
     // ---- the marks, one per design --------------------------------------
     //
     // The colour each design draws its boundary in, already composited, plus
-    // how many pixels of a 44 x Theme.slot pill that mark covers. A 1px
-    // outline is w*h - (w-2)*(h-2); a fill is w*h; a rule is its own width.
+    // how many pixels of a 44 x 24 pill that mark covers. A 1px outline is
+    // w*h - (w-2)*(h-2); a fill is w*h; a rule is its own width.
+    //
+    // 24 rather than Theme.slot: the pill is the one rail control that is
+    // deliberately under the slot, so the sheet has to draw it at its own
+    // height or every ink number here is computed off an area the rail does
+    // not have.
     readonly property int pw: 44
-    readonly property int ph: Shell.Theme.slot
+    readonly property int ph: 24
     readonly property int outline: root.pw * root.ph - (root.pw - 2) * (root.ph - 2)
 
     function markOf(d, theme) {
@@ -106,6 +111,7 @@ ShellRoot {
         case "round":   return root.over(T.dim, 0.10, g);
         case "inset":   return root.over(T.fg, 0.06, g);
         case "bboth":   return root.over(T.dim, 0.25, g);
+        case "gship":   return root.over(T.dim, 0.12, g);
         default:        return g;
         }
     }
@@ -116,6 +122,7 @@ ShellRoot {
             return root.outline;
         case "bidle":   return root.outline;
         case "gdim": case "gline": case "gbgalt": case "gbg": case "alt": case "round":
+        case "gship":
             return root.pw * root.ph;
         case "rline": case "rdim":   return 24;
         case "rfull": case "rlayout": return root.pw;
@@ -144,8 +151,52 @@ ShellRoot {
         { d: "left",    n: "16. left marker",   t: "a bar at the left edge of each idle pill, mirroring the focused one's. two marks now mean two things." },
         { d: "round",   n: "17. round + ground", t: "ground plus radius = height/2. the shape reads as a discrete object; the radius alone does not." },
         { d: "inset",   n: "18. inset",         t: "1px light top, 1px dark bottom. an embossed edge at 6% is under 2 dL on the light schemes." },
-        { d: "bboth",   n: "19. border + ground", t: "both channels at once. the boundary is unmistakable and the column is two tones louder than it was." }
+        { d: "bboth",   n: "19. border + ground", t: "both channels at once. the boundary is unmistakable and the column is two tones louder than it was." },
+        { d: "gship",   n: "20. ground dim .12", t: "#7's ground at .12 with the hover moved up under it to a(dim,.22) and the focused fill to .30. the ladder, shipped." }
     ]
+
+    // The three-step ladder, which is the whole question a filled ground asks
+    // and the reason #7 was rejected when the hover was still Theme.line. One
+    // ink, Theme.dim, at two strengths, then the focused pill's accent at two
+    // more — printed per scheme with the margin each rung clears the one below
+    // it by, because a ground that ties its own hover is worse than no ground.
+    readonly property var rungs: [
+        { n: "idle   a(dim,.12)",  k: "dim", a: 0.12 },
+        { n: "hover  a(dim,.22)",  k: "dim", a: 0.22 },
+        { n: "focus  a(acc,.30)",  k: "accent", a: 0.30 },
+        { n: "focus+ a(acc,.40)",  k: "accent", a: 0.40 }
+    ]
+
+    function ladder(rows) {
+        let head = "".padEnd(22);
+        for (const r of rows) head += r.name.substr(0, 12).padStart(14);
+        console.log("LADDER dL " + head);
+        let prev = null;
+        for (const rung of root.rungs) {
+            let line = rung.n.padEnd(22), margin = "  clears by".padEnd(22), worst = 999;
+            const at = ({});
+            for (const r of rows) {
+                const p = root.pal(r.p);
+                const v = root.step(root.over(p[rung.k], rung.a, p.bgHi), p.bgHi);
+                at[r.name] = v;
+                line += v.toFixed(1).padStart(14);
+                if (prev) {
+                    const d = v - prev[r.name];
+                    worst = Math.min(worst, d);
+                    margin += ("+" + d.toFixed(1)).padStart(14);
+                }
+            }
+            console.log("LADDER dL " + line);
+            if (prev)
+                console.log("LADDER dL " + margin + "  | worst +" + worst.toFixed(1));
+            prev = at;
+        }
+        // What the ground had to beat, and could not, while the hover was line.
+        let old = "was: hover Theme.line".padEnd(22);
+        for (const r of rows)
+            old += root.step(root.pal(r.p).line, root.pal(r.p).bgHi).toFixed(1).padStart(14);
+        console.log("LADDER dL " + old);
+    }
 
     // ---- the cross-theme sweep -------------------------------------------
     //
@@ -204,7 +255,10 @@ ShellRoot {
         Shell.Themes {
             id: schemes
             visible: false
-            Component.onCompleted: root.sweep(schemes.curated)
+            Component.onCompleted: {
+                root.sweep(schemes.curated);
+                root.ladder(schemes.curated);
+            }
         }
         exclusiveZone: 0
         color: "transparent"
@@ -223,7 +277,7 @@ ShellRoot {
                 spacing: 6
 
                 Text {
-                    text: "Where does one workspace pill end? Eighteen designs at the rail's true 58px, on the real bgHi ground, with his real workspace set — theme: " + Shell.Theme.name
+                    text: "Where does one workspace pill end? Twenty designs at the rail's true 58px, on the real bgHi ground, with his real workspace set — theme: " + Shell.Theme.name
                     color: Shell.Theme.fg
                     font.pixelSize: 13
                     font.weight: Font.DemiBold
@@ -244,12 +298,12 @@ ShellRoot {
                         ColumnLayout {
                             id: cell
                             required property var modelData
-                            Layout.preferredWidth: 98
+                            Layout.preferredWidth: 93
                             Layout.fillHeight: true
                             Layout.alignment: Qt.AlignTop
                             spacing: 4
 
-                            readonly property bool mine: modelData.d === "bdim"
+                            readonly property bool mine: modelData.d === "gship"
                             readonly property color mark: root.markOf(modelData.d)
                             readonly property real dL: modelData.d === "ship" ? 0 : root.step(cell.mark)
                             readonly property real ratio: modelData.d === "ship" ? 1 : root.wcag(cell.mark)
@@ -317,7 +371,8 @@ ShellRoot {
                                     + "   gap " + Math.round(col.children[1].y - col.children[0].y
                                         - col.children[0].children[0].height)
                                     + "   col " + Math.round(col.implicitHeight)
-                                color: Math.round(col.implicitHeight) > 156 ? Shell.Theme.bad
+                                color: Math.round(col.implicitHeight)
+                                        > 5 * root.ph + 4 * Shell.Theme.slotGap ? Shell.Theme.bad
                                      : cell.mine ? Shell.Theme.good : Shell.Theme.dim
                                 font.pixelSize: 10
                                 horizontalAlignment: Text.AlignHCenter
@@ -399,18 +454,22 @@ ShellRoot {
                 || d === "bboth" || (d === "bidle" && !focused)
             readonly property bool grounded:
                 d === "gdim" || d === "gline" || d === "gbgalt" || d === "gbg"
-                || d === "round" || d === "bboth" || (d === "alt" && idx % 2 === 1)
+                || d === "round" || d === "bboth" || d === "gship"
+                || (d === "alt" && idx % 2 === 1)
 
             Layout.alignment: Qt.AlignHCenter
-            implicitWidth: 44
-            implicitHeight: Shell.Theme.slot
+            implicitWidth: root.pw
+            implicitHeight: root.ph
             radius: d === "round" ? implicitHeight / 2 : Shell.Theme.radiusS
 
-            color: p.focused ? Qt.alpha(Shell.Theme.accent, 0.34)
+            // Design 20 carries its own focused fill, because moving the
+            // focused pill up is part of what buys the ground its room.
+            color: p.focused ? Qt.alpha(Shell.Theme.accent, d === "gship" ? 0.30 : 0.34)
                  : !p.grounded ? Qt.alpha(Shell.Theme.line, 0)
                  : d === "gline" ? Qt.alpha(Shell.Theme.line, 0.5)
                  : d === "gbgalt" ? Shell.Theme.bgAlt
                  : d === "gbg" ? Shell.Theme.bg
+                 : d === "gship" ? Qt.alpha(Shell.Theme.dim, 0.12)
                  : Qt.alpha(Shell.Theme.dim, 0.10)
 
             border.width: p.bordered ? 1 : 0

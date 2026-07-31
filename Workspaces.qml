@@ -147,53 +147,45 @@ ColumnLayout {
             readonly property var classes: root.byWorkspace[modelData.id] ?? []
 
             Layout.alignment: Qt.AlignHCenter
-            // One rail slot tall, the same stripe a button or a ring takes.
             // Wider than it is tall because it carries a number and up to two
-            // application icons side by side, which a button does not.
+            // application icons side by side, which a button does not — and
+            // four pixels under Theme.slot, the one control on the rail that is
+            // not a full stripe. A pill is the smallest thing here and there are
+            // eight of them stacked; at a button's height the column reads as a
+            // column of buttons. The gap stays Theme.slotGap, so the rail's
+            // rhythm is the one it was and only the ink standing in it is
+            // shorter.
             implicitWidth: 44
-            implicitHeight: Theme.slot
+            implicitHeight: 24
             radius: Theme.radiusS
-            // Idle is the hover colour at zero alpha, never "transparent":
-            // "transparent" is transparent *black*, and ColorAnimation walks
-            // every channel, so fading in from it drags the fill through a
-            // half-opaque near-black — a dark pulse on enter and another on
-            // exit, which is what the flicker was. The hover colour is
-            // Theme.line for the same reason Btn uses it: these pills stand on
-            // the workspace block's ground, which is the bgHi every Group on the
-            // rail draws, so a bgHi highlight is invisible and the dark pulse
-            // was the only thing left to see. line is the step above it. The focused pill
-            // keeps its accent and deepens it under the pointer, so every pill
-            // acknowledges the cursor without ever leaving its own hue.
-            color: ws.here ? Qt.alpha(Theme.accent, hover.containsMouse ? 0.34 : 0.22)
-                 : hover.containsMouse ? Theme.line
-                 : Qt.alpha(Theme.line, 0)
+            // A tinted ground on every pill rather than an outline round it, so
+            // an idle workspace is an object with a number in it instead of a
+            // number in mid-air. It is the tray cell's idiom — a step away from
+            // the group's ground, shell.qml:752-760 — and Btn's disc.
+            //
+            // One ink at three strengths, with the focused pill's own at two
+            // more. Theme.dim because that is already what the idle number is
+            // drawn in, so ground and label are one colour, and because it is
+            // the one token that does not collapse on the light schemes.
+            //
+            // The ground is only affordable because the hover moved with it.
+            // Hover was Theme.line, which stands 3.7 units of CIE L* above the
+            // bgHi these pills sit on in Tokyo Night and 3.8 in Gruvbox, so any
+            // ground worth seeing outshone the hovered pill — that measurement
+            // is why the outline was drawn instead. Each state now clears the
+            // one below it on all nine curated schemes: idle 3.1-5.9, hover
+            // 5.6-10.7, focused 11.1-19.0, focused and hovered 14.8-25.0, with
+            // 2.2 L* at the tightest. docs/surveys/pill-bounds.md has the sheet.
+            //
+            // Every transition here is one hue at two alphas, which is the
+            // flicker fix stated generally: "transparent" is transparent
+            // *black*, and ColorAnimation walks every channel, so fading from it
+            // dragged the fill through a half-opaque near-black — a dark pulse
+            // on enter and another on exit. No state ever leaves its own hue.
+            color: ws.here ? Qt.alpha(Theme.accent, hover.containsMouse ? 0.40 : 0.30)
+                 : Qt.alpha(Theme.dim, hover.containsMouse ? 0.22 : 0.12)
 
             Behavior on color { ColorAnimation { duration: 120 } }
-
-            // An outline on every pill, so an idle workspace is a box with a
-            // number in it rather than a number in mid-air. A border and not a
-            // rule between pills: a rule says where a pill stops vertically
-            // and nothing about how wide it is, and the pill that needed help
-            // most is the *empty* one, which between two hairlines is still a
-            // floating digit.
-            //
-            // Not Theme.line, which is what a border in this shell normally
-            // is. line is the hairline against Theme.bg, and these pills stand
-            // on the bgHi a Group draws: against that ground it is 3.7 units
-            // of CIE L* on Tokyo Night — invisible — and 13.4 on Kanagawa,
-            // near the 14.8 of the focused pill's own fill. It is also already
-            // spent here as the hover colour. dim instead, at a quarter,
-            // because dim is what the idle number is already drawn in, so box
-            // and label are one ink at two strengths: 6.3 to 12.1 L* over all
-            // nine curated schemes, under the focused fill in every one of
-            // them, and it does not collapse on the light ones the way an
-            // fg-derived border does. docs/surveys/pill-bounds.md has the
-            // other eighteen and their numbers.
-            //
-            // A constant, on its own property: the fill's animation and the
-            // flicker fix under it are untouched.
-            border.width: 1
-            border.color: Qt.alpha(Theme.dim, 0.25)
 
             Rectangle {
                 visible: ws.here
@@ -215,13 +207,17 @@ ColumnLayout {
                     // Same label the sort ranks on, so the rail always reads in
                     // the order of the numbers it is showing.
                     //
-                    // The number is what the pill is for and it was the
-                    // smallest type on the rail, so it goes up two points. The
-                    // cap is what a two-digit number needs at that size and not
-                    // a pixel less: a workspace named rather than numbered
-                    // elides instead of pushing its icons out of the pill, but
-                    // "10" — which is a real workspace here — must never elide,
-                    // and at 15 it did.
+                    // The number is what the pill is for and it was once the
+                    // smallest type on the rail at eleven pixels, and he said
+                    // so. It stays at thirteen although the pill came down four
+                    // pixels: a shorter pill is not a smaller number, thirteen
+                    // is the same size as the icons standing beside it, and a
+                    // 13px line still leaves three pixels of air top and bottom
+                    // in 24. The cap is what a two-digit number needs at that
+                    // size and not a pixel less: a workspace named rather than
+                    // numbered elides instead of pushing its icons out of the
+                    // pill, but "10" — which is a real workspace here — must
+                    // never elide, and at 15 it did.
                     text: root.label(ws.modelData)
                     color: ws.here ? Theme.accent : Theme.dim
                     font.pixelSize: 13

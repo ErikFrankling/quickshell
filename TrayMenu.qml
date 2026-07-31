@@ -259,7 +259,19 @@ PanelWindow {
             anchors.fill: parent
             anchors.leftMargin: row.indent
             radius: Theme.radiusS
-            color: area.containsMouse && row.usable ? Theme.bgHi : "transparent"
+            // Idle is the hover colour at zero alpha, never "transparent":
+            // "transparent" is transparent *black*, and ColorAnimation walks
+            // every channel at once, so fading in from it drags the fill
+            // through a half-opaque near-black before it arrives. Over the
+            // card's own ground that is a dark bar under the pointer on the
+            // way in and another on the way out, and it lands back on exactly
+            // the colour it started from — which is what reads as a flicker
+            // even when the pointer never leaves the row. Holding the hue and
+            // moving only alpha makes the ramp monotonic in both directions.
+            // bgHi itself is right here: the card is drawn in bg, so the
+            // highlight is a step lighter than the surface under it.
+            color: area.containsMouse && row.usable ? Theme.bgHi
+                 : Qt.alpha(Theme.bgHi, 0)
 
             Behavior on color { ColorAnimation { duration: 110 } }
 

@@ -841,43 +841,46 @@ ShellRoot {
                                     acceptedButtons: Qt.RightButton
                                     onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
                                 }
-                            }
 
-                            // The tunnel, and only while there is one.
-                            //
-                            // This was a dot in the corner of the button above,
-                            // drawn with Btn's badge — the same 8px accent
-                            // circle the arrow used for unread notifications —
-                            // so the one thing on the rail that meant "a count
-                            // you have not read" also meant "your VPN is up",
-                            // and it sat on top of a glyph that already said
-                            // so. Erik read it as a notification, which is
-                            // exactly what it looked like. A slot that exists
-                            // only when the tunnel does says the same thing
-                            // without a second vocabulary, and it is how the
-                            // shells that show VPN at all do it: noctalia has a
-                            // VPN widget of its own beside its network widget
-                            // (Modules/Bar/Widgets/VPN.qml:107).
-                            //
-                            // The key rather than the shield. Material's own
-                            // name for this glyph is `vpn_key`, and it is what
-                            // DankMaterialShell (Modules/ControlCenter/
-                            // BuiltinPlugins/VpnWidget.qml:17) and caelestia
-                            // (modules/utilities/cards/Toggles.qml:144) both
-                            // draw; noctalia's shield is the other convention
-                            // and it is the one Erik read as security in
-                            // general rather than as a tunnel. Nerd Font does
-                            // carry a glyph literally called vpn, U+F0582, and
-                            // it is three thin letterforms that turn to mush at
-                            // 15px — rendered at rail size and rejected, along
-                            // with tunnel U+F183D, which at that size is a
-                            // filled blob. See docs/surveys/vpn-glyph.md.
-                            Btn {
-                                id: vpnBtn
-                                visible: win.vpn
-                                glyph: "󰌆"
-                                tint: Theme.good
-                                onClicked: win.openAt(vpnBtn, "network")
+                                // The tunnel, said under the glyph instead of
+                                // beside it. This was a whole second slot, and
+                                // before that Btn's badge — the 8px accent disc
+                                // the arrow uses for unread notifications,
+                                // which is what Erik read it as.
+                                //
+                                // Sixteen designs measured at this size in
+                                // docs/surveys/network-glyph.md. A bar changes
+                                // 42 of the slot's 784 pixels and is 3px thick
+                                // at its thinnest, where a 9px key in the
+                                // corner is 1px; it is the same 42 under every
+                                // link glyph, so it never runs into one the way
+                                // the disc runs into the wifi fan; and it
+                                // leaves the glyph alone, so ethernet, wifi and
+                                // offline stay exactly as far apart with the
+                                // tunnel up as without. Swapping the glyph for
+                                // a shield or a key puts those three zero
+                                // pixels apart.
+                                //
+                                // Shape from noctalia's focus underline
+                                // (Modules/Bar/Widgets/Taskbar.qml:870). It
+                                // means focus there and a tunnel here, and
+                                // nothing on this rail uses it at all.
+                                Rectangle {
+                                    visible: win.vpn
+                                    anchors {
+                                        bottom: parent.bottom
+                                        horizontalCenter: parent.horizontalCenter
+                                        bottomMargin: 2
+                                    }
+                                    width: 14
+                                    height: 3
+                                    radius: 1.5
+                                    // Btn floods the whole slot with the accent
+                                    // while its panel is open and draws the
+                                    // glyph in bg; the bar has to follow or it
+                                    // vanishes into it.
+                                    color: networkBtn.active ? Theme.bg : Theme.good
+                                }
                             }
 
                             Btn {

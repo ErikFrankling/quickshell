@@ -5,31 +5,48 @@ import Quickshell
 import Quickshell.Networking
 
 // What you are connected by, and the handful of numbers you open a network
-// panel to read. The neighbours' wifi is behind a row you have to press: this
-// machine reaches the internet by cable, and a screen-height list of routers it
-// will never join is not an answer to any question.
+// panel to read.
+//
+// The neighbours' wifi is the long part, and whether it starts open is decided
+// by one question: is wifi the link you are actually on? On the laptop it is,
+// the list is the reason you opened the panel, and making you press for it was
+// a press for nothing. On the desktop wifi is a card that exists, is switched
+// on, and carries nothing — ethernet does — and opening into a screen-height
+// list of routers it will never join is not an answer to any question.
+//
+// So the test is `Net.wifi` — the default route leaves by the radio — and not
+// `Networking.wifiEnabled`. Measured on the desktop: `nmcli radio` reports
+// WIFI enabled there while `wlp11s0` is disconnected with no saved connection
+// at all, so the radio switch would have opened the list on exactly the
+// machine the collapse was written for.
 ColumnLayout {
     id: root
     spacing: Theme.pad
 
-    property bool wifiOpen: false
+    property bool wifiOpen: Net.wifi
 
     // Closing the flyout hides the card, and an item is not visible while an
     // ancestor is hidden — so this is the close hook. shell.qml never clears
     // `shown`, so the page is *not* destroyed when the flyout shuts; only a
-    // switch to another page destroys it. Folding the section away here also
-    // means the panel always opens at its small size.
-    onVisibleChanged: if (!root.visible) root.wifiOpen = false
+    // switch to another page destroys it. Putting the section back to its
+    // natural state here is what makes a press on it last for one visit and
+    // not for the rest of the session.
+    onVisibleChanged: if (!root.visible) root.wifiOpen = Net.wifi
 
     // Scanning is what made this panel full height on a desktop on ethernet,
     // and it costs power on the laptop too, so the radio only sweeps while the
-    // list is open. Ricelin gates the same Binding the same way
+    // list is open *and on screen*. Ricelin gates the same Binding the same way
     // (WifiSurface.qml:275); the `when` guard is for before the device
     // enumerates.
+    //
+    // `root.visible` is the half Ricelin does not need and this does. The list
+    // now starts open on a wifi machine, so `wifiOpen` is true with the panel
+    // shut — and without this the radio would sweep for as long as the shell
+    // ran. That is the battery, on the machine that has one.
     Binding {
         target: Net.wifiDevice
         property: "scannerEnabled"
-        value: root.wifiOpen && Networking.wifiEnabled
+        value: root.visible && root.wifiOpen && Networking.wifiEnabled
         when: Net.wifiDevice !== null
         // The default restore mode puts the *old* value back when this Binding
         // dies, and the old value is whatever the scanner was when the page
@@ -48,7 +65,7 @@ ColumnLayout {
     Connections {
         target: Net
         function onLinkChanged() { Net.refreshPublicIp(); }
-        function onVpnLinkChanged() { Net.refreshPublicIp(); }
+        function onTunnelsChanged() { Net.refreshPublicIp(); }
     }
 
     // Interface, LAN address and gateway because they are the three you read off
@@ -116,20 +133,30 @@ ColumnLayout {
         }
     }
 
-    // The tunnel, when there is one. It rides on the link above rather than
-    // replacing it, so it is a row of its own and not a different first row.
-    Entry {
-        visible: Net.vpn
-        glyph: "󰦝"
-        label: Net.vpnLink
-        on: true
-        value: Net.vpnIp
+    // The tunnels, one row each. They ride on the link above rather than
+    // replacing it, so they are rows of their own and not a different first
+    // row — and there is a row *each* because two are up on his laptop at
+    // once, an OpenVPN and Cloudflare's WARP. The rail can only say that some
+    // tunnel is up; this is where you find out which, and how many.
+    Repeater {
+        model: ScriptModel { values: Net.tunnels }
+
+        Entry {
+            required property var modelData
+            glyph: "󰌆"
+            label: modelData.name
+            on: true
+            value: modelData.ip
+        }
     }
 
-    // Everything wireless, behind one press, and absent altogether on a machine
-    // with no radio in it.
+    // Everything wireless, and nothing at all on a machine with no radio in
+    // it. `Net.hasWifi` is a wifi *card* in `Networking.devices`, which is a
+    // different question from `Networking.wifiEnabled` — the switch. No card
+    // and none of the next three items exist; a card with the switch off and
+    // the row below says so and offers to flip it.
     Entry {
-        visible: Net.wifiDevice !== null
+        visible: Net.hasWifi
         glyph: Networking.wifiEnabled ? "󰤨" : "󰤮"
         label: "Wi-Fi"
         on: root.wifiOpen
@@ -141,14 +168,14 @@ ColumnLayout {
     // The radio itself, only where turning it on is the thing standing between
     // you and the list you just asked for.
     Entry {
-        visible: root.wifiOpen && !Networking.wifiEnabled
+        visible: Net.hasWifi && root.wifiOpen && !Networking.wifiEnabled
         glyph: "󰤨"
         label: "Turn Wi-Fi on"
         onClicked: Networking.wifiEnabled = true
     }
 
     ListView {
-        visible: root.wifiOpen && Networking.wifiEnabled
+        visible: Net.hasWifi && root.wifiOpen && Networking.wifiEnabled
         Layout.fillWidth: true
         // See Bluetooth.qml: a ListView reports no implicit height, so the card
         // has to be told the content height to size to it.

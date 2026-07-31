@@ -27,35 +27,54 @@ Singleton {
     property string lanIp: ""
     property string dns: ""
 
-    // The tunnel, if one is up, named by its interface. That is the only name a
-    // tunnel reliably has: NetworkManager types CloudflareWARP as `tun` and not
-    // as `vpn`, so filtering its connection list by type — which is what the
-    // other shells read for this do — misses it entirely.
-    property string vpnLink: ""
-    property string vpnIp: ""
+    // Every tunnel that is up, each `{ name, ip }`, named by its interface.
+    // That is the only name a tunnel reliably has: NetworkManager types
+    // CloudflareWARP as `tun` and not as `vpn`, so filtering its connection
+    // list by type — which is what the other shells read for this do — misses
+    // it entirely.
+    //
+    // A list and not one tunnel, because this machine runs two: OpenVPN's
+    // `tun0` and Cloudflare's `CloudflareWARP`, both up at once. Taking the
+    // first match showed whichever came up first, and the unit ordering in the
+    // dotfiles starts WARP before OpenVPN — so the one he set up by hand was
+    // the one that never appeared.
+    property var tunnels: []
 
     readonly property bool online: root.link !== ""
-    readonly property bool vpn: root.vpnLink !== ""
+    readonly property bool vpn: root.tunnels.length > 0
 
-    // Quickshell's view of that same interface.
+    // Quickshell's view of that same interface — and, when the default route
+    // leaves by a tunnel rather than by a card, whichever card is actually up
+    // underneath it. Without that second clause a full tunnel is the one
+    // moment the rail cannot tell wifi from ethernet, which is the moment it
+    // most obviously should. `connected` is also what keeps `vmnet1` and
+    // `vmnet8` out: they report as Wired but never as connected.
     readonly property var device:
-        Networking.devices.values.find(d => d.name === root.link) ?? null
+        Networking.devices.values.find(d => d.name === root.link)
+        ?? Networking.devices.values.find(d => d.connected) ?? null
     readonly property bool wired: root.device?.type === DeviceType.Wired
     readonly property bool wifi: root.device?.type === DeviceType.Wifi
 
+    // A radio in the machine, which is not the same question as a radio
+    // switched on: `Networking.wifiEnabled` is the switch, this is the card.
+    // Nothing wifi renders anywhere unless this is true.
     readonly property var wifiDevice:
         Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
+    readonly property bool hasWifi: root.wifiDevice !== null
     readonly property var wifiNetwork:
         root.wifiDevice?.networks.values.find(n => n.connected) ?? null
     readonly property real strength: root.wifiNetwork?.signalStrength ?? 0
 
-    // Ethernet, wifi at three strengths, a shield when the tunnel *is* the only
-    // way out, and a struck-through radio when there is no way out at all.
+    // Ethernet, wifi at three strengths, a struck-through radio when there is
+    // no way out at all, and a globe for the machine that is online through
+    // something NetworkManager does not have a card for. The tunnel is not in
+    // here: it is drawn as a mark under this glyph, so that the rail can say
+    // which link *and* whether it is tunnelled in one slot.
     readonly property string glyph:
           !root.online ? "󰤮"
         : root.wired ? "󰈀"
         : root.wifi ? (root.strength > 0.66 ? "󰤨" : root.strength > 0.33 ? "󰤥" : "󰤟")
-        : "󰦝"
+        : "󰖟"
 
     // How fast the link is, in its own terms: a cable negotiates a speed and
     // reports it, a radio does not, so it reports what it can hear.
@@ -95,10 +114,25 @@ Singleton {
         // rather than on a name catches WireGuard, OpenVPN's tun0 and
         // Cloudflare's WARP with one expression; matching on `tun0`, which the
         // rail did, catches exactly one of the three.
-        const tun = addrs.find(a => /^(tun|wireguard|ppp|vti|xfrm|ipip|gre)/
+        //
+        // The operstate test is what separates a tunnel that is carrying
+        // something from a persistent `tun` device nobody is attached to: the
+        // kernel holds a tun's carrier off until a process opens it, so an
+        // abandoned one reads DOWN and a live one reads UNKNOWN. Measured both
+        // ways — see docs/surveys/network-glyph.md.
+        const tuns = addrs.filter(a => /^(tun|wireguard|ppp|vti|xfrm|ipip|gre)/
             .test(a.linkinfo?.info_kind ?? "") && a.operstate !== "DOWN");
-        root.vpnLink = tun?.ifname ?? "";
-        root.vpnIp = root.addressOf(tun).split("/")[0];
+        const next = tuns.map(a => ({
+            name: a.ifname,
+            ip: root.addressOf(a).split("/")[0]
+        }));
+
+        // Assigned only when the set actually moves. `ip` is re-read on every
+        // netlink event and once a minute, and a fresh array every time would
+        // fire tunnelsChanged every time — which throws the public address
+        // away and buys it again from a stranger.
+        if (JSON.stringify(next) !== JSON.stringify(root.tunnels))
+            root.tunnels = next;
     }
 
     // The first global IPv4 on an interface, with its prefix. IPv6 is left out:
@@ -141,7 +175,7 @@ Singleton {
     }
 
     onLinkChanged: root.publicIp = ""
-    onVpnLinkChanged: root.publicIp = ""
+    onTunnelsChanged: root.publicIp = ""
 
     Process {
         id: publicIpProc

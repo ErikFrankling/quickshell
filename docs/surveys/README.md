@@ -12,6 +12,7 @@ relevant one before rewriting the widget it covers.
 | `clock-compact.qml` / `.md` / `.png` | Can the same four fields go *below* 36px? Fifteen new designs measured for height and width against the shipped `RailClock` — including the ones that fail, and why turning the clock's reading direction costs 124px. |
 | `hover-survey.md` | How do sixteen projects colour and animate the workspace pill on hover, and where does the hover state live (`MouseArea` vs `HoverHandler`)? |
 | `vpn-glyph.md` | Which glyph reads as "VPN" at the rail's 15px — what five shells use, and every candidate rendered at that size, including why the Nerd Font glyph actually named `vpn` cannot be used. |
+| `network-glyph.qml` / `.md` / `.png` | Can the link type *and* the tunnel fit in one 28px rail slot — sixteen designs measured for how many of the slot's 784 pixels change, how thin the changing mark is, and whether ethernet, wifi and offline stay apart while the tunnel is up. Also: does the tunnel matcher catch OpenVPN as well as WARP, proved with the real binary in a network namespace, and both at once. |
 | `control-centre.md` | When sixteen shells put several unrelated things behind one button, how do they page between them and how does the panel size itself — and where did each of them put the settings GUI? Also: does a vertical bar round its corners, and how do they mark the bar button whose panel is open? |
 | `wallpaper-survey.md` | How do six projects build a wallpaper + theme switcher — where the images come from, how the wallpaper is applied and persisted, how themes are stored, and whether light/dark is declared or guessed from luminance? |
 | `warning-states.md` | What did his waybar actually do when a metric went bad — the thresholds, which modules blinked and which only coloured, and why the stated blink duration is half the period? Plus what nine Quickshell shells do about low battery, the one pulse idiom they all share, why `NotificationServer` cannot send, and the contrast cost of a two-level background wash measured across all 335 schemes. |
@@ -24,7 +25,10 @@ The `.html` and `.qml` files are the sources the contact sheets were rendered
 from. All of them are scrollable and searchable, and all of them can be
 re-rendered after an edit — open the HTML in a browser, run a QML sheet with
 `quickshell -p docs/surveys/player-survey.qml` or
-`quickshell -p docs/surveys/clock-survey.qml`. Each QML sheet is a harness that
+`quickshell -p docs/surveys/clock-survey.qml`. `network-glyph.qml` goes one step
+further and is *measured* rather than looked at: two red registration marks let
+a script find its grid in a screenshot and count pixels, which is the only way
+to compare marks that are three pixels across. Each QML sheet is a harness that
 mocks a set of designs side by side at the rail's true width; nothing in them
 ships, and they import the shell by absolute path, so fix the path if the repo
 moves. `clock-survey.qml` measures each mock rather than labelling it, so the

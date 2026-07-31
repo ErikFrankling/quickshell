@@ -264,13 +264,22 @@ ShellRoot {
                     // margin above: the workspaces run into the top edge.
                     readonly property int inner: rail.height - 8
                     // The part of the rail that is not negotiable: the metrics,
-                    // what is playing, the radios, the clock, and the four gaps
+                    // what is playing, the radios, the clock, and the gaps
                     // between those groups.
                     //
-                    // The three groups below the spacer are measured by their
-                    // grounds, not by their contents, because the ground is what
-                    // occupies the rail — Theme.groupPad of air above and below
-                    // each cluster is height the workspaces cannot have.
+                    // Two gaps, counted rather than assumed. The boundaries
+                    // above the player and above the metrics are both spacers
+                    // that grow, so they are slack and not height owed to
+                    // anybody; only player-to-radios and radios-to-clock are
+                    // fixed. This used to say four, which quietly held eight
+                    // pixels back from the workspaces for a gap that was never
+                    // drawn.
+                    //
+                    // The three groups pinned to the bottom are measured by
+                    // their grounds, not by their contents, because the ground
+                    // is what occupies the rail — Theme.groupPad of air above
+                    // and below each cluster is height the workspaces cannot
+                    // have.
                     readonly property int fixed: ringBox.implicitHeight
                         + playerGroup.implicitHeight + clockGroup.implicitHeight
                         // Wifi and bluetooth, and the tunnel when there is one,
@@ -279,7 +288,7 @@ ShellRoot {
                         + Theme.slot * (win.vpn ? 3 : 2)
                         + Theme.slotGap * (win.vpn ? 2 : 1)
                         + Theme.groupPad * 2
-                        + Theme.groupGap * 4
+                        + Theme.groupGap * 2
                     // What the two things that grow on their own have to share.
                     readonly property int elastic: Math.max(0, rail.inner - rail.fixed)
                     // The tray is served first but never all of it: one
@@ -306,6 +315,43 @@ ShellRoot {
                     // reading its height back would close the loop.
                     readonly property int wsRoom: Math.max(0, rail.elastic
                         - rail.trayCells * rail.trayCell)
+
+                    // The metrics are the one group pinned to neither end. Erik
+                    // wants them at the middle of the rail with air on both
+                    // sides rather than riding on top of the player, so the gap
+                    // above them is whatever puts their middle on the rail's
+                    // middle — and never more than the room the workspaces did
+                    // not use, because that leftover is the only height on the
+                    // rail the ladder above has not already promised to
+                    // somebody. Full rail, no leftover, no gap: the metrics
+                    // settle back onto the stack below them and the rail
+                    // degrades to exactly the column it was before, rather than
+                    // centring something off the bottom of the screen.
+                    readonly property int ringGap: Math.max(0, Math.min(
+                        Math.round(rail.height / 2 - ringBox.implicitHeight / 2
+                            - wsBlock.implicitHeight),
+                        rail.wsRoom - wsBlock.implicitHeight))
+
+                    // ---- the seam -------------------------------------------
+                    // The rail's one curve sits on its right edge, and its right
+                    // edge is also where a panel attaches. A card that runs the
+                    // whole screen turns that edge from an outline into a seam:
+                    // there is no desktop on the far side of it any more for the
+                    // corner to curve away from. That is 883538b's rule read
+                    // from the rail's side rather than the card's — a surface
+                    // running into another surface does not have a corner there
+                    // — so the rail drops its curve exactly when the card drops
+                    // the two it would have met.
+                    //
+                    // Deliberately the card's own predicates and not a fresh
+                    // measurement of the card's height. They already engage only
+                    // where the free position equals the bound, so a panel that
+                    // grows into full height slides into the edge instead of
+                    // jumping to it, and the rail inherits that: the curve goes
+                    // at the same instant the card's fillets do, and a list
+                    // populating cannot make the two disagree for a frame.
+                    readonly property bool seamed: card.visible
+                        && card.squareTop && card.squareBottom
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -342,7 +388,14 @@ ShellRoot {
                             Layout.fillWidth: true
                             implicitHeight: wsBox.implicitHeight + 16
                             color: Theme.bgHi
-                            bottomRightRadius: Theme.radius
+                            // Gone while a full-height panel is against the
+                            // rail — see rail.seamed. Eased on the card's own
+                            // 150ms so the curve leaves with the panel that
+                            // took it rather than snapping a frame later.
+                            bottomRightRadius: rail.seamed ? 0 : Theme.radius
+                            Behavior on bottomRightRadius {
+                                NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                            }
                             clip: true
 
                             Item {
@@ -452,9 +505,11 @@ ShellRoot {
                             }
                         }
 
-                        // the gap that does the work: everything above sits at the
-                        // top, everything below at the bottom.
-                        Item { Layout.fillHeight: true }
+                        // The two gaps that do the work. The first is measured,
+                        // and puts the metrics on the rail's midpoint; the
+                        // second is whatever is left, which is what holds the
+                        // player, the radios and the clock down at the bottom.
+                        Item { Layout.preferredHeight: rail.ringGap }
 
                         // The rings are the monitor button. A separate button
                         // for the numbers printed directly above it was rail
@@ -544,8 +599,39 @@ ShellRoot {
                                 Ring { label: "gpu"; value: Sys.gpu; visible: Sys.hasGpu }
                                 Ring { label: "°c"; value: Sys.temp; text: Sys.temp; visible: Sys.hasTemp }
                                 Ring { label: "fan"; value: fan.pct; visible: Sys.hasFan }
-                                // Full is the good end of this one.
-                                Ring { label: "bat"; value: Sys.battery; heat: 100 - Sys.battery; visible: Sys.hasBattery }
+                                // Capacity, not throughput — the disk graphs in
+                                // the monitor panel already draw what is moving.
+                                // One ring per mount Caps found, so the machine
+                                // with two disks gets two and the laptop with
+                                // one gets one, and the caption is the mount
+                                // rather than the word "disk" because with two
+                                // of them the only useful caption is which is
+                                // which. Waybar's own disk thresholds
+                                // (config.jsonc:129-132).
+                                Repeater {
+                                    model: Sys.disks
+                                    Ring {
+                                        required property var modelData
+                                        label: modelData.path === "/" ? "/"
+                                             : modelData.path.replace(/.*\//, "")
+                                        value: modelData.pct
+                                        warnAt: 90
+                                        critAt: 95
+                                        blink: true
+                                    }
+                                }
+                                // Full is the good end of this one, so it hands
+                                // the ring the distance to empty and names its
+                                // lines in the charge he reads off it.
+                                Ring {
+                                    label: "bat"
+                                    value: Sys.battery
+                                    heat: 100 - Sys.battery
+                                    warnAt: 100 - Sys.batWarn
+                                    critAt: 100 - Sys.batCrit
+                                    blink: !Sys.charging
+                                    visible: Sys.hasBattery
+                                }
                             }
 
                             MouseArea {
@@ -557,11 +643,14 @@ ShellRoot {
                             }
                         }
 
-                        Item { implicitHeight: Theme.groupGap }
+                        Item { Layout.fillHeight: true }
 
-                        // What is playing, straight under the metrics, because
-                        // both are things he wants to read off the rail without
-                        // touching it.
+                        // What is playing, at the head of the bottom stack. It
+                        // used to sit hard against the metrics, on the grounds
+                        // that both are read off the rail without touching it;
+                        // the metrics have since floated off to the middle, and
+                        // what is left down here is everything that is a
+                        // control — the player, the radios, the tray, the clock.
                         Group {
                             id: playerGroup
                             RailPlayer {

@@ -31,6 +31,7 @@ Singleton {
     property int gpu: 0
     property int vram: 0
     property int battery: 0
+    property bool charging: true
     property int brightness: -1
     property string net: ""
 
@@ -233,15 +234,29 @@ Singleton {
         }
     }
 
+    // Keyed rather than positional, the way Caps reads its probe: a host with no
+    // battery prints nothing for the first two lines, and by position that
+    // silently made the backlight the charge.
     Process {
         id: powerProc
-        command: ["sh", "-c", 'cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1\n'
-            + 'brightnessctl -m 2>/dev/null | cut -d, -f4 | tr -d %']
+        command: ["sh", "-c", 'printf "cap=%s\\n" "$(cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1)"\n'
+            + 'printf "st=%s\\n" "$(cat /sys/class/power_supply/BAT*/status 2>/dev/null | head -1)"\n'
+            + 'printf "bl=%s\\n" "$(brightnessctl -m 2>/dev/null | cut -d, -f4 | tr -d %)"']
         stdout: StdioCollector {
             onStreamFinished: {
-                const l = text.split("\n");
-                root.battery = parseInt(l[0]) || 0;
-                root.brightness = Caps.hasBacklight ? parseInt(l[1]) || 0 : -1;
+                const v = {};
+                for (const line of text.split("\n")) {
+                    const i = line.indexOf("=");
+                    if (i > 0)
+                        v[line.slice(0, i)] = line.slice(i + 1).trim();
+                }
+                root.battery = parseInt(v.cap) || 0;
+                // Anything that is not actively draining counts as safe. "Not
+                // charging" is what a laptop held at a charge limit reports, and
+                // it is not a reason to shout.
+                root.charging = v.st !== "Discharging";
+                root.brightness = Caps.hasBacklight ? parseInt(v.bl) || 0 : -1;
+                root.warnBattery();
             }
         }
     }
@@ -254,6 +269,48 @@ Singleton {
         root.brightness = Math.round(pct * 100);
     }
 
+    // --- the warning that has to arrive when he is not looking ---------------
+    //
+    // His waybar's own thresholds (config.jsonc:50-53), so the ring lights where
+    // it always did. A blinking ring is only worth anything to somebody facing
+    // the screen, and the laptop that died was not being watched — so each of
+    // the two crossings also raises a notification, and this shell is the thing
+    // that will draw it.
+    //
+    // Once per crossing, never per poll: a watermark that only ever descends
+    // while discharging and is thrown away the moment the charge climbs back
+    // over the warning line or the mains come back. corecathx_whisker keeps the
+    // same single int (services/Power.qml:18, 30-60) and noctalia the same rearm
+    // (Services/Hardware/BatteryService.qml:287-323); a set of booleans, one per
+    // level, is the same thing spelled longer.
+    readonly property int batWarn: 30
+    readonly property int batCrit: 15
+    property int notifiedAt: 101
+
+    function warnBattery() {
+        // Zero is what an unread or absent battery reports, and 0% is not a
+        // reading worth waking him for.
+        if (!Caps.hasBattery || root.battery <= 0)
+            return;
+        if (root.charging || root.battery > root.batWarn) {
+            root.notifiedAt = 101;
+            return;
+        }
+        // Most severe first, so a long sleep that skipped both lines still says
+        // the true thing rather than the first one it passed.
+        for (const lvl of [root.batCrit, root.batWarn]) {
+            if (root.battery > lvl || root.notifiedAt <= lvl)
+                continue;
+            root.notifiedAt = lvl;
+            const crit = lvl === root.batCrit;
+            Quickshell.execDetached(["notify-send", "-a", "erikshell",
+                "-u", crit ? "critical" : "normal", "-i", "battery-caution",
+                crit ? "Battery critical" : "Battery low",
+                root.battery + "% left — plug in" + (crit ? " now" : " soon")]);
+            return;
+        }
+    }
+
     Process {
         id: dfProc
         stdout: StdioCollector {
@@ -261,10 +318,18 @@ Singleton {
                 const out = [];
                 for (const line of text.trim().split("\n")) {
                     const f = line.trim().split(/\s+/);
-                    if (f.length < 3 || !(Number(f[2]) > 0))
+                    if (f.length < 4 || !(Number(f[2]) > 0))
                         continue;
-                    // Decimal GB, the unit df and the old waybar config used.
-                    out.push({ path: f[0], pct: Math.round(100 * f[1] / f[2]),
+                    // Used over used-plus-available, rounded up — which is
+                    // exactly what df prints as Use%, and the only figure that
+                    // answers "how much more can I write". Over the raw size it
+                    // is not: ext4 holds back 5% for root, so this machine's /
+                    // reads 90% full by size and 95% by what is left of it,
+                    // which is the difference between a warning and an
+                    // emergency. Rounding df's way costs nothing and stops the
+                    // ring and the terminal disagreeing by a point.
+                    out.push({ path: f[0],
+                        pct: Math.ceil(100 * f[1] / (Number(f[1]) + Number(f[3]))),
                         usedGb: f[1] / 1e9, sizeGb: f[2] / 1e9 });
                 }
                 root.disks = out;
@@ -277,7 +342,7 @@ Singleton {
             root.disks = [];
             return;
         }
-        dfProc.command = ["sh", "-c", "df -B1 --output=target,used,size " + Caps.disks.map(p => "'" + p + "'").join(" ") + " 2>/dev/null | tail -n +2"];
+        dfProc.command = ["sh", "-c", "df -B1 --output=target,used,size,avail " + Caps.disks.map(p => "'" + p + "'").join(" ") + " 2>/dev/null | tail -n +2"];
         dfProc.running = true;
     }
 

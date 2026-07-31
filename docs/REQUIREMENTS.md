@@ -5,9 +5,13 @@ here is inferred — each line traces to something he actually asked for. Keep i
 up to date: when a session adds a requirement, add it here, and when one lands,
 tick it. This file exists because requirements were being forgotten between turns.
 
-Two audits of this file against the code and the running shell are kept in
-`docs/surveys/` (`requirements-audit.md`, `requirements-audit-2.md`), alongside
-the prior-art surveys behind several of the choices below.
+Three audits of this file against the code and the running shell are kept in
+`docs/surveys/` (`requirements-audit.md`, `requirements-audit-2.md`,
+`requirements-audit-3.md`), alongside the prior-art surveys behind several of
+the choices below. The third is the current one, and it re-derived every line
+from the code rather than trusting the first two — ticks here have been wrong
+twice in ways that cost a day, so an audit that agrees with this file without
+having read the code is worth nothing.
 
 ## Rules that govern all work
 
@@ -52,7 +56,14 @@ the prior-art surveys behind several of the choices below.
 - [x] Rings are clickable — no separate system-monitor button
 - [x] Theme button sits with the other buttons
 - [x] No launcher button in the rail
-- [ ] Rail is not cramped
+- [ ] Rail is not cramped — *stays open on purpose. The slot unification in
+      `Theme.qml:60-77` was aimed straight at it: one 28px slot and a 5px gap
+      for every control, gaining the pills four pixels and taking six off every
+      button, "which is the direction the rail was wrong in: cramped at the top,
+      loose at the bottom." So the work is done and the reasoning holds. But
+      this is a judgement he makes by eye from a screenshot and he has not made
+      it yet, and an agent ticking it would be grading its own homework — which
+      is how this file went wrong before.*
 - [x] A media player IN the rail, not a button that opens one — track name and
       playing state visible without opening anything. Same principle as the
       other rail icons carrying state. *(The rail is 58px wide and vertical;
@@ -69,13 +80,19 @@ the prior-art surveys behind several of the choices below.
 ## Panels
 
 - [x] Panels are only as tall and wide as their content — never full height
-- [ ] …but when the content genuinely fills the screen, go full height
+- [x] …but when the content genuinely fills the screen, go full height
       edge-to-edge and drop the fillets, rather than leaving a small dead gap
       top and bottom. *"this looks goofy when it's basically the entire screen
       with a small gap top and bottom."* The network panel is the example: very
       short with wifi off, short with wifi on and no networks found, and
       screen-filling with sixteen networks. Needs a threshold that does not
       make the panel snap between the two looks as a list populates.
+      *(`shell.qml:896` lets the card run the whole screen; `shell.qml:929-937`
+      drops a fillet exactly when the edge would start cutting it, which is his
+      own rule quoted in the comment. The snapping worry is answered at
+      `shell.qml:907-913`: the clamp engages only where the free position
+      already equals the bound, so a panel growing while open slides into the
+      edge rather than jumping to it.)*
 - [x] Escape closes whatever panel is open
 - [x] Opening a panel must not change the rail's width
 - [x] Do-not-disturb removed entirely
@@ -131,11 +148,23 @@ the prior-art surveys behind several of the choices below.
       see the note at the bottom. GTK cannot be recoloured at runtime by any
       file; only the portal's light/dark + single accent gets through.)*
 - [x] A theme is colour only here; fonts, spacing, radii stay hardcoded
-- [ ] At least one light theme, and the shell has to survive it — it was built
+- [x] At least one light theme, and the shell has to survive it — it was built
       dark throughout and a light base16 scheme runs base00→base07 the other
-      way round
-- [ ] A centred overlay listing every published base16 scheme with swatches,
+      way round. *(Two, both taken verbatim from upstream rather than
+      eyeballed: Gruvbox Light and Rosé Pine Dawn, `Themes.qml:72-73`. It
+      survives because `Theme.qml` maps the slots by **role** and never by
+      brightness — `bg` is base00 and `fg` is base05 whichever way the scheme
+      runs — and because there is no `Qt.darker`, no `Qt.lighter`, no `Qt.rgba`
+      literal and no hardcoded hex anywhere in the shell to contradict it.
+      Measured on the running shell: under Gruvbox Light the rail draws 25525
+      pixels of base00, and under the dark palette restored after it, 25525
+      again. The flip changes colour and moves no geometry.)*
+- [x] A centred overlay listing every published base16 scheme with swatches,
       so he can browse all of them and click one to apply
+      *(All 335 at spec 0.11, 237 dark and 98 light, checked in as data in
+      `schemes.js` and concatenated onto the nine curated palettes by
+      `Themes.qml:82-90`, with All/Dark/Light pills at `Themes.qml:127-129`.
+      The overlay is `LooksWindow.qml:85`.)*
 - [x] A toggle to match the theme to the wallpaper — *"a cute little toggle
       you can turn on if you wanna try it"*. Off by default.
 
@@ -177,6 +206,13 @@ the prior-art surveys behind several of the choices below.
 Changes that belong in the dotfiles repo, not here. Nothing has been done to
 his system; these are proposals.
 
+- syncthing, and this one is not a proposal but a stranded fix: the wallpaper
+  folder moved to `~/wallpapers` and `panels/Wallpapers.qml:21` reads it, but
+  `modules/nixos/syncthing.nix:81` on the dotfiles' `main` still says
+  `~/Pictures/wallpapers`. The correction is committed as `ce9b1755` on
+  `claude/notifications-dark-mode-fix-2b275e` and needs merging, not rewriting.
+  Until it lands, a `nixos-rebuild switch` puts syncthing back on the old path
+  and the picker looks at a folder nothing syncs any more.
 - kitty: `include ~/.cache/wal/colors-kitty.conf`, and drop
   `auto_reload_config = -1` from `modules/home-manager/kitty.nix:23` so new
   windows pick it up. Running windows already recolour via the OSC broadcast.

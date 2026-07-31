@@ -234,11 +234,9 @@ Item {
             // into the slot that sets it is the loop this avoids. xenon-shell
             // uses TextMetrics the same way (Modules/Bar/Widgets/Media.qml:
             // 92-98). advanceWidth, not width: width rounds down to whole
-            // pixels, and
-            // a label given its own rounded-down width elides — "The Spins"
-            // measured 59 and needed 59.34, so every title lost its last two
-            // characters to a third of a pixel. advanceWidth is the unrounded
-            // number and matches the label's implicitWidth exactly.
+            // pixels, and a label given its own rounded-down width elides —
+            // "The Spins" measured 59 and needed 59.34, so every title lost
+            // its last two characters to a third of a pixel.
             TextMetrics {
                 id: metrics
                 font: label.font
@@ -253,10 +251,13 @@ Item {
                 text: root.title
                 color: root.active ? Theme.accent
                      : root.playing ? Theme.fg : Theme.dim
-                // A point down and eight pixels longer, both spent the same
-                // way: 11px in 104 is fifteen characters of a song name, and
-                // 10px in 112 is eighteen.
-                font.pixelSize: 10
+                // Back to 11px. 10px was not distorted — rendered, its caps
+                // measured 7px and its stems 1px, exactly Ring's value and the
+                // clock's date at the same nominal size — it was just a point
+                // too small for the one label here nobody reads square on. The
+                // eight pixels it bought are kept: "Everything Goes My Way
+                // (Remastered)" is fourteen characters in 104, fifteen in 112.
+                font.pixelSize: 11
                 elide: Text.ElideRight
                 horizontalAlignment: Text.AlignHCenter
 

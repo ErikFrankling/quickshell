@@ -1,46 +1,52 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Shapes
 import Quickshell
 
-// The clock, across the rail rather than down it.
+// The clock, as a time and a date side by side.
 //
-// It was four numbers in a column — 17 / 20 / rule / 30 / 07 — which is
-// noctalia's vertical-bar clock split out of its `HH mm - dd MM` format string
-// (noctalia Modules/Bar/Widgets/Clock.qml:120,125). Five lines cost 92px on the
-// ground the rail gives it: the tallest single thing on a rail that overflows on
-// a laptop. Turning the date on its side got that to 36px.
+// It has been three things. Five lines and 92px — noctalia's vertical-bar clock
+// split out of its `HH mm - dd MM` format string (noctalia Modules/Bar/Widgets/
+// Clock.qml:120,125), the tallest single thing on a rail that overflows on a
+// laptop. Then 36px, by turning `30 JUL` −90° into the margin a stacked time
+// leaves free. Then 30px, by laying `HH:mm` across the rail on one line with
+// the date under it, which is the shortest of the sixteen designs measured in
+// docs/surveys/clock-compact.md.
 //
-// This is 30px, and it gets there by turning the *time* back. The rail is 58px
-// wide and this shell's font resolves to JetBrains Mono at about 0.6em per
-// glyph, so `HH:mm` is five characters in 45px with a third of the rail still
-// spare. A whole time fits across the rail at the rail's own type size, and it
-// costs one line instead of two.
+// 30px was too short in the one direction nobody had a number for. `HH:mm` at
+// 15px is 45px of glyph and the ground a rail group draws is Theme.groupWidth,
+// 46 — half a pixel of air either side. Erik read that as the clock almost
+// overflowing, and he is right: the shortest design on the sheet was also the
+// widest thing on the rail bar the workspaces.
 //
-// The sheet's own recommendation was 15px over a 9px date, which measures 28.
-// This keeps the 15px time and takes the date up to 10px, which measures 30:
-// the date is the part worth reading, and at 9px it is a smudge from a normal
-// sitting distance. The sheet's larger option, design 2, is 16px over 10px and
-// measures 34 — but the interesting number is its width. 16px digits make
-// `HH:mm` 48px, and the ground a rail group draws is Theme.groupWidth, 46. The
-// bigger time does not fit the ground it would sit on, and widening every group
-// on the rail to suit the clock is the tail wagging the dog. So the extra size
-// goes where it was wanted anyway. Every figure here was measured off the live
-// rail rather than calculated, which is the whole point of the survey that
-// produced them.
+// So this is the survey's runner-up, iNiR's (verticalBar/VerticalClockWidget
+// .qml:18-28 over verticalBar/VerticalDateWidget.qml:20-63, assembled by
+// VerticalBarContent.qml:265-300). Two ideas, and they pay for each other:
 //
-// Sixteen designs were rendered and measured for this (docs/surveys/
-// clock-compact.md). The finding that matters is that the 36px was never the
-// cost of the stacked time — it was the cost of the turned date. `30 JUL` is six
-// glyphs at 9px, which is 36px of column whichever way the time beside it is
-// laid out, so laying the time down underneath it bought nothing. Rotating the
-// reading direction is a loss in every variant measured: the whole time turned
-// is 48px, time and date on one turned line is 124px, worse than the five-line
-// stack this started from. Five glyphs of 15px monospace is 45px of rail
-// whichever axis you spend it on.
+//   - The time stacks. `HH` over `mm`, tucked, is 18px wide instead of 45 and
+//     costs one extra line — 36px tall, the same as the turned-date design it
+//     replaces, in 42px of the 46px ground instead of 45.
+//   - The date is a typographic fraction. `dd` sits top-left and `MM`
+//     bottom-right of a drawn diagonal, with no slash glyph anywhere: the rule
+//     *is* the separator. clock-survey.md calls it the best single idea in the
+//     survey, and it goes in the 21px of width the stacked time just freed.
 //
-// So this is the only design on the sheet that gets shorter while getting
-// easier to read. `HH:mm` on one line is a time; `HH` over `mm` is two numbers
-// you assemble into one, and nothing else on the rail asks to be read that way.
+// That width is the whole reason it works here. The fraction was tried once
+// before, shrunk to sit beside a one-line `HH:mm`, and at the ~9px that margin
+// allowed the diagonal and the digits collided into mush (clock-survey.md:140).
+// Beside a stacked time it gets 21x30 and 12px digits against iNiR's own 24x30
+// and 13px — a 29.4px diagonal where iNiR draws 27.2. It is the same drawing at
+// nine-tenths the width, not a miniature of it: rendered and counted, each pair
+// of date digits puts down 9px of ink with 3px of ground between them.
+//
+// The cost is that the date is two numbers again. The one-line version wrote
+// `30 JUL` on purpose — two numbers one above the other can be read in either
+// order, and `30` over `07` is a date in one country and nonsense in the next.
+// The diagonal is what buys that back: a fraction has a top and a bottom, so
+// day-above-month is a reading direction and not a convention you have to know.
+// It is thinner ice than three letters were. If it ever reads wrong, the answer
+// is `MMM` in the bottom slot, which fits — 12px `JUL` is 22px against the 21px
+// the box is drawn at — and not a return to one line.
 //
 // It is also the control centre's button. There was an arrow one group above it
 // whose whole job was to be pressable, sitting over a clock that is already the
@@ -57,18 +63,25 @@ Item {
     property bool active: false
 
     // Unread notifications. It reads on the date rather than as a dot in a
-    // corner, because a 45px clock has no corner free — `HH:mm` at 15px is the
-    // full width of the group — and because a dot on a rail button is what Erik
-    // had just finished reading as "there is a notification here" on a button
-    // where there could not be one. On this button there can be, and the cue
-    // is the date going from dim to the accent.
+    // corner, because a dot on a rail button is what Erik had just finished
+    // reading as "there is a notification here" on a button where there could
+    // not be one. On this button there can be, and the cue is the date going
+    // from dim to the accent.
     property int badge: 0
 
     signal activated
 
+    // The date's one colour, in one place: the digits and nothing else move,
+    // so the diagonal stays the hairline it is and the tint stays a message.
+    readonly property color dateFg: root.badge > 0 ? Theme.accent
+        : root.active ? Theme.fg : Theme.dim
+
     Layout.alignment: Qt.AlignHCenter
-    implicitWidth: col.implicitWidth
-    implicitHeight: col.implicitHeight
+    // 3px between the two, which is what keeps the whole thing to 42px on a
+    // 46px ground. The height is the time's; the fraction is shorter and rides
+    // in the middle of it.
+    implicitWidth: time.implicitWidth + 3 + frac.width
+    implicitHeight: Math.max(time.implicitHeight, frac.height)
 
     SystemClock {
         id: clock
@@ -76,17 +89,16 @@ Item {
     }
 
     Column {
-        id: col
-        // Digits have no descenders, so the pixels a 15px line reserves below
-        // its baseline are empty and the date moves up into space nothing was
-        // using. It is caelestia's tuck (modules/bar/components/Clock.qml:96)
-        // spent on the gap between time and date rather than between hour and
-        // minute.
+        id: time
+        anchors { left: parent.left; verticalCenter: parent.verticalCenter }
+        // iNiR stacks its two halves at spacing 0, which at 17px leaves 10px of
+        // empty leading between them and reads as two numbers rather than one
+        // time. Digits have no descenders, so all of that is air: −4 closes it
+        // to a 4px gap, the tuck caelestia spends between its own hour and
+        // minute (modules/bar/components/Clock.qml:96).
         spacing: -4
 
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: Qt.formatDateTime(clock.date, "HH:mm")
+        component Half: Text {
             color: Theme.fg
             font.pixelSize: 15
             font.weight: Font.DemiBold
@@ -97,20 +109,56 @@ Item {
             font.features: ({ tnum: 1 })
         }
 
-        Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            // Day, then the month in letters. Two numbers one above the other
-            // can be read in either order — 30 and 07 is a date in one country
-            // and nonsense in the next — and three letters cost the same room
-            // as two digits.
-            text: Qt.formatDateTime(clock.date, "dd MMM").toUpperCase()
-            color: root.badge > 0 ? Theme.accent
-                 : root.active ? Theme.fg : Theme.dim
-            font.pixelSize: 10
-            font.letterSpacing: 0.5
+        Half { text: Qt.formatDateTime(clock.date, "HH") }
+        Half { text: Qt.formatDateTime(clock.date, "mm") }
+    }
+
+    // The fraction. 21 wide is iNiR's 24 scaled to the room the stacked time
+    // leaves, and the digits are 12px against its 13; the height is iNiR's own
+    // 30, because the box is shorter than the time beside it either way and the
+    // two spare pixels are the gap between the two numbers. Everything inside
+    // is placed from the box's corners, so they are held apart by the box and
+    // not by a layout.
+    Item {
+        id: frac
+        anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+        width: 21
+        height: 30
+
+        // Inset 2px at the ends so the rule stops short of the corners rather
+        // than pointing out of the box. It passes within a pixel of the corner
+        // of each pair of digits — that near miss is what makes two numbers a
+        // fraction, and it is why the box cannot shrink much further.
+        Shape {
+            anchors.fill: parent
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                strokeColor: Theme.dim
+                strokeWidth: 1.2
+                fillColor: Qt.alpha(Theme.dim, 0)
+                startX: frac.width - 2
+                startY: 3
+                PathLine { x: 2; y: frac.height - 3 }
+            }
+        }
+
+        component Num: Text {
+            color: root.dateFg
+            font.pixelSize: 12
             font.features: ({ tnum: 1 })
 
             Behavior on color { ColorAnimation { duration: 120 } }
+        }
+
+        Num {
+            anchors { top: parent.top; left: parent.left }
+            text: Qt.formatDateTime(clock.date, "dd")
+        }
+
+        Num {
+            anchors { bottom: parent.bottom; right: parent.right }
+            text: Qt.formatDateTime(clock.date, "MM")
         }
     }
 

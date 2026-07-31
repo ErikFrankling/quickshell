@@ -140,9 +140,24 @@ Its clock (`VerticalClockWidget.qml:18-28`) is end-4's colon-split repeater at
 date, rule, battery inside a `BarGroup` with `rowSpacing: 12`.
 
 This was tried as the runner-up here — the fraction shrunk to sit beside the
-time rather than under it. At the ~9px the margin allows, the diagonal and the
-digits collide into mush; it needs iNiR's full 24x30 and 13px digits to read,
-and that is 30px of height for the date alone.
+time rather than under it. At the ~9px that margin allowed, the diagonal and the
+digits collided into mush, and the finding written down was that it needs
+iNiR's full 24x30 and 13px digits to read.
+
+**That was a finding about the margin, and the margin was a choice.** The 9px
+is what a one-line `HH:mm` leaves over; nothing about the fraction requires it.
+Stack the time instead — `HH` over `mm`, 18px wide against 45 — and the same
+fraction gets 21px of width and 12px digits, nine-tenths of iNiR's own drawing
+rather than a third of it. That is what ships now, in `RailClock.qml`: 42x36 in
+the 46px ground a rail group draws, measured off a render rather than claimed —
+12px of time-digit ink over two lines tucked −4, 9px of date-digit ink with 3px
+of ground between `dd` and `MM`, and a 29.4px diagonal where iNiR draws 27.2.
+
+It replaces the one-line design of `clock-compact.md`, which was 30px tall and
+45px wide in that same 46px ground. The date goes back to two numbers with it:
+the one-line version wrote `dd MMM` because `30` over `07` reads in either
+order, and the diagonal is what buys that back — a fraction has a top and a
+bottom, so day-above-month is a direction rather than a convention.
 
 ### 8. Whisker — `modules/bar/TimeLabel.qml:21-40`
 

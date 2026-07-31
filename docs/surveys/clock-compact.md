@@ -211,6 +211,24 @@ The change would be, precisely:
 
 That is a shorter file than the one it replaces.
 
+## What happened next: width won again
+
+Design 1 shipped, at 30px. It lasted until Erik looked at the rail and said the
+clock looked like it was almost overflowing, which is this sheet's own number
+read from the other side: 45px wide, in a ground that is `Theme.groupWidth`, 46.
+The sheet was right that width is the binding constraint once a clock goes
+horizontal — it just measured width against the 58px rail rather than against
+the 46px ground the group actually draws, and the shortest design on the sheet
+was also the widest thing on the rail bar the workspaces.
+
+What replaced it is design 7 of the *first* survey, iNiR's, assembled the way
+neither sheet tried: the time stacked so it costs 18px of width instead of 45,
+and the date as the typographic fraction in the 21px that frees. **42x36**, so
+it gives back the 6px this sheet saved and buys 2px of air either side of the
+clock inside the ground. `clock-survey.md:130` carries the measurements, and
+why the "collapses into mush" finding against that fraction did not survive the
+time being stacked.
+
 ## Sources read for this sheet
 
 On disk, under the session's clone and repo trees: `tripathiji1312_quickshell`

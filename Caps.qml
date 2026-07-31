@@ -15,7 +15,12 @@ Singleton {
     // being hidden again.
     property bool probed: false
 
-    property bool foundGpu: false
+    // The sysfs directory of the GPU to read, or empty. Not a boolean, because
+    // the capability and the reading have to be the same fact: a host where
+    // this is empty has nothing to read, and a host where it is set has
+    // somewhere to read from. That is what stops a ring being drawn over a
+    // number nothing can produce.
+    property string gpuPath: ""
     property bool foundTemp: false
     property bool foundBattery: false
     property bool foundBacklight: false
@@ -33,7 +38,12 @@ Singleton {
         return typeof root.cfg[key] === "boolean" ? root.cfg[key] : detected;
     }
 
-    readonly property bool hasGpu: set("gpu", foundGpu)
+    // The one capability the override cannot switch on. Everything else here is
+    // a preference — he may not want the fan on screen even though it answers —
+    // but `gpu = true` on a machine with no file to read would put back exactly
+    // the ring this replaced: drawn, gated, and reading zero forever. So the
+    // override can only take the GPU away.
+    readonly property bool hasGpu: gpuPath !== "" && set("gpu", true)
     readonly property bool hasFan: set("fan", fanSource !== "")
     readonly property bool hasTemp: set("temp", foundTemp)
     readonly property bool hasBattery: set("battery", foundBattery)
@@ -51,9 +61,23 @@ Singleton {
     Process {
         running: true
         command: ["sh", "-c", `
-gpu=0
-if command -v rocm-smi >/dev/null 2>&1 && rocm-smi -u --json 2>/dev/null | grep -q 'GPU use'; then gpu=1
-elif command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader 2>/dev/null | grep -q '[0-9]'; then gpu=1; fi
+# The GPU is whichever card exposes a utilisation file the shell can read, and
+# where a machine has two — this one has an RX 7900 XT and the Raphael graphics
+# on the CPU — the one with the most memory behind it. That is the discrete
+# card every time, and the discrete card is the one worth a ring: the integrated
+# one on this host reports the compositor's own work and jumps to 100% for a
+# frame at a time. amdgpu is the only driver that publishes this; on anything
+# else the loop finds nothing, and nothing is the honest answer.
+gpu=
+best=-1
+for d in /sys/class/drm/card*/device; do
+  [ -r "$d/gpu_busy_percent" ] || continue
+  vram=$(cat "$d/mem_info_vram_total" 2>/dev/null)
+  case "$vram" in ''|*[!0-9]*) vram=0;; esac
+  [ "$vram" -gt "$best" ] || continue
+  best=$vram
+  gpu=$d
+done
 echo "gpu=$gpu"
 fan=
 ls /sys/class/hwmon/hwmon*/fan1_input >/dev/null 2>&1 && fan=hwmon
@@ -84,7 +108,7 @@ echo "disks=$(df -B1 --output=target,size -x tmpfs -x devtmpfs -x efivarfs -x ov
                 }
                 const list = s => (s || "").split(/\s+/).filter(x => x.length > 0);
 
-                root.foundGpu = v.gpu === "1";
+                root.gpuPath = v.gpu || "";
                 root.fanSource = v.fan || "";
                 root.foundTemp = v.temp === "1";
                 root.foundBattery = v.battery === "1";

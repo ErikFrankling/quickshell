@@ -40,7 +40,11 @@ in
     systemd.enable = lib.mkEnableOption "running the shell from a systemd user service";
 
     metrics = {
-      gpu = metric "Show GPU utilisation and VRAM.";
+      # Setting this true is not what turns the GPU on: the shell shows it when
+      # it finds a card whose utilisation it can actually read, and a host with
+      # no such card would get a ring stuck at zero if this could force one.
+      # False hides a GPU that is there.
+      gpu = metric "Hide GPU utilisation and VRAM, if false. Only an AMD card is readable, and one that is not readable is never shown.";
       fan = metric "Show fan speed.";
       temp = metric "Show CPU temperature.";
       swap = metric "Show swap usage and swap I/O.";

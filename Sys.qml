@@ -5,10 +5,9 @@ import Quickshell.Io
 import QtQuick
 
 // Quickshell has no module for any of this. CPU, memory, swap, temperature,
-// the fan and the two throughputs come from /proc and /sys, read as files;
-// the GPU reuses the scripts already driving the waybar config, so there is
-// one implementation of it, not two. Nothing here decides what to show — that
-// is Caps, whose answers are re-exported so a widget needs one import.
+// the fan, the GPU and the two throughputs all come from /proc and /sys, read
+// as files. Nothing here decides what to show — that is Caps, whose answers are
+// re-exported so a widget needs one import.
 Singleton {
     id: root
 
@@ -54,6 +53,13 @@ Singleton {
     // file read is on the half second, and everything that still has to start a
     // process stays on the two seconds it was already on. Raising the rate at
     // all is what moving those two readings off `sh` bought.
+    //
+    // The GPU joined them on the same arithmetic. Timed here the same way: the
+    // fork it used to take cost 2.56 ms a call, and the three files that replace
+    // it cost 33 µs, 18 µs and 19 µs — 0.07 ms for the lot, which is barely more
+    // than the single read of /proc/stat that is already on this tier at 63 µs.
+    // A metric that costs one thirty-sixth of what it did can be asked four
+    // times as often for less than it used to cost once.
     //
     // Half a second because that is what he asked for: he wants to watch the
     // fan answer a temperature rise, and at two seconds the ring reached a step
@@ -103,7 +109,7 @@ Singleton {
         return m ? parseInt(m[1]) : 0;
     }
 
-    // The waybar scripts print human strings; take the numbers out.
+    // Every number in a line of text, for the /proc lines that are one.
     function nums(s) {
         return (String(s).match(/\d+(?:\.\d+)?/g) || []).map(Number);
     }
@@ -288,6 +294,52 @@ Singleton {
         }
     }
 
+    // The GPU, from the driver rather than from a shell. These three files used
+    // to be two scripts in ~/.local/bin that home-manager installed alongside
+    // waybar, and unimporting the waybar module took them with it: the shell
+    // went on forking `sh` at them twice a second, got nothing back, and drew a
+    // ring reading 0% over a card that was busy. Nothing said so, which is the
+    // whole argument for reading the kernel's own file — there is no layer left
+    // between the number and the driver to go missing.
+    //
+    // amdgpu publishes gpu_busy_percent as a percentage already and the two
+    // memory figures in bytes. Which card they belong to is Caps' answer, worked
+    // out once at startup; empty means nothing here can be read and the ring is
+    // not drawn at all.
+    FileView {
+        id: gpuFile
+        path: Caps.hasGpu ? Caps.gpuPath + "/gpu_busy_percent" : ""
+        printErrors: false
+        onLoaded: root.gpu = parseInt(text()) || 0
+    }
+
+    // GiB, and printed as "GB" beside the memory reading that is also GiB — the
+    // 7900 XT's 21458059264 bytes are the 20 GB written on the box.
+    FileView {
+        id: vramUsedFile
+        path: Caps.hasGpu ? Caps.gpuPath + "/mem_info_vram_used" : ""
+        printErrors: false
+        onLoaded: {
+            root.vramUsedGb = (parseInt(text()) || 0) / 1073741824;
+            root.readVram();
+        }
+    }
+
+    FileView {
+        id: vramTotalFile
+        path: Caps.hasGpu ? Caps.gpuPath + "/mem_info_vram_total" : ""
+        printErrors: false
+        onLoaded: {
+            root.vramTotalGb = (parseInt(text()) || 0) / 1073741824;
+            root.readVram();
+        }
+    }
+
+    function readVram() {
+        root.vram = root.vramTotalGb > 0
+            ? Math.round(100 * root.vramUsedGb / root.vramTotalGb) : 0;
+    }
+
     // --- readings that still have to fork ------------------------------------
     //
     // fw-fanctrl is a Python client talking to a daemon over a socket, so this
@@ -300,23 +352,6 @@ Singleton {
         command: ["sh", "-c", "fw-fanctrl --output-format JSON print speed 2>/dev/null | jq -r .speed"]
         stdout: StdioCollector {
             onStreamFinished: root.fan = parseInt(text) || 0
-        }
-    }
-
-    Process {
-        id: gpuProc
-        command: ["sh", "-c", "$HOME/.local/bin/gpu-util.sh 2>/dev/null; $HOME/.local/bin/gpu-vram.sh 2>/dev/null"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                // util%, vram used GB, vram total GB — in that order.
-                const n = root.nums(text);
-                root.gpu = n[0] || 0;
-                if (n.length >= 3 && n[2] > 0) {
-                    root.vramUsedGb = n[1];
-                    root.vramTotalGb = n[2];
-                    root.vram = Math.round(100 * n[1] / n[2]);
-                }
-            }
         }
     }
 
@@ -451,6 +486,11 @@ Singleton {
                 tempFile.reload();
             for (let i = 0; i < fanFiles.count; i++)
                 fanFiles.objectAt(i).reload();
+            if (gpuFile.path !== "") {
+                gpuFile.reload();
+                vramUsedFile.reload();
+                vramTotalFile.reload();
+            }
             sample.restart();
         }
     }
@@ -477,11 +517,11 @@ Singleton {
             diskRead: root.diskRead, diskWrite: root.diskWrite })
     }
 
-    // The slow tier: everything that still starts a process. None of these is a
-    // number he watches move — the GPU scripts, the charge, the backlight — and
-    // each of them costs a fork, so they stay on the two seconds they were on
-    // before any of this. Raising the fast tier was affordable exactly because
-    // it left this list alone.
+    // The slow tier: everything that still starts a process — the laptop's fan
+    // daemon, the charge, the backlight. Each of them costs a fork, so they stay
+    // on the two seconds they were on before any of this. Raising the fast tier
+    // was affordable exactly because it left this list alone, and the list is
+    // one shorter than it was: the GPU left it by becoming three file reads.
     Timer {
         interval: root.procMs
         running: Caps.probed
@@ -489,7 +529,6 @@ Singleton {
         triggeredOnStart: true
         onTriggered: {
             fwFanProc.running = Caps.fanSource === "fw";
-            gpuProc.running = Caps.hasGpu;
             powerProc.running = Caps.hasBattery || Caps.hasBacklight;
         }
     }

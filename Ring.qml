@@ -9,6 +9,36 @@ Item {
     property real value: 0        // 0..100
     property string text: ""      // centre text; defaults to rounded value
 
+    // The metric's name, stood on its side in the flank.
+    //
+    // Most rings have two things to say and two places to put them: a number in
+    // the middle and a name under it. Memory and the disks have three — a name,
+    // a used value and a total — and the ring's clear middle is 20px across,
+    // which is three characters at the 10px the centre already uses. So the
+    // third fact has to go somewhere that costs no height, and the only such
+    // place left is sideways: a 28px ring on a 46px group leaves 9px down each
+    // side, and until now the rail spent it on nothing.
+    //
+    // This is a borrowed move rather than a new one — RailClock turns the date
+    // into the margin its stacked time leaves (RailClock.qml:100-118) and
+    // RailPlayer turns the track title the same way (RailPlayer.qml:222-238) —
+    // but it is borrowed from inside this shell, not from outside it. Six other
+    // shells were read and none of them labels a *metric* with turned text:
+    // rotation is reserved everywhere for long free text like a track title
+    // (shub39_dotfiles/quickshell/bar/PlayingMedia.qml:67-80) or a date
+    // (Rexcrazy804_Zaphkiel/dots/quickshell/kurukurubar/Widgets/CalendarView.qml:51).
+    // What they do instead is stack — Ricelin puts the used value in the ring,
+    // the name under it and "/ total" under that (Gakuseei_Ricelin/configs/
+    // quickshell/pill/SysmonSurface.qml:244-250, 142-166), and Brainitech puts
+    // the name *above* the arc with "11.2 / 16 GB" under the centre
+    // (Brainitech_Brain_Shell/src/components/Speedometer.qml:4-7). Measured at
+    // this rail's scale both cost 10px a ring, which is 30px of rail over the
+    // three metrics that need it. The flank costs nothing. docs/surveys/
+    // metric-fraction.md has all twenty-one measurements.
+    //
+    // Empty on every ring that has nothing to add, which is most of them.
+    property string name: ""
+
     // What the colour is keyed off, when that is not the fill. Battery is the
     // one metric here where a full ring is the good news, so it hands over
     // 100 - charge and goes red on the way to empty rather than on the way up.
@@ -128,5 +158,34 @@ Item {
         text: root.label
         color: Theme.dim
         font.pixelSize: 8
+    }
+
+    // Measured unconstrained and read back transposed, the way both the other
+    // turned labels on this rail are sized. Two details are load-bearing:
+    //
+    // advanceWidth, not width — width is rounded down, and a turned label given
+    // its own rounded-down length elides the glyph that did not fit.
+    //
+    // And the box is the flank, 9px, rather than the text's own line height,
+    // which at 8px is 11. The three extra pixels are leading and carry no ink,
+    // so letting them fall outside the box moves no glyph and keeps the label
+    // inside the group's ground instead of three pixels off the edge of it.
+    Item {
+        visible: root.name !== ""
+        anchors.right: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        implicitWidth: 9
+        implicitHeight: Math.ceil(nameMetrics.advanceWidth)
+
+        TextMetrics { id: nameMetrics; font: nameText.font; text: root.name }
+
+        Text {
+            id: nameText
+            anchors.centerIn: parent
+            rotation: -90
+            text: root.name
+            color: Theme.dim
+            font.pixelSize: 8
+        }
     }
 }

@@ -590,9 +590,16 @@ ShellRoot {
                                 // gigabytes fit: the ring's clear middle is
                                 // about 20px across and 10px digits are 6px
                                 // wide, so "14" fits where "14.1" does not.
+                                //
+                                // The word "ram" used to appear only when the
+                                // total was unknown, which meant the one ring
+                                // that could say what it was never did. It says
+                                // both now: the name in the flank, the total in
+                                // the caption.
                                 Ring {
+                                    name: "ram"
                                     label: Sys.memTotalGb > 0
-                                        ? "/" + Math.round(Sys.memTotalGb) : "ram"
+                                        ? "/" + Math.round(Sys.memTotalGb) : ""
                                     value: Sys.mem
                                     text: Math.round(Sys.memUsedGb)
                                 }
@@ -603,17 +610,50 @@ ShellRoot {
                                 // the monitor panel already draw what is moving.
                                 // One ring per mount Caps found, so the machine
                                 // with two disks gets two and the laptop with
-                                // one gets one, and the caption is the mount
-                                // rather than the word "disk" because with two
-                                // of them the only useful caption is which is
-                                // which. Waybar's own disk thresholds
+                                // one gets one. Waybar's own disk thresholds
                                 // (config.jsonc:129-132).
+                                //
+                                // Gigabytes rather than a percentage, for the
+                                // same reason memory reads in gigabytes: "95" is
+                                // a number you have to convert before you can
+                                // act on it and "845" over "/947" is not. The
+                                // arc keeps the percentage, because df's Use% is
+                                // what says how much more can be written.
+                                //
+                                // The mount is the name and it goes in the
+                                // flank, because with two disks the question the
+                                // ring has to answer first is which disk. Root
+                                // is spelled out: the caption under every one of
+                                // these already starts with a slash, and a lone
+                                // "/" turned on its side is a backslash.
+                                //
+                                // Only the last path segment, never the path.
+                                // "/mnt/data" is 44px of 8px caption on a 46px
+                                // ground — it fits, with one pixel of air a side,
+                                // which is a measurement rather than a design
+                                // (docs/surveys/metric-fraction.md, design 13).
+                                // The whole path is in the monitor panel, which
+                                // is a click away and 430px wide.
                                 Repeater {
                                     model: Sys.disks
                                     Ring {
                                         required property var modelData
-                                        label: modelData.path === "/" ? "/"
-                                             : modelData.path.replace(/.*\//, "")
+
+                                        // Three characters is what the middle
+                                        // holds, so a disk past a terabyte reads
+                                        // in terabytes and takes its caption
+                                        // with it — 1.8/2.0T rather than a
+                                        // four-digit number in a 20px hole.
+                                        function short(gb: real): string {
+                                            return gb >= 1000 ? (gb / 1000).toFixed(1)
+                                                              : Math.round(gb);
+                                        }
+
+                                        name: modelData.path === "/" ? "root"
+                                            : modelData.path.replace(/.*\//, "")
+                                        text: short(modelData.usedGb)
+                                        label: "/" + short(modelData.sizeGb)
+                                             + (modelData.sizeGb >= 1000 ? "T" : "")
                                         value: modelData.pct
                                         warnAt: 90
                                         critAt: 95
@@ -819,6 +859,8 @@ ShellRoot {
                             // also where every shell read for this puts it.
                             Btn {
                                 id: networkBtn
+                                // A disc, like the tray cells directly above it.
+                                disc: true
                                 // Three states, three shapes: this button says
                                 // which link, and only which link. It used to
                                 // swap to a shield whenever the tunnel was up,
@@ -855,13 +897,23 @@ ShellRoot {
                                 // key puts those three states zero pixels
                                 // apart, which is why this was two slots
                                 // before.
+                                // Pulled in from the corner now the ground is
+                                // round. A 26px disc centred in the 28px slot
+                                // reaches 13px from the middle; the box corner
+                                // the lock used to hang off is 19.8px out along
+                                // the diagonal, so the old -1/-3 margins would
+                                // leave it floating clear of the button
+                                // entirely. 0/0 lands its centre at about 23,23
+                                // — on the disc's own edge at half past four,
+                                // which is where a corner mark belongs when the
+                                // corner is a curve.
                                 Text {
                                     visible: win.vpn
                                     anchors {
                                         right: parent.right
                                         bottom: parent.bottom
-                                        rightMargin: -1
-                                        bottomMargin: -3
+                                        rightMargin: 0
+                                        bottomMargin: 0
                                     }
                                     text: "󰌾"
                                     font.pixelSize: 9
@@ -874,6 +926,7 @@ ShellRoot {
 
                             Btn {
                                 id: btBtn
+                                disc: true
                                 glyph: Bluetooth.defaultAdapter?.enabled ? "󰂯" : "󰂲"
                                 active: win.page === "bluetooth"
                                 tint: !Bluetooth.defaultAdapter?.enabled ? Theme.dim

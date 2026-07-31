@@ -842,43 +842,32 @@ ShellRoot {
                                     onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
                                 }
 
-                                // The tunnel, said under the glyph instead of
-                                // beside it. This was a whole second slot, and
-                                // before that Btn's badge — the 8px accent disc
-                                // the arrow uses for unread notifications,
-                                // which is what Erik read it as.
+                                // The tunnel, as a padlock tucked into the
+                                // corner of the link glyph. Erik picked this
+                                // one off the sheet of sixteen in
+                                // docs/surveys/network-glyph.md.
                                 //
-                                // Sixteen designs measured at this size in
-                                // docs/surveys/network-glyph.md. A bar changes
-                                // 42 of the slot's 784 pixels and is 3px thick
-                                // at its thinnest, where a 9px key in the
-                                // corner is 1px; it is the same 42 under every
-                                // link glyph, so it never runs into one the way
-                                // the disc runs into the wifi fan; and it
-                                // leaves the glyph alone, so ethernet, wifi and
-                                // offline stay exactly as far apart with the
-                                // tunnel up as without. Swapping the glyph for
-                                // a shield or a key puts those three zero
-                                // pixels apart.
-                                //
-                                // Shape from noctalia's focus underline
-                                // (Modules/Bar/Widgets/Taskbar.qml:870). It
-                                // means focus there and a tunnel here, and
-                                // nothing on this rail uses it at all.
-                                Rectangle {
+                                // It is a mark, not a slot: the whole point is
+                                // that the link glyph is untouched, so
+                                // ethernet, wifi and offline stay exactly as
+                                // far apart with the tunnel up as without —
+                                // where swapping the glyph for a shield or a
+                                // key puts those three states zero pixels
+                                // apart, which is why this was two slots
+                                // before.
+                                Text {
                                     visible: win.vpn
                                     anchors {
+                                        right: parent.right
                                         bottom: parent.bottom
-                                        horizontalCenter: parent.horizontalCenter
-                                        bottomMargin: 2
+                                        rightMargin: -1
+                                        bottomMargin: -3
                                     }
-                                    width: 14
-                                    height: 3
-                                    radius: 1.5
-                                    // Btn floods the whole slot with the accent
-                                    // while its panel is open and draws the
-                                    // glyph in bg; the bar has to follow or it
-                                    // vanishes into it.
+                                    text: "󰌾"
+                                    font.pixelSize: 9
+                                    // Btn floods the slot with the accent while
+                                    // its panel is open and draws the glyph in
+                                    // bg; the lock has to follow or it vanishes.
                                     color: networkBtn.active ? Theme.bg : Theme.good
                                 }
                             }

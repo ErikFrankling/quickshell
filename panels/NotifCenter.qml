@@ -48,7 +48,8 @@ ColumnLayout {
             required property var modelData
             width: ListView.view.width
             n: modelData
-            saved: root.showSaved
+            saved: Notifs.isSaved(modelData.key)
+            savedList: root.showSaved
         }
     }
 

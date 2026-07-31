@@ -5,7 +5,13 @@ Rectangle {
     id: root
 
     required property var n
+    // Two different questions, and they used to be one property, which is why
+    // the star in the history list was always hollow and always re-saved.
+    // `saved` is whether this notification is in the saved list — the star.
+    // `savedList` is whether this card is being drawn in that list, which is
+    // all ✕ needs to know: it removes the entry from the list you can see.
     property bool saved: false
+    property bool savedList: false
     property bool popup: false
 
     implicitHeight: col.implicitHeight + 22
@@ -99,7 +105,7 @@ Rectangle {
                 implicitWidth: 26
                 implicitHeight: 26
                 onClicked: root.popup ? Notifs.dismissPopup(root.n.key)
-                                      : (root.saved ? Notifs.unsave(root.n.key) : Notifs.drop(root.n.key))
+                                      : (root.savedList ? Notifs.unsave(root.n.key) : Notifs.drop(root.n.key))
             }
         }
     }

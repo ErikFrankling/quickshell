@@ -966,12 +966,12 @@ ShellRoot {
 
                         Item { implicitHeight: Theme.groupGap }
 
-                        // The clock, and the control centre behind it. Laid
-                        // across the rail by RailClock rather than down it,
-                        // which is why this is a group of one 30px slot rather
-                        // than the 92px stack of five lines it replaced — the
-                        // tallest single thing on a rail that overflows on a
-                        // laptop, for a date nobody could read twice.
+                        // The clock, and the control centre behind it. The time
+                        // stacks and the date sits beside it as a fraction, so
+                        // this is a group of one 36px slot rather than the 92px
+                        // stack of five lines it replaced — the tallest single
+                        // thing on a rail that overflows on a laptop, for a date
+                        // nobody could read twice.
                         //
                         // It used to open a month grid. That grid is deleted:
                         // no account is signed in, Erik keeps his calendar in

@@ -2,11 +2,46 @@
 
 Erik asked whether three things could be read and rendered as one cheatsheet —
 his Dactyl Manuform's QMK/Vial layers, his Hyprland binds, and his Neovim
-keymaps. This is the answer to that question. Nothing here is built yet; it was
-research for discussion, and the write-up previously existed only inside agent
-transcripts, which do not survive.
+keymaps. This is the answer to that question, and — since 2026-08-01 — the
+record of the two thirds of it that shipped.
 
 All three are possible. The difficulty is not where you would guess.
+
+## What shipped
+
+`KeysWindow.qml` — a centred overlay in the launcher's shape, Escape to
+dismiss, on `qs ipc call keys toggle` and a `GlobalShortcut`, no rail button.
+It shows the Dactyl's two layers on a drawn board, and all of Hyprland's binds
+under it, grouped by modifier. `Keymap.qml` is the data behind both;
+`KeyBoard.qml` draws the board. Three files, none over 250 lines.
+
+Neovim is deliberately not in it. Being right about his keymaps means RPC into
+a live instance — every offline number below is wrong — and a keymap list that
+is quietly wrong is worse than none. Adding it is the third section of this
+document plus a `Process` running `nvim --server $SOCK --remote-expr`, a
+`$NVIM_LISTEN_ADDRESS` to find, and a decision about what the sheet shows when
+no instance is running. Perhaps sixty lines and a real design question, against
+the roughly two hundred the other two cost together.
+
+Measured on the running shell the day it shipped: 61 binds in four modifier
+groups (Super 32, Super+Shift 16, no modifier 9, Super+Alt 4), 64 keys, 2
+layers. Card 860×840 on a 1862×1080 output; board 792×275 at a 44px key pitch.
+
+### The one thing the research got wrong
+
+`hyprctl binds -j` **is not JSON** on Hyprland 0.56.0. The writer emits the
+value list one position out of step with the key names, prints `keycode` as a
+bare token and leaves `allow_input_capture` with no value at all; `jq` gives up
+at line 15 and so does `JSON.parse`. The plain `hyprctl binds` output is
+correct, and is what `Keymap.qml` parses. `docs/surveys/keybind-cheatsheet.md`
+has the offending bytes, and notes that the one other shell in the wild reading
+`binds -j` has a `catch` that has been silently swallowing this.
+
+Two of the 61 binds now carry a description — the two `bindd` lines pointing at
+this shell's own `GlobalShortcut`s. The other 59 fall back to their dispatcher
+and argument, drawn dim and italic so the sheet is never read as claiming
+somebody wrote that label. Converting the rest to `bindd` is still the fix, and
+still belongs in the dotfiles rather than here.
 
 ## The keyboard — easier than expected
 
@@ -26,6 +61,23 @@ The one real obstacle is rendering. QtSvg ignores `dominant-baseline` and
 high. Three ways out: rasterise it, post-process about thirty lines of SVG, or
 skip the SVG and draw the keys natively in QML from a 6.7 KB joined JSON. The
 last is probably right for a shell that already draws everything else itself.
+
+**It was the third, and it did not even need the joined JSON.** `keyboard.json`
+in the keyboard directory already gives every key an `x` and a `y` in key units
+— including the splay and both thumb clusters — and the `LAYOUT()` macro is
+*generated from that array*, so the nth argument in `keymap.c` is the nth
+position in `keyboard.json` and no matrix arithmetic is involved. `KeyBoard.qml`
+is a `Repeater` over 64 positions; `Keymap.qml` reads the two files with
+`FileView` and `watchChanges: true`, splits the `LAYOUT(...)` arguments on
+depth-zero commas after stripping comments, and maps the 46 keycodes whose name
+is not already their legend. So there is no `qmk`, no `keymap-drawer`, no
+derivation and no build step, and re-flashing shows up in the overlay the moment
+the file changes.
+
+Two things that will bite the next person: `MO(1)` and `UP(AA_LOWER, AA_UPPER)`
+contain commas, so the argument split has to track parenthesis depth; and
+`keymap.c` keeps a whole commented-out old keymap below the live one, so block
+and line comments have to go first or you parse four layers instead of two.
 
 Reading the layout live over HID with Vial's protocol also works — about sixty
 lines of stdlib Python, and the existing `/etc/udev/rules.d/50-qmk.rules`

@@ -9,6 +9,7 @@ singleton Markup 1.0 Markup.qml
 singleton Audio 1.0 Audio.qml
 singleton Net 1.0 Net.qml
 singleton Pins 1.0 Pins.qml
+singleton Keymap 1.0 Keymap.qml
 
 Bar 1.0 Bar.qml
 Workspaces 1.0 Workspaces.qml
@@ -16,6 +17,8 @@ Btn 1.0 Btn.qml
 CardShape 1.0 CardShape.qml
 Graph 1.0 Graph.qml
 Group 1.0 Group.qml
+KeyBoard 1.0 KeyBoard.qml
+KeysWindow 1.0 KeysWindow.qml
 LauncherWindow 1.0 LauncherWindow.qml
 LooksWindow 1.0 LooksWindow.qml
 NotifCard 1.0 NotifCard.qml

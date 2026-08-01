@@ -253,51 +253,106 @@ ShellRoot {
                     // sections grow into each other and whatever passes the
                     // screen edge is cut; whisker's VBarContainer.qml:24 does
                     // exactly the same. Neither has a cap, a scroll or an
-                    // indicator. So the ladder below is this shell's own, and
-                    // its one rule is that the rail spends its height from the
-                    // bottom up: the clock, the tray, the shell's own buttons
-                    // and the metrics all keep their place, and the workspaces
-                    // — the most numerous thing here and the only one with a
-                    // natural order to scroll through — are what gives.
+                    // indicator. So the ladder below is this shell's own, and it
+                    // is an order of who gives first:
+                    //
+                    //   1. Nothing. The workspaces stand at their full natural
+                    //      height while any slack remains anywhere on the rail.
+                    //   2. The metrics' centring. The group slides off the
+                    //      rail's midpoint, upward, until it is sitting on the
+                    //      player.
+                    //   3. The metrics themselves. The block caps at what is
+                    //      left and a chevron says the rest is behind it — and
+                    //      the block is already the button that opens the panel
+                    //      showing every one of them in full.
+                    //   4. The tray, into the control centre behind a +N.
+                    //   5. Only then the workspaces, which scroll with the
+                    //      focused pill kept in view.
+                    //
+                    // The clock is not on this list and never gives.
+                    //
+                    // The workspaces used to be step 1 rather than step 5, on
+                    // the reasoning that they are the most numerous thing here
+                    // and the only one with a natural order to scroll through.
+                    // Erik overruled it: the workspaces are what he navigates
+                    // by, and the rings are a readout he can lose the tail of.
+                    // Being numerous made them the easiest thing to take height
+                    // from, not the right one.
                     //
                     // Height minus the 8px margin under the clock. There is no
                     // margin above: the workspaces run into the top edge.
                     readonly property int inner: rail.height - 8
-                    // The part of the rail that is not negotiable: the metrics,
-                    // what is playing, the radios, the clock, and the gaps
-                    // between those groups.
+
+                    // What the bottom of the rail costs, with the tray at
+                    // nothing: the player, the radios, the clock, and the two
+                    // gaps between those three.
                     //
                     // Two gaps, counted rather than assumed. The boundaries
                     // above the player and above the metrics are both spacers
                     // that grow, so they are slack and not height owed to
                     // anybody; only player-to-radios and radios-to-clock are
                     // fixed. This used to say four, which quietly held eight
-                    // pixels back from the workspaces for a gap that was never
-                    // drawn.
+                    // pixels back for a gap that was never drawn.
                     //
-                    // The three groups pinned to the bottom are measured by
-                    // their grounds, not by their contents, because the ground
-                    // is what occupies the rail — Theme.groupPad of air above
-                    // and below each cluster is height the workspaces cannot
-                    // have.
-                    readonly property int fixed: ringBox.implicitHeight
-                        + playerGroup.implicitHeight + clockGroup.implicitHeight
-                        // Wifi and bluetooth, and the tunnel when there is one,
-                        // which are the slots of bottomGroup whatever the tray
-                        // does, plus that group's own ground.
-                        + Theme.slot * (win.vpn ? 3 : 2)
-                        + Theme.slotGap * (win.vpn ? 2 : 1)
+                    // The groups pinned to the bottom are measured by their
+                    // grounds, not by their contents, because the ground is what
+                    // occupies the rail — Theme.groupPad of air above and below
+                    // each cluster is height nothing else can have.
+                    //
+                    // Wifi and bluetooth, and nothing else. This used to bill a
+                    // third slot and a third gap whenever the tunnel was up, and
+                    // that is 33px the rail has not owed since the tunnel became
+                    // a padlock tucked into the corner of the network glyph
+                    // rather than a button of its own — "It is a mark, not a
+                    // slot", networkBtn below. Nothing could spend those 33px
+                    // and nothing could see them either: they came off `elastic`
+                    // and reappeared in the fillHeight spacer as dead air, so
+                    // the rail would clip the workspaces while visibly holding
+                    // a gap open above the player.
+                    readonly property int stack:
+                        playerGroup.implicitHeight + clockGroup.implicitHeight
+                        + Theme.slot * 2
+                        + Theme.slotGap
                         + Theme.groupPad * 2
                         + Theme.groupGap * 2
-                    // What the two things that grow on their own have to share.
+
+                    // The metrics' floor. Two rings and the block's own padding:
+                    // cpu and ram are the pair /proc answers for on every host,
+                    // so they are the two that are always there to keep, and a
+                    // metrics block scrolled down to one ring is worse than no
+                    // metrics block at all.
+                    readonly property int ringMin: Theme.slot * 2 + 9 + 12
+                    // Their natural height, before the rail has any say.
+                    readonly property int ringNat: rings.implicitHeight + 12
+
+                    // How tall the workspaces may stand. Everything below them
+                    // at its own minimum, which is the whole bottom stack plus
+                    // two rings and no tray at all — so this only ever bites on
+                    // a screen too short to hold the workspaces and a legible
+                    // clock at once, and it exists so that the thing that gives
+                    // there is still not the clock. Counted against constants
+                    // rather than against `elastic`: the budget below is derived
+                    // from the workspaces' height, so reading it back here would
+                    // close the loop.
+                    readonly property int wsMax: Math.max(Theme.slot + 16,
+                        rail.inner - rail.stack - rail.ringMin)
+
+                    // The workspaces are paid first and in full. Erik navigates
+                    // by them and has at most ten; they are not the rail's
+                    // shock absorber and asking them to be one was this budget's
+                    // first mistake, above whichever arithmetic went with it.
+                    readonly property int fixed:
+                        wsBlock.implicitHeight + rail.stack
+                    // What the tray and the metrics have to share, and whatever
+                    // neither of them wants is the slack the centring spends.
                     readonly property int elastic: Math.max(0, rail.inner - rail.fixed)
-                    // The tray is served first but never all of it: one
-                    // workspace pill's worth is held back so the rail always
-                    // still says which workspace he is on. Each icon is a 26px
-                    // cell over the column's own gap.
+                    // The tray is served first but never all of it: two rings'
+                    // worth is held back, so the rail always still says what the
+                    // machine is doing. Each icon is a 26px cell over the
+                    // column's own gap.
                     readonly property int trayCell: 26 + Theme.slotGap
                     readonly property int trayMax: Math.max(0,
-                        Math.floor((rail.elastic - Theme.slot) / rail.trayCell))
+                        Math.floor((rail.elastic - rail.ringMin) / rail.trayCell))
                     // How many cells the tray gets, and how many of them are
                     // icons. When the rail cannot hold them all the last cell
                     // carries the count instead of an icon, so saying how many
@@ -309,28 +364,38 @@ ShellRoot {
                             ? Math.max(0, rail.trayCells - 1) : rail.trayCells
                     readonly property int trayHidden:
                         Pins.railTray.length - rail.trayShown
-                    // And the workspaces take whatever the tray left. Counted
+                    // And the metrics take whatever the tray left. Counted
                     // rather than measured: the icons are delegates of a
                     // Repeater inside the column this budget also pays for, so
                     // reading its height back would close the loop.
-                    readonly property int wsRoom: Math.max(0, rail.elastic
+                    readonly property int ringRoom: Math.max(0, rail.elastic
                         - rail.trayCells * rail.trayCell)
 
                     // The metrics are the one group pinned to neither end. Erik
                     // wants them at the middle of the rail with air on both
                     // sides rather than riding on top of the player, so the gap
                     // above them is whatever puts their middle on the rail's
-                    // middle — and never more than the room the workspaces did
-                    // not use, because that leftover is the only height on the
-                    // rail the ladder above has not already promised to
-                    // somebody. Full rail, no leftover, no gap: the metrics
-                    // settle back onto the stack below them and the rail
-                    // degrades to exactly the column it was before, rather than
-                    // centring something off the bottom of the screen.
+                    // middle — and never more than the room the rings did not
+                    // themselves use, because that leftover is the only height
+                    // on the rail the ladder above has not already promised to
+                    // somebody.
+                    //
+                    // This is the second thing to give and it gives from the
+                    // top: the gap above the metrics is the measured one and the
+                    // gap below them is the fillHeight spacer that takes the
+                    // rest, so as the slack runs out the metrics slide *up*
+                    // toward the workspaces rather than the two gaps closing
+                    // evenly. Splitting it evenly would cost the workspaces
+                    // half of every pixel the centring wants, for a symmetry
+                    // nobody can see once the group is off centre anyway. Full
+                    // rail, no leftover, no gap: the metrics settle back onto
+                    // the stack below them and the rail degrades to exactly the
+                    // column it was before, rather than centring something off
+                    // the bottom of the screen.
                     readonly property int ringGap: Math.max(0, Math.min(
                         Math.round(rail.height / 2 - ringBox.implicitHeight / 2
                             - wsBlock.implicitHeight),
-                        rail.wsRoom - wsBlock.implicitHeight))
+                        rail.ringRoom - ringBox.implicitHeight))
 
                     // ---- the seam -------------------------------------------
                     // The rail's one curve sits on its right edge, and its right
@@ -373,15 +438,27 @@ ShellRoot {
                         // 42-47); skwd's DropdownTail.qml:34-37 squares exactly
                         // the one corner that touches the bar.
                         //
-                        // It is also the one elastic thing on the rail: its
-                        // natural height until the rail runs out, and then it
-                        // stops growing and scrolls instead. Two things make
-                        // that safe rather than merely tidy: the focused pill is
-                        // scrolled back into view whenever it moves, so the
-                        // workspace he is actually on is never the one that
-                        // went away, and a chevron sits over each edge that has
-                        // more behind it, so a short list and a scrolled list
-                        // never look alike.
+                        // It is also the *last* thing on the rail to give. It
+                        // stands at its natural height and keeps standing there
+                        // while the metrics' centring, the metrics themselves
+                        // and the tray all yield in front of it; only on a
+                        // screen too short to hold ten pills, two rings and a
+                        // clock at once does it stop growing and scroll instead.
+                        // On his 1080px screen that is twenty-four workspaces,
+                        // so in practice this never engages and the block below
+                        // behaves exactly as a plain column of pills.
+                        //
+                        // It is kept rather than deleted because deleting it
+                        // does not make the overflow go away, it just moves who
+                        // it lands on: an unbounded block pushes the clock off
+                        // the bottom of a short screen, and the clock going
+                        // quietly is the one thing that was never up for
+                        // negotiation. Two things make the scroll safe rather
+                        // than merely tidy: the focused pill is scrolled back
+                        // into view whenever it moves, so the workspace he is
+                        // actually on is never the one that went away, and a
+                        // chevron sits over each edge that has more behind it,
+                        // so a short list and a scrolled list never look alike.
                         Rectangle {
                             id: wsBlock
 
@@ -411,7 +488,7 @@ ShellRoot {
                                 // than the rail can pay for, and never shorter
                                 // than one pill.
                                 implicitHeight: Math.min(wsCol.implicitHeight,
-                                    Math.max(Theme.slot, rail.wsRoom - 16))
+                                    Math.max(Theme.slot, rail.wsMax - 16))
 
                                 Flickable {
                                     id: wsFlick
@@ -509,6 +586,11 @@ ShellRoot {
                         // and puts the metrics on the rail's midpoint; the
                         // second is whatever is left, which is what holds the
                         // player, the radios and the clock down at the bottom.
+                        // Which is also why the centring gives from the top:
+                        // this one is clamped and that one is fillHeight, so
+                        // pressure closes this gap and opens that one, and the
+                        // metrics rise toward the workspaces instead of the
+                        // group's air being shaved off both ends at once.
                         Item { Layout.preferredHeight: rail.ringGap }
 
                         // The rings are the monitor button. A separate button
@@ -553,19 +635,46 @@ ShellRoot {
                         // would render *darker* than the resting colour, so
                         // opening the panel would dim the block instead of
                         // lighting it.
+                        //
+                        // This is the elastic thing on the rail now, and the
+                        // first to give after the centring: its natural height
+                        // while the rail can pay for it, and what is left when
+                        // it cannot. It caps rather than scrolls, which is the
+                        // one place this block deliberately does not copy the
+                        // workspaces below. There is no focused ring for a
+                        // follow() to keep in view, so a scroll position here
+                        // would be a thing to manage with nothing to aim it at;
+                        // and a Flickable would have to sit above ringMa to see
+                        // the wheel at all, which puts a scroll surface on top
+                        // of the click target that already opens the panel
+                        // showing every one of these metrics in full. Capping
+                        // costs one `clip` and keeps the press.
+                        //
+                        // It drops from the bottom, so the order the rings are
+                        // declared in is the order they are kept in: cpu and ram
+                        // first because /proc answers for those two on every
+                        // host, then whatever this machine has sensors for, and
+                        // the battery last. It never drops below rail.ringMin.
+                        // The chevron is the same affordance the workspaces
+                        // carry, in this block's own resolved colour so it
+                        // follows the open and hover washes rather than sitting
+                        // as a flat Theme.bgHi patch on top of them.
                         OpenGround {
                             id: ringBox
 
                             Layout.alignment: Qt.AlignHCenter
                             implicitWidth: Theme.groupWidth
-                            implicitHeight: rings.implicitHeight + 12
+                            implicitHeight: Math.min(rail.ringNat,
+                                Math.max(rail.ringMin, rail.ringRoom))
                             on: win.page === "monitor"
                             ground: Theme.bgHi
                             hovering: ringMa.containsMouse
+                            clip: true
 
                             ColumnLayout {
                                 id: rings
-                                anchors.centerIn: parent
+                                anchors.top: parent.top
+                                anchors.topMargin: 6
                                 width: parent.width
                                 spacing: 9
 
@@ -712,6 +821,19 @@ ShellRoot {
                                     critAt: 100 - Sys.batCrit
                                     blink: !Sys.charging
                                     visible: Sys.hasBattery
+                                }
+                            }
+
+                            Rectangle {
+                                anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+                                height: 10
+                                color: ringBox.color
+                                visible: rail.ringNat > ringBox.implicitHeight
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰅀"
+                                    color: Theme.accent
+                                    font.pixelSize: 10
                                 }
                             }
 

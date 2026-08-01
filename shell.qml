@@ -418,38 +418,50 @@ ShellRoot {
                     // months and is visibly wrong; it cannot silently disappear.
                     readonly property bool ringCapped: rail.ringRoom < rail.ringNat
 
-                    // The metrics are the one group pinned to neither end. Erik
-                    // wants them at the middle of the rail with air on both
-                    // sides rather than riding on top of the player, so the gap
-                    // above them is whatever puts their middle on the rail's
-                    // middle — and never more than the room the rings did not
-                    // themselves use, because that leftover is the only height
-                    // on the rail the ladder above has not already promised to
-                    // somebody.
+                    // The metrics are the one group pinned to neither end, and
+                    // this is the air above them: half of whatever the rings did
+                    // not themselves use, so the other half falls into the
+                    // fillHeight spacer below and the block stands with the same
+                    // gap on either side.
                     //
-                    // This is the second thing to give and it gives from the
-                    // top: the gap above the metrics is the measured one and the
-                    // gap below them is the fillHeight spacer that takes the
-                    // rest, so as the slack runs out the metrics slide *up*
-                    // toward the workspaces rather than the two gaps closing
-                    // evenly. Splitting it evenly would cost the workspaces
-                    // half of every pixel the centring wants, for a symmetry
-                    // nobody can see once the group is off centre anyway. Full
-                    // rail, no leftover, no gap: the metrics settle back onto
-                    // the stack below them and the rail degrades to exactly the
-                    // column it was before, rather than centring something off
-                    // the bottom of the screen.
+                    // Erik has asked for two things that cannot both be
+                    // literally true. The metrics were to be "anchored to the
+                    // middle of the sidebar, not attached to the things below",
+                    // and the gaps between groups are to be consistent. Putting
+                    // the block on rail.height / 2 answered the first and made
+                    // the second impossible: everything below the metrics is
+                    // taller than the workspaces above them — 331px against 243
+                    // on his screen — so a block on the rail's own midpoint sat
+                    // with 161px of air above it and 65 below. Two and a half
+                    // times more air on one side does not read as free-standing.
+                    // It reads as pushed down, which is the opposite of what the
+                    // centring was asked for.
                     //
-                    // Counted against ringNat rather than against the height
-                    // the block ended up at, which is the same thing every time
-                    // the gap is open and is the statement rather than the
-                    // arithmetic: the metrics are paid in full before a pixel of
-                    // this is called leftover.
+                    // So the block is centred in the channel between the
+                    // workspaces and the bottom stack rather than on the rail
+                    // itself. It gives up the literal midpoint — 48px up, from
+                    // 540 to 492 — and it buys the thing the midpoint was a
+                    // proxy for, which is a group standing clear of both its
+                    // neighbours by the same distance.
+                    //
+                    // Counted off ringRoom - ringNat, which is the whole of what
+                    // is left once the rings are paid in full. That is the same
+                    // statement the old three-term expression was making about
+                    // the order of payment, in one term: the metrics are paid
+                    // before a pixel of this is called leftover. It needs no
+                    // floor of its own either, because ringCapped is exactly
+                    // ringRoom < ringNat and so the difference here is never
+                    // negative.
+                    //
+                    // Still the second thing to give, and still ahead of the
+                    // metrics themselves: as the rail runs out this difference
+                    // shrinks and both halves close together, and at zero the
+                    // metrics settle onto the stack below and the rail degrades
+                    // to exactly the column it was before. Floor rather than
+                    // round, so an odd pixel goes to the spacer whose whole job
+                    // is to take what is left.
                     readonly property int ringGap: rail.ringCapped ? 0
-                        : Math.max(0, Math.min(
-                            Math.round(rail.height / 2 - rail.ringNat / 2
-                                - wsBlock.implicitHeight),
-                            rail.ringRoom - rail.ringNat))
+                        : Math.floor((rail.ringRoom - rail.ringNat) / 2)
 
                     // ---- the seam -------------------------------------------
                     // The rail's one curve sits on its right edge, and its right
@@ -477,20 +489,20 @@ ShellRoot {
                         anchors.bottomMargin: 8
                         spacing: 0
 
-                        // The workspaces, and the rail's one curve.
+                        // The workspaces, and the rail's one curved edge.
                         //
                         // Its ground is the one every other group copies —
                         // Theme.bgHi, see Group — so what sets this block apart
                         // is its shape rather than its colour. It is full width
                         // and runs square into the top and left screen edges,
-                        // and its bottom right corner is the single curve on the
-                        // rail's outline — the boundary between
-                        // where he is and what the machine is doing. Zaphkiel
-                        // stacks two rectangles into one block the same way,
-                        // rounding the outside pair and squaring the pair where
-                        // the sections meet (Widgets/CalendarView.qml:22-27,
-                        // 42-47); skwd's DropdownTail.qml:34-37 squares exactly
-                        // the one corner that touches the bar.
+                        // and its bottom is the single curved boundary on the
+                        // rail's outline — between where he is and what the
+                        // machine is doing. Zaphkiel stacks two rectangles into
+                        // one block the same way, rounding the outside pair and
+                        // squaring the pair where the sections meet
+                        // (Widgets/CalendarView.qml:22-27, 42-47); skwd's
+                        // DropdownTail.qml:34-37 squares exactly the corners
+                        // that touch the bar.
                         //
                         // It is also the *last* thing on the rail to give. It
                         // stands at its natural height and keeps standing there
@@ -519,10 +531,45 @@ ShellRoot {
                             Layout.fillWidth: true
                             implicitHeight: wsBox.implicitHeight + 16
                             color: Theme.bgHi
+                            // Where the workspaces end, and the only edge of
+                            // this block that is free. The top of it runs into
+                            // the top of the screen and its left runs into the
+                            // side, so neither of those has a corner to draw —
+                            // 883538b's rule, that a surface running into
+                            // another surface does not have a corner there. The
+                            // bottom has desktop under it across its whole
+                            // width, so it has two.
+                            //
+                            // The bottom left is new, and it is what Erik was
+                            // pointing at when he asked why this ground has no
+                            // rounded corners while the four below it do. It had
+                            // one, and the other end of the same edge was a
+                            // square notch: an edge curved at one end and cut at
+                            // the other reads as unfinished rather than as
+                            // decided. "There should be like one curve, and that
+                            // should be where the workspaces end" names the
+                            // boundary, and the boundary is the whole bottom
+                            // edge rather than one corner of it.
+                            //
+                            // What is deliberately unchanged is everything above
+                            // that edge. The block keeps the full 58 and stays
+                            // square into both screen edges — "i don't want the
+                            // curve on the sidebar, it should go all the way to
+                            // the top" — so it is still the one thing on the
+                            // rail shaped differently from the grounds under it,
+                            // which is what says the workspaces are not merely
+                            // another cluster. Narrowing it to Theme.groupWidth
+                            // would settle the question by deleting it, and take
+                            // the pills' 7px of air either side with it
+                            // (Workspaces.qml:173, 44px on this full width).
+                            bottomLeftRadius: Theme.radius
                             // Gone while a full-height panel is against the
-                            // rail — see rail.seamed. Eased on the card's own
-                            // 150ms so the curve leaves with the panel that
-                            // took it rather than snapping a frame later.
+                            // rail — see rail.seamed. This corner only: the seam
+                            // is the rail's right edge, and a panel attaching
+                            // there says nothing about the left, which still has
+                            // desktop under it. Eased on the card's own 150ms so
+                            // the curve leaves with the panel that took it
+                            // rather than snapping a frame later.
                             bottomRightRadius: rail.seamed ? 0 : Theme.radius
                             Behavior on bottomRightRadius {
                                 NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
@@ -636,15 +683,16 @@ ShellRoot {
                             }
                         }
 
-                        // The two gaps that do the work. The first is measured,
-                        // and puts the metrics on the rail's midpoint; the
-                        // second is whatever is left, which is what holds the
-                        // player, the radios and the clock down at the bottom.
-                        // Which is also why the centring gives from the top:
-                        // this one is clamped and that one is fillHeight, so
-                        // pressure closes this gap and opens that one, and the
-                        // metrics rise toward the workspaces instead of the
-                        // group's air being shaved off both ends at once.
+                        // The two gaps that do the work, and the same gap twice.
+                        // This one is half the room the rings left over — see
+                        // rail.ringGap — and the fillHeight spacer below the
+                        // metrics is handed the other half by the layout, which
+                        // is also what holds the player, the radios and the
+                        // clock down at the bottom. Writing only one of them and
+                        // letting the column work out the other is what keeps
+                        // them equal through every height the rail can take:
+                        // there is no second expression here to drift out of
+                        // step with the first.
                         Item { Layout.preferredHeight: rail.ringGap }
 
                         // The rings are the monitor button. A separate button

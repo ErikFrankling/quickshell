@@ -31,9 +31,10 @@ import QtQuick.Layouts
 // this ground, and are still visible doing it.
 //
 // The workspaces still read differently, by shape rather than by colour: they
-// are full rail width and run square into the top and left screen edges, and
-// they carry the 20px curve. These are inset to Theme.groupWidth and rounded on
-// all four corners. Grounding some clusters and shaping one of them apart is
+// are full rail width, run square into the top and left screen edges, and carry
+// the 20px curve on both ends of the one edge of theirs that is free. These are
+// inset to Theme.groupWidth and rounded on all four corners at Theme.radiusS.
+// Grounding some clusters and shaping one of them apart is
 // josecriane's and Rexcrazy804's move both — neither distinguishes a section by
 // giving it a second ground colour.
 //

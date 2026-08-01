@@ -316,14 +316,36 @@ ShellRoot {
                         + Theme.groupPad * 2
                         + Theme.groupGap * 2
 
-                    // The metrics' floor. Two rings and the block's own padding:
+                    // What the metrics block spends on air, whatever is in it.
+                    // Theme.groupPad above and below, like every other group —
+                    // and then the last ring's caption, which hangs Ring.
+                    // overhang below the slot the column was told about and is
+                    // therefore drawn *under* the bottom pad rather than in it.
+                    // Asked of the ring rather than written down here: it is a
+                    // fact about the caption's font, the ring is the only thing
+                    // that knows it, and the last agent to write it down as a
+                    // number wrote 6 for something that measures 10.
+                    //
+                    // This is what Erik was pointing at. The block used to be
+                    // 12px of pad and no overhang, so its ground stopped four
+                    // pixels above the bottom of the last caption's box and the
+                    // `clip` below took the ends off "data 2.0T" while 70px of
+                    // rail sat empty under it.
+                    //
+                    // Rounded up, because a fractional pixel of caption is a
+                    // pixel of caption and this budget is counted in whole ones.
+                    readonly property int ringPad:
+                        Theme.groupPad * 2 + Math.ceil(rings.overhang)
+
+                    // The metrics' floor. Two rings and the block's own air:
                     // cpu and ram are the pair /proc answers for on every host,
                     // so they are the two that are always there to keep, and a
                     // metrics block scrolled down to one ring is worse than no
                     // metrics block at all.
-                    readonly property int ringMin: Theme.slot * 2 + 9 + 12
+                    readonly property int ringMin:
+                        Theme.slot * 2 + rings.spacing + rail.ringPad
                     // Their natural height, before the rail has any say.
-                    readonly property int ringNat: rings.implicitHeight + 12
+                    readonly property int ringNat: rings.implicitHeight + rail.ringPad
 
                     // How tall the workspaces may stand. Everything below them
                     // at its own minimum, which is the whole bottom stack plus
@@ -371,6 +393,31 @@ ShellRoot {
                     readonly property int ringRoom: Math.max(0, rail.elastic
                         - rail.trayCells * rail.trayCell)
 
+                    // Whether the metrics are being made to give, and the one
+                    // fact everything about the cap is read off. Three things
+                    // follow from it and nothing else decides any of them: how
+                    // tall the block is, whether it clips, and whether it says
+                    // there is more behind it.
+                    //
+                    // It is written as one comparison on purpose. The block
+                    // used to size itself with a min/max and the gap above it
+                    // clamped itself separately, and "the cap only engages when
+                    // the gap is shut" was then an algebraic consequence of two
+                    // expressions that did not mention each other — true, but
+                    // nothing a reader or a later edit could see. Erik's rule is
+                    // that nothing is cut while a pixel is free anywhere on the
+                    // rail, and a rule that important should be one line: the
+                    // metrics are capped exactly when the room left for them is
+                    // less than they naturally want, the gap is what remains
+                    // *after* that natural height is paid, and the clip is
+                    // switched off whenever it is not.
+                    //
+                    // So a group that has not been squeezed cannot clip. If some
+                    // future arithmetic gets a pixel wrong the caption draws
+                    // over the ground's edge again, which is what it did for
+                    // months and is visibly wrong; it cannot silently disappear.
+                    readonly property bool ringCapped: rail.ringRoom < rail.ringNat
+
                     // The metrics are the one group pinned to neither end. Erik
                     // wants them at the middle of the rail with air on both
                     // sides rather than riding on top of the player, so the gap
@@ -392,10 +439,17 @@ ShellRoot {
                     // the stack below them and the rail degrades to exactly the
                     // column it was before, rather than centring something off
                     // the bottom of the screen.
-                    readonly property int ringGap: Math.max(0, Math.min(
-                        Math.round(rail.height / 2 - ringBox.implicitHeight / 2
-                            - wsBlock.implicitHeight),
-                        rail.ringRoom - ringBox.implicitHeight))
+                    //
+                    // Counted against ringNat rather than against the height
+                    // the block ended up at, which is the same thing every time
+                    // the gap is open and is the statement rather than the
+                    // arithmetic: the metrics are paid in full before a pixel of
+                    // this is called leftover.
+                    readonly property int ringGap: rail.ringCapped ? 0
+                        : Math.max(0, Math.min(
+                            Math.round(rail.height / 2 - rail.ringNat / 2
+                                - wsBlock.implicitHeight),
+                            rail.ringRoom - rail.ringNat))
 
                     // ---- the seam -------------------------------------------
                     // The rail's one curve sits on its right edge, and its right
@@ -648,7 +702,10 @@ ShellRoot {
                         // the wheel at all, which puts a scroll surface on top
                         // of the click target that already opens the panel
                         // showing every one of these metrics in full. Capping
-                        // costs one `clip` and keeps the press.
+                        // costs one `clip` and keeps the press — and the clip is
+                        // bound to rail.ringCapped rather than left on, so the
+                        // block can only ever cut something at the moment it is
+                        // being cut short itself.
                         //
                         // It drops from the bottom, so the order the rings are
                         // declared in is the order they are kept in: cpu and ram
@@ -664,18 +721,28 @@ ShellRoot {
 
                             Layout.alignment: Qt.AlignHCenter
                             implicitWidth: Theme.groupWidth
-                            implicitHeight: Math.min(rail.ringNat,
-                                Math.max(rail.ringMin, rail.ringRoom))
+                            implicitHeight: rail.ringCapped
+                                ? Math.max(rail.ringMin, rail.ringRoom)
+                                : rail.ringNat
                             on: win.page === "monitor"
                             ground: Theme.bgHi
                             hovering: ringMa.containsMouse
-                            clip: true
+                            clip: rail.ringCapped
 
                             ColumnLayout {
                                 id: rings
+
+                                // What the ring under this one hangs into the
+                                // gap, and past the last ring into the block's
+                                // bottom pad. Every caption is the same font, so
+                                // the first ring answers for all of them.
+                                readonly property real overhang: cpuRing.overhang
+
                                 anchors.top: parent.top
-                                anchors.topMargin: 6
+                                anchors.topMargin: Theme.groupPad
                                 width: parent.width
+                                // Wider than Theme.slotGap because the gap is
+                                // carrying a caption as well as air — see Ring.
                                 spacing: 9
 
                                 // Every ring but the first two is conditional,
@@ -683,7 +750,7 @@ ShellRoot {
                                 // sensor on this host produces. /proc/stat and
                                 // /proc/meminfo answer everywhere, so cpu and
                                 // ram are the only two that need no permission.
-                                Ring { label: "cpu"; value: Sys.cpu }
+                                Ring { id: cpuRing; label: "cpu"; value: Sys.cpu }
                                 // Free gigabytes is the question anyone actually
                                 // asks of memory; a percentage of an unstated
                                 // total is not an answer. The arc still runs on
@@ -828,6 +895,12 @@ ShellRoot {
                                 anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
                                 height: 10
                                 color: ringBox.color
+                                // Not rail.ringCapped: that says the block was
+                                // squeezed, and this says something is behind
+                                // the edge. They part on a host with exactly two
+                                // rings, where the floor and the natural height
+                                // are the same number and a squeeze hides
+                                // nothing.
                                 visible: rail.ringNat > ringBox.implicitHeight
                                 Text {
                                     anchors.centerIn: parent

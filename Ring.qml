@@ -128,7 +128,9 @@ Item {
     // One rail slot, like every other control on the rail. The caption below is
     // the one thing on the rail that lives outside its slot: it is a label on
     // the ring rather than a control of its own, so it hangs into the gap under
-    // it and the rings group is given a wider gap to carry it.
+    // it and the rings group is given a wider gap to carry it. Under the last
+    // ring there is no gap, only the group's bottom pad, so the group adds
+    // `overhang` to it — see the bottom of this file and rail.ringPad.
     implicitWidth: Theme.slot
     implicitHeight: Theme.slot
 
@@ -207,20 +209,24 @@ Item {
     // on its right instead of 1 and 2, which is what Erik was pointing at when
     // he said the caption was going too far.
     //
-    // Downwards it still is not, and that is the open half of the same
-    // complaint. This hangs about 11px below the ring while a group only pads
-    // Theme.groupPad = 6 under its last child, so the *last* ring in the group
-    // — the battery on a laptop, the last disk on this desktop — draws its
-    // caption over the group's bottom edge and its outer characters land on
-    // bare rail, past the 10px corner radius. Measured on the live rail: the
-    // caption's ink runs rows y666..672 while the ground's bottom edge is y670
-    // and its corners have been eating the ends since y662. Closing it
-    // costs about 6px of rail height, which rail.fixed and the overflow ladder
-    // in shell.qml are not free to spend without a decision — the height-free
-    // version is to take the 6px off the rings' 9px spacing and give it to the
-    // bottom pad, which tightens the overhang between rings to buy it. See
-    // docs/surveys/metric-centred.md.
+    // Downwards it was not, and that was the open half of the same complaint.
+    // The caption reaches 10px below the ring while a group pads Theme.groupPad
+    // = 6 under its last child, so the *last* ring in the group — the battery
+    // on a laptop, the last disk on this desktop — drew its caption over the
+    // group's bottom edge, and once that group learned to clip it lost the ends
+    // outright: ink on rows y666..672 against a ground that stopped at y670.
+    // Erik on seeing it: "there is just empty space but things are getting cut
+    // off", and there were 70 pixels of it under the block.
+    //
+    // The block pays for it now. `overhang` below is what it asks, rail.ringPad
+    // in shell.qml is where it is added, and the 10px comes out of the slack
+    // that was sitting empty. The alternative was to take it off the 9px
+    // spacing between rings, which buys the same pixels by pushing every
+    // caption harder into the ring under it — a real cost, paid to protect a
+    // budget that had 70px going spare. See docs/surveys/metric-centred.md.
     Text {
+        id: cap
+
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.bottom
         anchors.topMargin: -1
@@ -228,4 +234,18 @@ Item {
         color: Theme.dim
         font.pixelSize: 8
     }
+
+    // How far the caption reaches below the slot the layout was told about.
+    // The ring hands this out rather than leaving every caller to rediscover
+    // it: a column of rings carries the overhang in the gap between them, but
+    // whoever is *last* in that column hangs over the bottom of whatever
+    // contains it, and a container that does not add this to its own bottom
+    // padding will cut a caption it is itself drawing.
+    //
+    // Measured off the caption rather than written down as a number, so it
+    // follows the font and cannot go stale — the last number written down for
+    // this said 6 and it measures 10. Off the caption's own box and not its
+    // ink: the box is what QML can answer for, and it is the larger of the two,
+    // so the ground it buys clears the ink on every string and every font.
+    readonly property real overhang: cap.height + cap.anchors.topMargin
 }

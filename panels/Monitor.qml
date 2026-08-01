@@ -179,21 +179,6 @@ Flickable {
         RowLayout {
             Layout.fillWidth: true
 
-            Text {
-                text: "System"
-                color: Theme.fg
-                font.pixelSize: 18
-                font.weight: Font.DemiBold
-            }
-            // Every graph below is sampled by the same timer, so one label is
-            // the whole truth — and it is read off the timer, not typed here.
-            Text {
-                text: "graphs · last"
-                color: Theme.dim
-                font.pixelSize: 11
-                Layout.bottomMargin: 2
-                verticalAlignment: Text.AlignBottom
-            }
             // The window, and the choice of window, in one place: the label
             // that says how far back the graphs go is the control that sets it.
             // Three presets is a control on a panel; anything more would be a
@@ -250,17 +235,10 @@ Flickable {
             // RowLayout is only as narrow as its widest child insists on being,
             // and a header that insists stretches every graph under it past the
             // edge of the card. An SSID can be any length.
-            Text {
-                text: Net.online
-                    ? Net.link + (Net.rate !== "" ? " · " + Net.rate : "")
-                    : "offline"
-                color: Net.online ? Theme.dim : Theme.bad
-                font.pixelSize: 11
-                elide: Text.ElideRight
-                horizontalAlignment: Text.AlignRight
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-            }
+            // Nothing else in this row: he asked for the window control and
+            // nothing else. The link and its rate moved out with the heading —
+            // the network panel says both, and this one is about graphs.
+            Item { Layout.fillWidth: true }
         }
 
         // One bar per core, so a single pinned thread is visible even while the

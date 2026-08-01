@@ -1615,6 +1615,23 @@ ShellRoot {
         onPressed: looksWin.open ? looksWin.hide() : looksWin.show()
     }
 
+    // ---- keys ---------------------------------------------------------------
+    // The keyboard and the binds on one sheet. Same shape as the launcher and
+    // looks: a centred overlay on a keybind, and no rail button for it.
+    KeysWindow { id: keysWin }
+
+    IpcHandler {
+        target: "keys"
+        function toggle(): void { keysWin.open ? keysWin.hide() : keysWin.show(); }
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "keys"
+        description: "Toggle the keyboard and keybind sheet"
+        onPressed: keysWin.open ? keysWin.hide() : keysWin.show()
+    }
+
     // The volume and brightness card at the bottom of the screen.
     Osd {}
 

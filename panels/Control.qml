@@ -36,11 +36,12 @@ ColumnLayout {
 
     property string page: "notifs"
 
-    // Both are raised because they belong to shell.qml — the tray menu is a
-    // window of its own and so is the looks overlay, and a panel cannot reach
-    // either from its own scope.
+    // All three are raised because they belong to shell.qml — the tray menu is a
+    // window of its own and so are the looks and keys overlays, and a panel
+    // cannot reach any of them from its own scope.
     signal menuRequested(var item, real x, real y)
     signal looksRequested
+    signal keysRequested
 
     // Landing on the notifications page is reading them, which is what the
     // bell used to mean when it was still a button of its own.
@@ -79,6 +80,21 @@ ColumnLayout {
             glyph: "󰸉"
             tint: Theme.fg
             onClicked: root.looksRequested()
+        }
+
+        // Neither is this one, and it is the same argument twice over: a
+        // keyboard drawn to scale does not fit a 430px column either, and the
+        // overlay it opens is the one thing in the shell whose whole purpose is
+        // to be findable when the key for it has been forgotten. Leaving it on
+        // $mod+B alone would have been a joke at his expense.
+        //
+        // Not on the rail. The rail is down to five controls on purpose and has
+        // twice given a button back; this strip is where the shell puts the
+        // things that open a window instead of a page.
+        Btn {
+            glyph: "󰌌"
+            tint: Theme.fg
+            onClicked: root.keysRequested()
         }
     }
 

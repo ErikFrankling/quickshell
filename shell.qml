@@ -1515,9 +1515,12 @@ ShellRoot {
                     Component { id: cBluetooth; Panels.Bluetooth {} }
                     Component { id: cPlayer; Panels.Player {} }
                     // The control centre's tray rows open the same menu the
-                    // rail's icons do, and its Looks button opens the overlay
-                    // window. Neither is reachable from a panel's own scope, so
-                    // it asks and this hands them over.
+                    // rail's icons do, and its Looks and Keys buttons open the
+                    // overlay windows. None of them is reachable from a panel's
+                    // own scope, so it asks and this hands them over. Both
+                    // overlays close the panel on the way out: they are centred
+                    // windows of their own and the panel behind them is in the
+                    // way.
                     Component {
                         id: cControl
                         Panels.Control {
@@ -1526,6 +1529,10 @@ ShellRoot {
                             onLooksRequested: {
                                 win.page = "";
                                 looksWin.show();
+                            }
+                            onKeysRequested: {
+                                win.page = "";
+                                keysWin.show();
                             }
                         }
                     }

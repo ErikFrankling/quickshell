@@ -52,7 +52,11 @@ ColumnLayout {
         label: "Output"
     }
 
+    // No mic plugged in means no source node at all, and a capture slider
+    // pinned at zero with a mute button that mutes nothing is the same lie
+    // the device lists below used to tell.
     Mix {
+        visible: !!Audio.source
         node: Audio.source
         glyph: "󰍬"
         label: "Input"
@@ -110,7 +114,20 @@ ColumnLayout {
         Layout.topMargin: 6
     }
 
+    // A list of one is not a choice, and a list of none is a header over
+    // nothing. Both used to render as rows you could hover and click to no
+    // effect, which is what "I can't select a device" turned out to mean:
+    // this machine has one sink and, until a mic is plugged in, no sources.
+    Text {
+        visible: Audio.outputs.length < 2
+        text: Audio.outputs.length === 0 ? "No output devices"
+            : "Only " + Audio.name(Audio.outputs[0])
+        color: Theme.dim
+        font.pixelSize: 12
+    }
+
     ColumnLayout {
+        visible: Audio.outputs.length > 1
         Layout.fillWidth: true
         spacing: 6
 
@@ -133,7 +150,16 @@ ColumnLayout {
         Layout.topMargin: 6
     }
 
+    Text {
+        visible: Audio.inputs.length < 2
+        text: Audio.inputs.length === 0 ? "No input devices"
+            : "Only " + Audio.name(Audio.inputs[0])
+        color: Theme.dim
+        font.pixelSize: 12
+    }
+
     ColumnLayout {
+        visible: Audio.inputs.length > 1
         Layout.fillWidth: true
         spacing: 6
 

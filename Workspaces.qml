@@ -146,6 +146,21 @@ ColumnLayout {
             readonly property bool here: Hyprland.focusedWorkspace?.id === modelData.id
             readonly property var classes: root.byWorkspace[modelData.id] ?? []
 
+            // A window somewhere else asked for attention and did not get it —
+            // a link handed to the browser already open two workspaces away, a
+            // chat message, a dialog. Hyprland writes `urgent>><address>` on
+            // socket2 for it and Quickshell rolls the flag up onto the
+            // workspace, so this is one property and not an event listener.
+            // `hyprctl clients -j` does not carry it: the flag exists only in
+            // the compositor's memory and only the event stream ever mentions
+            // it, which is why polling was never going to find this.
+            //
+            // Never on the pill you are standing on. Going to a workspace is
+            // what clears its urgency, so the two are already exclusive — but
+            // they clear on separate signals, and a frame where both are true
+            // would put an alarm round the focused pill.
+            readonly property bool alarm: modelData.urgent && !ws.here
+
             Layout.alignment: Qt.AlignHCenter
             // Wider than it is tall because it carries a number and up to two
             // application icons side by side, which a button does not — and
@@ -187,6 +202,35 @@ ColumnLayout {
 
             Behavior on color { ColorAnimation { duration: 120 } }
 
+            // The fifth state, drawn in the one channel the ladder above does
+            // not use — so the ladder is untouched by construction rather than
+            // by measurement, and an urgent pill still walks idle to hover in
+            // Theme.dim underneath the mark.
+            //
+            // This is waybar's own mark. His config gives every button
+            // `border-top: 2px solid transparent` and then `.urgent {
+            // border-color: #c9545d; color: #c9545d }` (style.css:212-231) —
+            // an edge and the label in the alarm colour, and no fill, where
+            // `.active` fills the ground as well. On a vertical rail the
+            // pill's edge is its outline: the left marker that would be the
+            // literal transposition is already the focused pill's, and an
+            // urgent pill drawn there would read as a mis-coloured focused one.
+            //
+            // 2px is waybar's weight and the marker's below. It carries twice
+            // the ink of the whole shipped ground in a quarter of the area,
+            // and no scheme brings it within 42 dE of anything else on the
+            // rail; a ground could not clear the hover rung on nine palettes
+            // without driving its own label under the focused pill's contrast.
+            // docs/surveys/urgent-mark.md has all of it.
+            //
+            // border.width and not border.color carries the toggle: an int has
+            // no ColorAnimation to walk, so nothing here can fade to or from
+            // "transparent" — transparent *black*, and the reason the fill
+            // above is one hue at two alphas. A border draws inside its
+            // bounds, so the pill is the 24 it was and rail.fixed does not move.
+            border.width: ws.alarm ? 2 : 0
+            border.color: Theme.bad
+
             Rectangle {
                 visible: ws.here
                 anchors { left: parent.left; verticalCenter: parent.verticalCenter }
@@ -219,7 +263,13 @@ ColumnLayout {
                     // pill, but "10" — which is a real workspace here — must
                     // never elide, and at 15 it did.
                     text: root.label(ws.modelData)
-                    color: ws.here ? Theme.accent : Theme.dim
+                    // The other half of waybar's mark: the number goes the
+                    // alarm colour too. On the ground it actually stands on —
+                    // which does not move — Theme.bad reads 2.2-4.7 against
+                    // the idle rung and 1.9-4.1 against the hover rung, beside
+                    // the 2.3-3.8 the focused pill's own accent-on-accent has
+                    // read since it shipped.
+                    color: ws.here ? Theme.accent : ws.alarm ? Theme.bad : Theme.dim
                     font.pixelSize: 13
                     font.weight: ws.here ? Font.Bold : Font.Normal
                     elide: Text.ElideRight

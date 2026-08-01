@@ -1,22 +1,23 @@
+import "keys" as Pages
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 
-// What the keys do, on one sheet: the Dactyl's own layers above, Hyprland's
-// binds below. The launcher's shape — a centred overlay on a keybind, Escape
-// to dismiss, no rail button:
+// What the keys do. The launcher's shape — a centred overlay on a keybind,
+// Escape to dismiss, no rail button:
 //   qs -p <repo> ipc call keys toggle
 //
-// Board and binds share one sheet rather than two tabs because they answer one
-// question. Neovim's keymaps are deliberately absent: being right about them
-// needs RPC into a live instance (docs/keyboard.md), and a list that is quietly
-// wrong is worse than no list.
+// Three pages rather than one sheet, because they answer three questions and
+// only ever one at a time. The shape is `panels/Control.qml`'s, which is
+// vast-shell's: a strip of chips along the top and a single Loader under it.
+// The card takes its height from whatever the Loader is holding, so the board
+// — wide and short — does not have to live in a window sized for the bind list.
 PanelWindow {
     id: root
 
     property bool open: false
-    property int activeLayer: 0
+    property string page: "board"
 
     visible: root.open
     color: "transparent"
@@ -32,6 +33,8 @@ PanelWindow {
         bottom: true
     }
 
+    readonly property var pages: [["board", "Dactyl"], ["hypr", "Hyprland"], ["nvim", "Neovim"]]
+
     function show() {
         root.open = true;
         card.forceActiveFocus();
@@ -39,6 +42,11 @@ PanelWindow {
 
     function hide() {
         root.open = false;
+    }
+
+    function step(by) {
+        const i = root.pages.findIndex(p => p[0] === root.page);
+        root.page = root.pages[(i + by + root.pages.length) % root.pages.length][0];
     }
 
     // Click anywhere outside the card to dismiss.
@@ -50,18 +58,32 @@ PanelWindow {
     Rectangle {
         id: card
         anchors.centerIn: parent
-        width: Math.min(860, parent.width - 80)
-        height: Math.min(840, parent.height - 80)
+        width: Math.min(880, parent.width - 80)
+        // Only as tall as the page showing, and never taller than the screen.
+        height: Math.min(parent.height - 80, col.implicitHeight + 36)
         radius: Theme.radius
         color: Theme.bg
         border.width: 1
         border.color: Theme.line
 
+        Behavior on height {
+            NumberAnimation {
+                duration: 140
+                easing.type: Easing.OutCubic
+            }
+        }
+
         focus: true
         Keys.onEscapePressed: root.hide()
-        // Tab flips layers, which is the only thing on this sheet to flip.
+        Keys.onLeftPressed: root.step(-1)
+        Keys.onRightPressed: root.step(1)
+        // Tab flips the Dactyl's layers, which is the only thing on any of
+        // these pages to flip. Elsewhere it walks the pages instead.
         Keys.onTabPressed: event => {
-            root.activeLayer = (root.activeLayer + 1) % Math.max(1, Keymap.layers.length);
+            if (root.page === "board" && loader.item)
+                loader.item.cycle();
+            else
+                root.step(1);
             event.accepted = true;
         }
 
@@ -71,39 +93,35 @@ PanelWindow {
         }
 
         ColumnLayout {
+            id: col
             anchors.fill: parent
             anchors.margins: 18
             spacing: 12
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 6
 
                 Text {
                     text: "Keys"
                     color: Theme.fg
                     font.pixelSize: 18
                     font.weight: Font.DemiBold
+                    Layout.rightMargin: 8
                 }
 
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                // One chip per layer the keymap actually has.
                 Repeater {
-                    model: Keymap.layerNames.slice(0, Keymap.layers.length)
+                    model: root.pages
 
                     Rectangle {
                         id: chip
 
                         required property var modelData
-                        required property int index
-                        readonly property bool here: chip.index === root.activeLayer
+                        readonly property bool here: chip.modelData[0] === root.page
 
-                        implicitWidth: tab.implicitWidth + 20
-                        implicitHeight: 24
-                        radius: 12
+                        implicitWidth: tab.implicitWidth + 22
+                        implicitHeight: 26
+                        radius: 13
                         color: chip.here ? Theme.bgHi : "transparent"
                         border.width: 1
                         border.color: chip.here ? Theme.accent : Theme.line
@@ -111,132 +129,45 @@ PanelWindow {
                         Text {
                             id: tab
                             anchors.centerIn: parent
-                            text: chip.modelData
+                            text: chip.modelData[1]
                             color: chip.here ? Theme.fg : Theme.dim
                             font.pixelSize: 12
                         }
 
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: root.activeLayer = chip.index
+                            onClicked: root.page = chip.modelData[0]
                         }
                     }
                 }
-            }
 
-            KeyBoard {
-                id: board
-                Layout.alignment: Qt.AlignHCenter
-                activeLayer: root.activeLayer
-                unit: Math.min(44, (card.width - 40) / Math.max(1, bounds.w))
-            }
-
-            // The board is not the binds, and a rule says so.
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 1
-                color: Theme.line
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Text {
-                    text: "Hyprland"
-                    color: Theme.fg
-                    font.pixelSize: 14
-                    font.weight: Font.DemiBold
-                }
-
-                Text {
+                Item {
                     Layout.fillWidth: true
-                    text: Keymap.binds.length + " binds · " + Keymap.keys.length + " keys · " + Keymap.layers.length + " layers"
-                    color: Theme.dim
-                    font.pixelSize: 11
                 }
             }
 
-            Flickable {
-                id: scroll
+            Loader {
+                id: loader
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                clip: true
-                contentHeight: groups.implicitHeight
-                boundsBehavior: Flickable.StopAtBounds
+                // What makes the card resize per page: fillHeight alone reports
+                // nothing upwards, so the column would ask for the chip strip
+                // and stop.
+                Layout.preferredHeight: item ? item.implicitHeight : 0
+                sourceComponent: root.page === "hypr" ? cHypr : root.page === "nvim" ? cNvim : cBoard
+            }
 
-                readonly property int cols: 3
-                readonly property real cell: (width - (scroll.cols - 1) * 16) / scroll.cols
-
-                ColumnLayout {
-                    id: groups
-                    width: scroll.width
-                    spacing: 9
-
-                    Repeater {
-                        model: Keymap.bindGroups
-
-                        ColumnLayout {
-                            id: grp
-
-                            required property var modelData
-                            Layout.fillWidth: true
-                            spacing: 3
-
-                            Text {
-                                text: grp.modelData.name + "  " + grp.modelData.items.length
-                                color: Theme.accent
-                                font.pixelSize: 11
-                                font.weight: Font.DemiBold
-                            }
-
-                            Grid {
-                                Layout.fillWidth: true
-                                columns: scroll.cols
-                                columnSpacing: 16
-                                rowSpacing: 1
-
-                                Repeater {
-                                    model: grp.modelData.items
-
-                                    Item {
-                                        id: row
-
-                                        required property var modelData
-                                        width: scroll.cell
-                                        height: 17
-
-                                        Text {
-                                            id: combo
-                                            width: 100
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: row.modelData.combo
-                                            color: Theme.fg
-                                            font.pixelSize: 11
-                                            elide: Text.ElideRight
-                                        }
-
-                                        Text {
-                                            anchors.left: combo.right
-                                            anchors.leftMargin: 7
-                                            anchors.right: parent.right
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            // A bind with no description shows
-                                            // its dispatcher instead, dimmer and
-                                            // italic, so the sheet never pretends
-                                            // the label was written for it.
-                                            text: row.modelData.label
-                                            color: row.modelData.described ? Theme.fg : Theme.dim
-                                            font.italic: !row.modelData.described
-                                            font.pixelSize: 11
-                                            elide: Text.ElideRight
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            Component {
+                id: cBoard
+                Pages.Layers {}
+            }
+            Component {
+                id: cHypr
+                Pages.Hypr {}
+            }
+            Component {
+                id: cNvim
+                Pages.Nvim {}
             }
         }
     }

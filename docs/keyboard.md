@@ -11,21 +11,19 @@ All three are possible. The difficulty is not where you would guess.
 
 `KeysWindow.qml` — a centred overlay in the launcher's shape, Escape to
 dismiss, on `qs ipc call keys toggle` and a `GlobalShortcut`, no rail button.
-It shows the Dactyl's two layers on a drawn board, and all of Hyprland's binds
-under it, grouped by modifier. `Keymap.qml` is the data behind both;
-`KeyBoard.qml` draws the board. Three files, none over 250 lines.
+**Three pages behind a chip strip**, in `panels/Control.qml`'s shape: the
+Dactyl's layers, Hyprland's binds, Neovim's keymaps. The card takes its height
+from the page showing, so the board — wide and short — does not sit in a window
+sized for the bind list. Left and right walk the pages; Tab flips the Dactyl's
+layers on the board page and walks the pages elsewhere.
 
-Neovim is deliberately not in it. Being right about his keymaps means RPC into
-a live instance — every offline number below is wrong — and a keymap list that
-is quietly wrong is worse than none. Adding it is the third section of this
-document plus a `Process` running `nvim --server $SOCK --remote-expr`, a
-`$NVIM_LISTEN_ADDRESS` to find, and a decision about what the sheet shows when
-no instance is running. Perhaps sixty lines and a real design question, against
-the roughly two hundred the other two cost together.
+`Keymap.qml` is the Dactyl's data; `KeyBoard.qml` draws the board; each page
+under `keys/` owns its own source, because `hyprctl binds` answers in under a
+millisecond and there is nothing to cache between openings.
 
-Measured on the running shell the day it shipped: 61 binds in four modifier
-groups (Super 32, Super+Shift 16, no modifier 9, Super+Alt 4), 64 keys, 2
-layers. Card 860×840 on a 1862×1080 output; board 792×275 at a 44px key pitch.
+Measured on the running shell: 61 binds in four modifier groups (Super 32,
+Super+Shift 16, no modifier 9, Super+Alt 4), 64 keys, 2 layers, 402 Neovim
+entries. Board 828×322 at a 46px key pitch, in an 880-wide card.
 
 ### The one thing the research got wrong
 
@@ -56,23 +54,52 @@ reading the repo is reading the keyboard.
 QMK tree is enough for a hermetic derivation; the 2 GB `vial-qmk` repo does
 **not** need to be a flake input.
 
-The one real obstacle is rendering. QtSvg ignores `dominant-baseline` and
-`paint-order`, so keymap-drawer's SVG comes out with the legends sitting too
-high. Three ways out: rasterise it, post-process about thirty lines of SVG, or
-skip the SVG and draw the keys natively in QML from a 6.7 KB joined JSON. The
-last is probably right for a shell that already draws everything else itself.
+The one real obstacle is rendering, and the first answer to it was wrong in two
+ways. `docs/surveys/keyboard-render.md` is the full record; both corrections
+matter.
 
-**It was the third, and it did not even need the joined JSON.** `keyboard.json`
-in the keyboard directory already gives every key an `x` and a `y` in key units
-— including the splay and both thumb clusters — and the `LAYOUT()` macro is
-*generated from that array*, so the nth argument in `keymap.c` is the nth
-position in `keyboard.json` and no matrix arithmetic is involved. `KeyBoard.qml`
-is a `Repeater` over 64 positions; `Keymap.qml` reads the two files with
-`FileView` and `watchChanges: true`, splits the `LAYOUT(...)` arguments on
-depth-zero commas after stripping comments, and maps the 46 keycodes whose name
-is not already their legend. So there is no `qmk`, no `keymap-drawer`, no
-derivation and no build step, and re-flashing shows up in the overlay the moment
-the file changes.
+**`keyboard.json` is the wrong file to draw from.** It gives every key an `x`
+and a `y`, but with the rotation stripped: it descends from a manually
+de-rotated KLE export made to feed kbfirmware.com. `keymaps/vial/vial.json`
+descends from the export that kept it, and carries **two ±15° thumb clusters**
+(`r: 15, rx: 5.25, ry: 4` and `r: -15, rx: 12.75`). That is not decoration —
+in raw coordinates the two clusters overlap by 0.75 u, and only the rotation
+separates them, so a flat drawing of this board is an invalid one rather than a
+simplified one. Drawn rotated, no two caps overlap; drawn flat, two pairs do.
+`vial.json` is also what the Vial GUI itself renders and what is in the flashed
+firmware, so it is the truth in every sense.
+
+**The SVG obstacle was understated, not settled.** QtSvg ignores far more than
+`dominant-baseline` and `paint-order`: also `tspan` `x`/`dy` (multi-line
+legends collapse to one line), `font-size` in percent (`64%` becomes 64 px),
+root-element selectors, and `@media` (so dark mode never applies). A working
+post-processor came to ~65 lines, not thirty, and still could not do the icon
+glyphs or `clip-path`; baking the offset into `y` is required because Qt
+ignores `dy` on `text` too. keymap-drawer *does* preserve rotation — that part
+of the worry was unfounded — but it reads rotation from QMK `info.json`, which
+for this board has none, so it would draw the same flat grid anyway.
+
+So it is still a native QML render, and still no `qmk`, no `keymap-drawer`, no
+derivation and no build step — but from three files rather than two.
+`Keymap.qml` reads `vial.json` for shape, `keyboard.json` for matrix addresses
+and `keymap.c` for keycodes, and joins them on the matrix address: KLE labels
+every key `"row,col"`, and `keyboard.json`'s nth entry is the nth argument of
+the generated `LAYOUT()` macro. All three are `FileView` with
+`watchChanges: true`, so re-flashing still shows up the moment a file changes.
+
+`KeyBoard.qml` puts each key through its own `Rotation` — both clusters carry
+their own origin, so a key turns about a point usually outside itself — and
+draws Vial's two-rectangle keycap: a dark base and a lighter top inset a tenth
+of a unit at the sides, a twentieth at the top and three twentieths at the
+bottom. The bottom inset being three times the top is the whole 3D effect, and
+KLE, VIA and kbplacer all independently landed on the same 1:3.
+
+Three things that will bite the next person, beyond the two below: KLE's `x`
+and `y` are *deltas*; setting either `rx` or `ry` snaps the cursor to a
+persistent cluster origin, which is how the right thumb inherits `ry: 4`
+without restating it; and the end of a row is `x = rx`, not `x = 0` — KLE's own
+wiki says `x = 0` and is wrong, and `ijprest/kle-serial` master has the same
+bug. Port KLE's `serial.js` or Vial's `kle_serial.py`, not the npm package.
 
 Two things that will bite the next person: `MO(1)` and `UP(AA_LOWER, AA_UPPER)`
 contain commas, so the argument split has to track parenthesis depth; and
@@ -96,19 +123,59 @@ modifier mask, the key and the description survive. **Converting `bind` to
 needs no longer exists.** That is roughly sixty lines in
 `modules/home-manager/hyprland/default.nix`.
 
-## Neovim — the fiddly one
+## Neovim — a dump, and the page for it
 
-His config is nixCats plus lazy.nvim, which makes a build-time dump silently
-wrong. A bare headless run sees 106 normal-mode maps; a live instance sees
-118–120; `Lazy! load all` over-reports at 132. None of those numbers is the
-answer.
+**The earlier claim here — that a build-time dump is silently wrong and only
+RPC to a live instance is correct — was itself wrong**, and so were its
+numbers. `-c` runs before `VimEnter` and `qa!` exits before it fires, which is
+what made a headless run undercount. Add a `VimEnter` handler plus one
+`nvim_exec_autocmds('UIEnter', {})` so lazy.nvim fires `VeryLazy`, and a
+headless run reproduces a real TUI session exactly — verified against a genuine
+pty, identical per-mode counts, 1.3 s. `Lazy! load all` was not over-reporting
+either; it adds exactly one map. 132 was always right for normal mode.
 
-The working path is RPC to a live instance, which returns valid JSON with 215
-described entries. which-key is present but has no dump API and contributes
-only group labels on top of `nvim_get_keymap` — read
-`require("which-key.config").mappings` filtered to `m.group == true` for the
-seven group names and nothing else. Whitelist the fields when encoding: raw
-non-UTF-8 bytes in `lhsraw` will break `JSON.parse`.
+which-key is a *better* source than `nvim_get_keymap`, not a worse one, and the
+claim that it has no dump API was wrong too:
+`require('which-key.buf').get({mode='n'}).tree:walk(…)` enumerates fully — 111
+real keymap nodes plus 121 annotations describing Vim's own motions that
+`nvim_get_keymap` cannot see (`w` "Next word", `%` "Matching (){}[]"), plus the
+eight real groups, which are the page's headings. Descriptions were never the
+blocker: coverage is 232 normal-mode entries with **one** undescribed.
+
+A superset is safe, because lazy.nvim registers each spec's `desc` at startup
+*before* loading the plugin — `neo-tree` reports `NOT LOADED` while its
+`<leader>tr` is in the dump and works when pressed.
+
+**`keys/Nvim.qml` reads `$XDG_CACHE_HOME/erikshell/nvim-keymaps.json`** with a
+`FileView`, the same shape `Keymap.qml` uses for `keymap.c`. It collapses the
+modes of one key onto one row, buckets by which-key group with the longest
+prefix winning, puts the named groups first and the remainder last, and
+separates his own maps from Vim's own annotations behind two chips. When the
+file is absent it says so and shows nothing else — a quietly incomplete keymap
+list is worse than no list.
+
+### What the dotfiles still need
+
+The writer does not live here. It wants a Home Manager **activation script**
+running the real profile `nvim` headless once per rebuild:
+
+```
+NVIM_KEYMAP_OUT=… nvim --headless --cmd "luafile $driver"
+```
+
+writing `{generated, config, count, maps[]}` to
+`$XDG_CACHE_HOME/erikshell/nvim-keymaps.json`, with a `systemd.user.path`
+watching it. Whitelist the fields before `vim.json.encode` — `callback` is a
+function and will not serialise.
+
+**Not** a hermetic derivation: 47 of his 48 plugins are store paths, but
+`harpoon` is a lazy.nvim git clone in `~/.local/share/nvim/lazy/`, so an
+offline build either fails or silently undercounts. It happens to cost nothing
+today only because every harpoon keymap is commented out.
+
+The one thing no dump can do is filetype-local maps — the 11 LSP bindings, and
+the markdown and tex sets — because they do not exist until a buffer of that
+type is open. The page says so rather than implying completeness.
 
 ## Unrelated bug found while doing this
 

@@ -16,6 +16,10 @@ ColumnLayout {
     property var pages: []
     property string page: ""
     property bool searchable: false
+    // What Ctrl with the arrows does on the page in front of him. It is not
+    // the same thing everywhere and a hint that says "filter" over a keyboard
+    // is worse than none — he read it and reached for the mouse.
+    property string chips: ""
 
     readonly property string query: field.text
 
@@ -81,7 +85,9 @@ ColumnLayout {
         // The whole scheme, written where it is needed. There is no other
         // documentation of it and there should not have to be.
         Text {
-            text: "Tab page · ↑↓ scroll · Ctrl↑↓ filter · Esc close"
+            text: "Tab page · ↑↓ scroll"
+                + (root.chips !== "" ? " · Ctrl↑↓ " + root.chips : "")
+                + " · Esc close"
             color: Theme.dim
             font.pixelSize: 11
         }

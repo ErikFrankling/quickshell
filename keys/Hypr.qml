@@ -115,6 +115,7 @@ ColumnLayout {
     // What the window asks of every page.
     property string query: ""
     readonly property bool searchable: true
+    readonly property string chips: ""
     readonly property int hits: sheet.hits
     readonly property int sheetWidth: 1040
 

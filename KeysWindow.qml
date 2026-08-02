@@ -63,6 +63,12 @@ PanelWindow {
 
     readonly property bool searchable: loader.item ? loader.item.searchable : false
 
+    // Each page names what its own chips are, so the hint line says "layer"
+    // over the keyboard and "filter" over the map list, and says nothing on a
+    // page that has no chips at all.
+    readonly property string chips: loader.item && loader.item.chips !== undefined
+                                  ? loader.item.chips : ""
+
     function show() {
         head.clear();
         // Always open on the board. The page is remembered while the shell
@@ -195,6 +201,7 @@ PanelWindow {
                 pages: root.pages
                 page: root.page
                 searchable: root.searchable
+                chips: root.chips
                 onPicked: p => root.page = p
             }
 

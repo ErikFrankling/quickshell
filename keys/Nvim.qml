@@ -12,6 +12,7 @@ ColumnLayout {
     // What the window asks of every page.
     property string query: ""
     readonly property bool searchable: maps.have
+    readonly property string chips: maps.have ? "filter" : ""
     readonly property int hits: maps.have ? sheet.hits : -1
     readonly property int sheetWidth: 1220
 

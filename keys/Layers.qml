@@ -17,6 +17,7 @@ ColumnLayout {
     // sends the arrow keys through to the layers instead of to a row cursor.
     property string query: ""
     readonly property bool searchable: false
+    readonly property string chips: "layer"
     readonly property int hits: -1
     readonly property int sheetWidth: 0
 

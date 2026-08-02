@@ -87,105 +87,59 @@ ColumnLayout {
         });
     }
 
+    // By modifier, not by task. The Neovim sheet groups by what a mapping is
+    // *for*, because `:help quickref` proves that is what a human scans for —
+    // but that only works when something in the data says what a bind does, and
+    // 59 of these 61 carry no description at all. The modifier is the one thing
+    // every record honestly states, so it is the heading.
     readonly property var bindGroups: {
         const by = {};
         for (const b of root.binds) {
             const name = root.mods(b.mask).join(" + ") || "No modifier";
-            (by[name] = by[name] ?? []).push(b);
+            const hay = (b.combo + "\t" + b.label).toLowerCase();
+            (by[name] = by[name] ?? []).push({
+                key: b.combo,
+                desc: b.label,
+                derived: !b.described,
+                modes: "",
+                hay: hay,
+                fold: hay.replace(/[\[\]<>+_\s-]/g, "")
+            });
         }
         return Object.keys(by).map(k => ({
             name: k,
-            items: by[k].sort((a, b) => a.combo.localeCompare(b.combo))
+            items: by[k].sort((a, b) => a.key.localeCompare(b.key))
         })).sort((a, b) => b.items.length - a.items.length);
     }
 
+    // What the window asks of every page.
+    property string query: ""
+    readonly property bool searchable: true
+    readonly property int hits: sheet.hits
+    readonly property int sheetWidth: 1040
+
+    function scroll(rows) {
+        sheet.scroll(rows);
+    }
+
+    // Nothing on this page to filter — the binds are the binds.
+    function cycle(by) {}
+
     Text {
         Layout.fillWidth: true
-        text: root.binds.length + " binds · from the running compositor"
+        text: root.query !== "" ? sheet.hits + " of " + root.binds.length + " shown" : root.binds.length + " binds · from the running compositor"
         color: Theme.dim
         font.pixelSize: 11
     }
 
-    Flickable {
-        id: scroll
+    Sheet {
+        id: sheet
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.preferredHeight: groups.implicitHeight
-        clip: true
-        contentHeight: groups.implicitHeight
-        boundsBehavior: Flickable.StopAtBounds
-
-        readonly property int cols: 3
-        readonly property real cell: (width - (scroll.cols - 1) * 16) / scroll.cols
-
-        ColumnLayout {
-            id: groups
-            width: scroll.width
-            spacing: 9
-
-            Repeater {
-                model: root.bindGroups
-
-                ColumnLayout {
-                    id: grp
-
-                    required property var modelData
-                    Layout.fillWidth: true
-                    spacing: 3
-
-                    Text {
-                        text: grp.modelData.name + "  " + grp.modelData.items.length
-                        color: Theme.accent
-                        font.pixelSize: 11
-                        font.weight: Font.DemiBold
-                    }
-
-                    Grid {
-                        Layout.fillWidth: true
-                        columns: scroll.cols
-                        columnSpacing: 16
-                        rowSpacing: 1
-
-                        Repeater {
-                            model: grp.modelData.items
-
-                            Item {
-                                id: row
-
-                                required property var modelData
-                                width: scroll.cell
-                                height: 17
-
-                                Text {
-                                    id: combo
-                                    width: 120
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: row.modelData.combo
-                                    color: Theme.fg
-                                    font.pixelSize: 11
-                                    elide: Text.ElideRight
-                                }
-
-                                Text {
-                                    anchors.left: combo.right
-                                    anchors.leftMargin: 7
-                                    anchors.right: parent.right
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    // A bind with no description shows its
-                                    // dispatcher instead, dimmer and italic, so
-                                    // the sheet never pretends the label was
-                                    // written for it.
-                                    text: row.modelData.label
-                                    color: row.modelData.described ? Theme.fg : Theme.dim
-                                    font.italic: !row.modelData.described
-                                    font.pixelSize: 11
-                                    elide: Text.ElideRight
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        Layout.preferredHeight: contentHeight
+        sections: root.bindGroups
+        query: root.query
+        cols: 2
+        keyW: 150
     }
 }

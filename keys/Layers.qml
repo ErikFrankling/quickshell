@@ -11,8 +11,19 @@ ColumnLayout {
 
     property int activeLayer: 0
 
-    function cycle() {
-        root.activeLayer = (root.activeLayer + 1) % Math.max(1, Keymap.layers.length);
+    // What the window asks of every page. There is nothing here to search — a
+    // board is a picture, not a list — so the window keeps its field hidden and
+    // sends the arrow keys through to the layers instead of to a row cursor.
+    property string query: ""
+    readonly property bool searchable: false
+    readonly property int hits: -1
+    readonly property int sheetWidth: 0
+
+    function scroll(rows) {}
+
+    function cycle(by) {
+        const n = Math.max(1, Keymap.layers.length);
+        root.activeLayer = (root.activeLayer + by + n) % n;
     }
 
     RowLayout {
@@ -56,7 +67,7 @@ ColumnLayout {
         }
 
         Text {
-            text: Keymap.keys.length + " keys · " + Keymap.layers.length + " layers · Tab to flip"
+            text: Keymap.keys.length + " keys · " + Keymap.layers.length + " layers"
             color: Theme.dim
             font.pixelSize: 11
         }

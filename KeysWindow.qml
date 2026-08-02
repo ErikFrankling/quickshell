@@ -65,6 +65,10 @@ PanelWindow {
 
     function show() {
         head.clear();
+        // Always open on the board. The page is remembered while the shell
+        // runs, so a session that ended on Hyprland reopened there — and the
+        // keyboard is the thing he opens this for.
+        root.page = "board";
         root.open = true;
     }
 

@@ -5,108 +5,81 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// The Dactyl Manuform's layers, read from the QMK tree the firmware was built
-// from — which matches what is flashed, since the LZMA blob in the hex is
-// `vial.json` byte for byte (docs/keyboard.md).
+// The Dactyl Manuform's layers, from two sources that answer the same question
+// differently.
 //
-// Three files, because the board's shape and the board's keycodes live apart:
+//   the board    `vial.py` asks the keyboard over Vial's raw-HID protocol,
+//                which is the only source that cannot be stale: it is what is
+//                flashed, whether it was flashed from the QMK tree or typed
+//                into the Vial GUI five minutes ago.
+//   the config   `dactyl.json`, generated from that QMK tree and committed
+//                here, so a machine that has never had the keyboard plugged in
+//                still draws the board rather than an empty card.
 //
-//   vial.json      the physical layout, as KLE — and the only one of the three
-//                  with the thumb clusters' ±15° rotation in it. It is the
-//                  same payload the Vial GUI itself renders.
-//   keyboard.json  the matrix address of every position, in `LAYOUT()` order.
-//   keymap.c       the keycodes, one `LAYOUT(...)` per layer.
+// The board wins when it answers. Nothing is cached between the two, because
+// the committed baseline is already the offline answer and a third source
+// would only raise the question of which keyboard the cache came from.
 //
-// The join is the matrix address: KLE labels every key "row,col", and
-// `keyboard.json`'s nth entry is the nth argument of the generated `LAYOUT()`
-// macro, so "row,col" gives an index and the index gives a keycode.
+// Both arrive in one shape — `{layers, keymap, codes}`, KLE rows and a keycode
+// per layer per matrix address — so there is one parser here and not two. The
+// join is the matrix address: KLE labels every key "row,col", and that is
+// exactly how `codes` is keyed.
 Singleton {
     id: root
 
-    readonly property string board: "/home/erikf/projects/3d/vial-qmk/keyboards/handwired/dactyl_manuform/5x6_64"
+    property var live: null
+    property var base: null
 
-    property var placed: []   // KLE keys: x, y, w, h, r, rx, ry, matrix
-    property var order: ({})  // matrix address → index into a LAYOUT() call
-    property var layers: []   // keycodes per layer
+    readonly property var data: root.live ?? root.base
+    readonly property string origin: root.live ? "from the keyboard" : root.base ? "from the config" : ""
+    readonly property int layerCount: root.data ? root.data.layers : 0
 
     readonly property var layerNames: ["Base", "Fn"]
 
-    // `keyboard.json` gives every key an x and a y as well, but with the
-    // rotation thrown away and both thumb clusters flattened into the bottom
-    // row — which is why the board used to read as a flat grid. The KLE is the
-    // richer description, so it wins; keyboard.json stays only for the matrix
-    // addresses, which the KLE's labels have to resolve against.
-    FileView {
-        path: root.board + "/keymaps/vial/vial.json"
-        watchChanges: true
-        onFileChanged: reload()
-        onLoaded: {
-            try {
-                root.placed = Kle.deserialise(JSON.parse(text()).layouts.keymap);
-            } catch (e) {
-                root.placed = [];
-            }
+    function parse(text) {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            return null;
         }
     }
 
-    FileView {
-        path: root.board + "/keyboard.json"
-        watchChanges: true
-        onFileChanged: reload()
-        onLoaded: {
-            const by = {};
-            try {
-                const l = JSON.parse(text()).layouts.LAYOUT.layout;
-                for (let i = 0; i < l.length; i++)
-                    by[l[i].matrix[0] + "," + l[i].matrix[1]] = i;
-            } catch (e) {}
-            root.order = by;
-        }
+    // Asked again every time the sheet opens, so plugging the board in is
+    // enough — there is nothing to restart and nothing to press.
+    function probe() {
+        if (!ask.running)
+            ask.running = true;
     }
 
+    // No `watchChanges`: this file only changes when he regenerates it, which
+    // is a git commit and not a re-flash.
     FileView {
-        path: root.board + "/keymaps/vial/keymap.c"
-        watchChanges: true
-        onFileChanged: reload()
-        onLoaded: root.layers = root.parseLayers(text())
+        path: Quickshell.shellPath("dactyl.json")
+        onLoaded: root.base = root.parse(text())
     }
 
-    // Each `LAYOUT(...)` in keymap.c lists its keycodes in exactly the order
-    // keyboard.json lists positions — that is what the generated macro is — so
-    // the nth argument is the nth matrix address and no arithmetic is needed.
-    // Comments go first: the file keeps a whole commented-out old keymap under
-    // the live one, and the row markers inside the live one.
-    function parseLayers(src) {
-        const s = src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
-        const out = [];
-        let at = 0;
-        for (;;) {
-            const start = s.indexOf("LAYOUT(", at);
-            if (start < 0)
-                break;
-            let depth = 1, tok = "", cur = [], i = start + 7;
-            for (; i < s.length; i++) {
-                const c = s[i];
-                if (c === "(")
-                    depth++;
-                else if (c === ")" && --depth === 0)
-                    break;
-                if (depth === 1 && c === ",") {
-                    cur.push(tok.trim());
-                    tok = "";
-                } else {
-                    tok += c;
-                }
-            }
-            cur.push(tok.trim());
-            out.push(cur);
-            at = i + 1;
+    // A helper process because QML cannot open a hidraw node. It exits
+    // non-zero with nothing on stdout when no keyboard answers, which parses
+    // to null and falls back to the baseline — the same path as a board that
+    // was unplugged since the last look.
+    Process {
+        id: ask
+
+        command: ["python3", Quickshell.shellPath("vial.py")]
+        Component.onCompleted: ask.running = true
+
+        stdout: StdioCollector {
+            onStreamFinished: root.live = root.parse(text)
         }
-        return out;
     }
 
     // Only the keycodes whose name is not already the legend. Everything else
     // — letters, digits, F-keys — is `KC_` and then the thing itself.
+    //
+    // `UP(4, 5)` rather than `UP(AA_LOWER, AA_UPPER)`: a unicode pair keycode
+    // names two entries of the board's own `unicode_map`, and over HID the
+    // board can only report their indices, so `vial.py` rewrites the source
+    // side to indices too and both sources speak one vocabulary.
     readonly property var legends: ({
             "KC_TRNS": "▽",
             "KC_NO": "",
@@ -151,9 +124,9 @@ Singleton {
             "KC_PSCR": "PrtSc",
             "QK_BOOT": "Boot",
             "MO(1)": "Fn",
-            "UP(AA_LOWER, AA_UPPER)": "å",
-            "UP(OE_LOWER, OE_UPPER)": "ö",
-            "UP(AE_LOWER, AE_UPPER)": "ä"
+            "UP(4, 5)": "å",
+            "UP(2, 3)": "ö",
+            "UP(0, 1)": "ä"
         })
 
     function legend(code) {
@@ -163,12 +136,12 @@ Singleton {
     // One entry per physical key, carrying its legend on every layer, so a
     // layer switch is a property read and not a re-parse.
     readonly property var keys: {
-        if (root.placed.length === 0 || root.layers.length === 0)
+        if (!root.data)
             return [];
         const out = [];
-        for (const p of root.placed) {
-            const i = root.order[p.matrix];
-            if (i === undefined)
+        for (const p of Kle.deserialise(root.data.keymap)) {
+            const codes = root.data.codes[p.matrix];
+            if (codes === undefined)
                 continue;
             out.push({
                 x: p.x,
@@ -178,7 +151,7 @@ Singleton {
                 r: p.r,
                 rx: p.rx,
                 ry: p.ry,
-                legends: root.layers.map(l => i < l.length ? root.legend(l[i]) : "")
+                legends: codes.map(c => root.legend(c))
             });
         }
         return out;

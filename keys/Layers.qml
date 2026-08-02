@@ -1,6 +1,7 @@
 import ".."
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Window
 
 // The Dactyl's own layers. A chip per layer the keymap actually has, and the
 // board under it — nothing else, because the board is the page.
@@ -22,16 +23,23 @@ ColumnLayout {
     function scroll(rows) {}
 
     function cycle(by) {
-        const n = Math.max(1, Keymap.layers.length);
+        const n = Math.max(1, Keymap.layerCount);
         root.activeLayer = (root.activeLayer + by + n) % n;
     }
+
+    // Ask the keyboard again whenever the sheet comes up, so plugging the board
+    // in between two looks is enough. The Loader keeps this page alive across
+    // page changes, so `Component.onCompleted` alone would only fire once.
+    readonly property bool showing: root.Window.window ? root.Window.window.visible : false
+    onShowingChanged: if (root.showing)
+        Keymap.probe()
 
     RowLayout {
         Layout.fillWidth: true
         spacing: 6
 
         Repeater {
-            model: Keymap.layerNames.slice(0, Keymap.layers.length)
+            model: Keymap.layerNames.slice(0, Keymap.layerCount)
 
             Rectangle {
                 id: chip
@@ -66,17 +74,33 @@ ColumnLayout {
             Layout.fillWidth: true
         }
 
+        // Which of the two sources drew this, because "from the keyboard" and
+        // "from the config" are the same board until the day they are not.
         Text {
-            text: Keymap.keys.length + " keys · " + Keymap.layers.length + " layers"
+            text: Keymap.keys.length + " keys · " + Keymap.layerCount + " layers · " + Keymap.origin
             color: Theme.dim
             font.pixelSize: 11
+            visible: Keymap.keys.length > 0
         }
     }
 
     KeyBoard {
         id: board
         Layout.alignment: Qt.AlignHCenter
+        visible: Keymap.keys.length > 0
         activeLayer: root.activeLayer
         unit: Math.min(46, (root.width - 8) / Math.max(1, bounds.w))
+    }
+
+    // Neither the board nor the committed baseline answered. Say so: an empty
+    // card looks like a board with nothing on it, which is a different bug.
+    Text {
+        Layout.alignment: Qt.AlignHCenter
+        Layout.topMargin: 24
+        Layout.bottomMargin: 24
+        visible: Keymap.keys.length === 0
+        text: "no keyboard found"
+        color: Theme.dim
+        font.pixelSize: 13
     }
 }

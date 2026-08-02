@@ -14,6 +14,9 @@
       runtimeDeps = with pkgs; [
         brightnessctl
         hyprpaper
+        # `vial.py`, which reads the Dactyl's layout off the board over raw
+        # HID. Standard library only — no hidapi, no pyusb, nothing to package.
+        python3
         # Only for the optional wallpaper-matching toggle, which is off by
         # default. It needs -c lchansi -p ansidark16; every other palette
         # reorders hues by salience and turns red into magenta.
@@ -30,6 +33,11 @@
           # other QML source file.
           (lib.fileset.fileFilter (f: f.hasExt "js") ./.)
           ./qmldir
+          # The keyboard helper and the layout it falls back to when no
+          # keyboard answers. Both are found through `Quickshell.shellPath`,
+          # so they have to sit beside the QML in the store too.
+          ./vial.py
+          ./dactyl.json
         ];
       };
     in

@@ -54,16 +54,56 @@
         );
       };
 
-      # The installable version, for when the shell is part of the system
-      # rather than something being iterated on.
-      # Arguments are forwarded, so `erikshell ipc call launcher toggle` works.
-      # Without that the IpcHandlers are unreachable on an installed system:
-      # `qs` finds an instance by its config path, which nobody knows once the
-      # config lives in the store.
-      packages.${system}.default = pkgs.writeShellApplication {
-        name = "erikshell";
-        runtimeInputs = [ pkgs.quickshell ] ++ runtimeDeps;
-        text = ''exec quickshell -p ${src} "$@"'';
+      packages.${system} = {
+        # One package, two commands, because they are installed together or
+        # neither is any use: `erikshell-theme` reads a file the running shell
+        # writes. Home Manager puts this on PATH through `home.packages`, so
+        # the theme command and its completions arrive with the shell and the
+        # dotfiles need to say nothing about either.
+        default = pkgs.symlinkJoin {
+          name = "erikshell";
+          paths = with self.packages.${system}; [
+            shell
+            theme
+          ];
+          meta.mainProgram = "erikshell";
+        };
+
+        # The installable version of the shell, for when it is part of the
+        # system rather than something being iterated on.
+        # Arguments are forwarded, so `erikshell ipc call launcher toggle`
+        # works. Without that the IpcHandlers are unreachable on an installed
+        # system: `qs` finds an instance by its config path, which nobody knows
+        # once the config lives in the store. It also matches on the display
+        # connection, so WAYLAND_DISPLAY has to be set in the calling shell —
+        # which is why the theme command below does not go through IPC at all.
+        shell = pkgs.writeShellApplication {
+          name = "erikshell";
+          runtimeInputs = [ pkgs.quickshell ] ++ runtimeDeps;
+          text = ''exec quickshell -p ${src} "$@"'';
+        };
+
+        # `erikshell-theme <name>` — the picker, for a terminal. See the top of
+        # nix/erikshell-theme.sh for why this exists and why it is files rather
+        # than IPC.
+        theme = pkgs.symlinkJoin {
+          name = "erikshell-theme";
+          paths = [
+            (pkgs.writeShellApplication {
+              name = "erikshell-theme";
+              runtimeInputs = with pkgs; [
+                jq
+                coreutils
+                gnugrep
+              ];
+              text = builtins.readFile ./nix/erikshell-theme.sh;
+            })
+            (pkgs.runCommand "erikshell-theme-completions" { } ''
+              install -Dm444 ${./nix/erikshell-theme.fish} \
+                $out/share/fish/vendor_completions.d/erikshell-theme.fish
+            '')
+          ];
+        };
       };
 
       # Importing this is enough — the package defaults to the one above, so a

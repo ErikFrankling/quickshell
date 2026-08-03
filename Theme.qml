@@ -127,14 +127,47 @@ Singleton {
         atomicWrites: true
         watchChanges: true
         onFileChanged: reload()
+        // Publishing here, and not only in apply(), is what makes the theme a
+        // property of the machine rather than of this window. `erikshell-theme`
+        // writes this file and nothing else; the shell recolours because the
+        // watch fires, and the terminals, kitty, waybar and neovim recolour
+        // because this line takes the same road apply() takes. Without it a
+        // theme set from a terminal — which is the only way to set one over
+        // SSH — would repaint the shell and leave every other application on
+        // the palette it had, which is the half-fix.
+        //
+        // It costs nothing when the change came from apply(): Scheme compares
+        // the sixteen colours against what it last wrote and returns.
         onLoaded: {
             try {
                 root.palette = JSON.parse(text());
-            } catch (e) {}
+            } catch (e) {
+                return;
+            }
+            Scheme.publish(root.palette);
         }
         onLoadFailed: err => {
             if (err === FileViewError.FileNotFound)
                 Qt.callLater(() => store.setText("{}"));
+        }
+    }
+
+    // The picker's list of themes, written out where a command line can read
+    // it. Nothing in the shell reads it back — it exists so that setting a
+    // theme from a terminal does not mean a second copy of the palettes going
+    // quietly out of date. Catalog builds it from the same two places the
+    // picker does.
+    FileView {
+        id: catalogue
+        path: Quickshell.statePath("themes.json")
+        atomicWrites: true
+        onLoaded: Qt.callLater(() => {
+            if (catalogue.text() !== Catalog.json)
+                catalogue.setText(Catalog.json);
+        })
+        onLoadFailed: err => {
+            if (err === FileViewError.FileNotFound)
+                Qt.callLater(() => catalogue.setText(Catalog.json));
         }
     }
 }

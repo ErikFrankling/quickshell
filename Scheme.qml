@@ -34,11 +34,25 @@ Singleton {
         return 0.299 * r + 0.587 * g + 0.114 * b > 0.5;
     }
 
+    // The sixteen colours last written out. Publishing is reached from two
+    // directions now — the picker, and any write to the state file from
+    // outside the shell — and one theme change fires both, so the second has
+    // to be a no-op or every terminal on the machine is sent the escape
+    // sequences twice. Comparing what would be written against what is there
+    // is also what makes it safe to publish on startup: if the files already
+    // say this palette nothing runs, and if they are stale they are put right
+    // without anybody having to ask.
+    property string current: ""
+
     function publish(p) {
         if (!p.base00)
             return;
 
         const c = root.ansi.map(k => p[k]);
+        if (c.join("\n") === root.current)
+            return;
+        root.current = c.join("\n");
+
         const bg = p.base00;
         const fg = p.base05;
         const each = fmt => c.map((v, i) => fmt("color" + i, v)).join("\n");
@@ -94,5 +108,17 @@ Singleton {
 
     Process {
         id: write
+    }
+
+    // `colors` is the shortest of the files and holds exactly the sixteen,
+    // so it is the cheapest way to ask what the desktop is currently wearing.
+    // Read once at startup and never watched: after that this shell is the
+    // only thing writing it.
+    FileView {
+        path: root.dir + "/colors"
+        onLoaded: {
+            if (root.current === "")
+                root.current = text().trim();
+        }
     }
 }

@@ -33,7 +33,7 @@ ColumnLayout {
             onMoved: v => {
                 if (mix.node?.audio) {
                     mix.node.audio.muted = false;
-                    mix.node.audio.volume = v;
+                    Audio.setVolume(mix.node, v);
                 }
             }
         }

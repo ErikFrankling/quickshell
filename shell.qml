@@ -14,7 +14,8 @@ import "panels" as Panels
 
 ShellRoot {
     Variants {
-        model: Quickshell.screens
+        // The headless agent output has no human rail or reserved screen edge.
+        model: Quickshell.screens.filter(screen => screen.name !== "AGENT-1")
 
         // Two windows per screen, both a fixed size for their whole life.
         // Noctalia and caelestia both split it this way: a tiny window whose
@@ -1644,7 +1645,7 @@ ShellRoot {
 
     // ---- popups -----------------------------------------------------------
     Variants {
-        model: Quickshell.screens
+        model: Quickshell.screens.filter(screen => screen.name !== "AGENT-1")
 
         PanelWindow {
             required property var modelData

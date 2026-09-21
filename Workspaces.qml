@@ -133,7 +133,10 @@ ColumnLayout {
         // by identity, so one workspace appearing or going away does not
         // rebuild every other pill.
         model: ScriptModel {
-            values: [...Hyprland.workspaces.values].sort((a, b) => {
+            // Keep the agent desktop out of the human workspace switcher.
+            values: Hyprland.workspaces.values.filter(w =>
+                w.name !== "agent" && w.monitor?.name !== "AGENT-1"
+            ).sort((a, b) => {
                 const x = root.rank(a), y = root.rank(b);
                 return x === y ? root.label(a).localeCompare(root.label(b)) : x - y;
             })

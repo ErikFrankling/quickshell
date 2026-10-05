@@ -9,6 +9,7 @@ singleton Notifs 1.0 Notifs.qml
 singleton Markup 1.0 Markup.qml
 singleton Audio 1.0 Audio.qml
 singleton Net 1.0 Net.qml
+singleton Mullvad 1.0 Mullvad.qml
 singleton Pins 1.0 Pins.qml
 singleton Keymap 1.0 Keymap.qml
 

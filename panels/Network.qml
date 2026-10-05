@@ -143,6 +143,37 @@ ColumnLayout {
         }
     }
 
+    // Mullvad: one row that is the switch, then one per exit worth a press --
+    // home, and the one for watching what only plays in the USA. The country
+    // is Mullvad's own name for it, because that is what the status reports
+    // and so what the row is matched on. Any other exit is the desktop app's
+    // job, and shows up here on the switch row once it is picked there.
+    Entry {
+        visible: Mullvad.present
+        glyph: "󰦝"
+        label: "Mullvad"
+        on: Mullvad.connected
+        value: Mullvad.busy ? "…"
+            : Mullvad.connected ? Mullvad.city + ", " + Mullvad.country : "off"
+        onClicked: Mullvad.connected ? Mullvad.disconnect() : Mullvad.connect("")
+    }
+
+    Repeater {
+        model: [
+            { code: "se", country: "Sweden" },
+            { code: "us", country: "USA" }
+        ]
+
+        Entry {
+            required property var modelData
+            visible: Mullvad.present
+            glyph: "󰍎"
+            label: "Exit in " + modelData.country
+            on: Mullvad.connected && Mullvad.country === modelData.country
+            onClicked: Mullvad.connect(modelData.code)
+        }
+    }
+
     // Everything wireless, and nothing at all on a machine with no radio in
     // it. `Net.hasWifi` is a wifi *card* in `Networking.devices`, which is a
     // different question from `Networking.wifiEnabled` — the switch. No card

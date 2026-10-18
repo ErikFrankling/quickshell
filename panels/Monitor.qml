@@ -168,7 +168,7 @@ Flickable {
         if (bar.kind === "battery")
             return Sys.battery + "%";
         const d = root.disk(bar.label);
-        return d ? d.pct + "%  ·  " + d.usedGb.toFixed(0) + " / " + d.sizeGb.toFixed(0) + " GB" : "";
+        return d ? d.pct + "%  ·  " + d.usedGb.toFixed(0) + " / " + d.sizeGb.toFixed(0) + " GB  ·  " + d.freeGb.toFixed(0) + " GB free" : "";
     }
 
     ColumnLayout {

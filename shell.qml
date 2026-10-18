@@ -821,6 +821,11 @@ ShellRoot {
                                         : "ram"
                                     value: Sys.mem
                                     text: Math.round(Sys.memUsedGb)
+                                    // Yellow at 2 GB left, red at 1: the
+                                    // default 70/90 lit up every day and so
+                                    // meant nothing.
+                                    warnAt: Sys.memTotalGb > 0 ? 100 * (Sys.memTotalGb - 2) / Sys.memTotalGb : 70
+                                    critAt: Sys.memTotalGb > 0 ? 100 * (Sys.memTotalGb - 1) / Sys.memTotalGb : 90
                                 }
                                 Ring { label: "gpu"; value: Sys.gpu; visible: Sys.hasGpu }
                                 // VRAM the way ram reads: used gigabytes in
@@ -833,6 +838,9 @@ ShellRoot {
                                         : "vram"
                                     value: Sys.vram
                                     text: Math.round(Sys.vramUsedGb)
+                                    // Same as ram: yellow at 2 GB left, red at 1.
+                                    warnAt: Sys.vramTotalGb > 0 ? 100 * (Sys.vramTotalGb - 2) / Sys.vramTotalGb : 70
+                                    critAt: Sys.vramTotalGb > 0 ? 100 * (Sys.vramTotalGb - 1) / Sys.vramTotalGb : 90
                                     visible: Sys.hasGpu
                                 }
                                 Ring { label: "°c"; value: Sys.temp; text: Sys.temp; visible: Sys.hasTemp }

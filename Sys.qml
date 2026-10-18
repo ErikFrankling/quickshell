@@ -306,6 +306,23 @@ Singleton {
     // memory figures in bytes. Which card they belong to is Caps' answer, worked
     // out once at startup; empty means nothing here can be read and the ring is
     // not drawn at all.
+    //
+    // Except that the number is not always the driver's to give. On the desktop
+    // the 7900 XT is pinned at profile_peak, and with clock gating off the
+    // firmware's activity monitor reads 100 whether anything is running or not
+    // — gpu_busy_percent and nvtop's device total both. What stays right is the
+    // engine time the kernel bills to each client, which is nvtop's per-process
+    // column; the dotfiles' gpu-busy service sums it per card into /run. Read
+    // that when it is there, and the driver's file when it is not: the laptop,
+    // or the first seconds after boot.
+    FileView {
+        id: gpuBusyFile
+        path: Caps.hasGpu ? Caps.gpuBusyPath : ""
+        printErrors: false
+        onLoaded: root.gpu = parseInt(text()) || 0
+        onLoadFailed: gpuFile.reload()
+    }
+
     FileView {
         id: gpuFile
         path: Caps.hasGpu ? Caps.gpuPath + "/gpu_busy_percent" : ""
@@ -490,7 +507,10 @@ Singleton {
             for (let i = 0; i < fanFiles.count; i++)
                 fanFiles.objectAt(i).reload();
             if (gpuFile.path !== "") {
-                gpuFile.reload();
+                if (gpuBusyFile.path !== "")
+                    gpuBusyFile.reload();
+                else
+                    gpuFile.reload();
                 vramUsedFile.reload();
                 vramTotalFile.reload();
             }

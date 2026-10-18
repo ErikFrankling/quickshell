@@ -21,6 +21,11 @@ Singleton {
     // somewhere to read from. That is what stops a ring being drawn over a
     // number nothing can produce.
     property string gpuPath: ""
+    // Where the dotfiles' gpu-busy service writes this card's real utilisation:
+    // engine time from DRM fdinfo, summed over every client. Named whether or
+    // not the file exists yet; Sys falls back to gpu_busy_percent while it does
+    // not. See gpuFile in Sys.qml for why the driver's own figure is not enough.
+    property string gpuBusyPath: ""
     property bool foundTemp: false
     property bool foundBattery: false
     property bool foundBacklight: false
@@ -79,6 +84,7 @@ for d in /sys/class/drm/card*/device; do
   gpu=$d
 done
 echo "gpu=$gpu"
+[ -n "$gpu" ] && echo "gpubusy=/run/gpu-busy/$(basename "$(readlink -f "$gpu")")"
 fan=
 ls /sys/class/hwmon/hwmon*/fan1_input >/dev/null 2>&1 && fan=hwmon
 [ -z "$fan" ] && command -v fw-fanctrl >/dev/null 2>&1 && fan=fw
@@ -109,6 +115,7 @@ echo "disks=$(df -B1 --output=target,size -x tmpfs -x devtmpfs -x efivarfs -x ov
                 const list = s => (s || "").split(/\s+/).filter(x => x.length > 0);
 
                 root.gpuPath = v.gpu || "";
+                root.gpuBusyPath = v.gpu ? (v.gpubusy || "") : "";
                 root.fanSource = v.fan || "";
                 root.foundTemp = v.temp === "1";
                 root.foundBattery = v.battery === "1";

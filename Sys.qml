@@ -43,7 +43,7 @@ Singleton {
     property real swapOut: 0
     property real diskRead: 0           // bytes/sec
     property real diskWrite: 0
-    property var disks: []              // [{ path, pct, usedGb, sizeGb, freeGb }]
+    property var disks: []              // [{ path, pct, usedGb, sizeGb }]
 
     // How often each thing is asked. Not one rate, and the thing that separates
     // them is not how fast the number moves — it is what asking costs. Timed on
@@ -451,7 +451,10 @@ Singleton {
                     // ring and the terminal disagreeing by a point.
                     out.push({ path: f[0],
                         pct: Math.ceil(100 * f[1] / (Number(f[1]) + Number(f[3]))),
-                        usedGb: f[1] / 1e9, sizeGb: f[2] / 1e9, freeGb: f[3] / 1e9 });
+                        // The size is the same used-plus-available, not
+                        // df's Size: a disk is full, and writes fail, when
+                        // used reaches that, ~5% short of the raw size.
+                        usedGb: f[1] / 1e9, sizeGb: (Number(f[1]) + Number(f[3])) / 1e9 });
                 }
                 root.disks = out;
             }

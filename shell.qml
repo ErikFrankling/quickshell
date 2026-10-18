@@ -847,7 +847,7 @@ ShellRoot {
                                 // Gigabytes rather than a percentage, for the
                                 // same reason memory reads in gigabytes: "95" is
                                 // a number you have to convert before you can
-                                // act on it and "18" under "root free" is not.
+                                // act on it and "845" under "root 947" is not.
                                 // The arc keeps the percentage, because df's
                                 // Use% is what says how much more can be
                                 // written.
@@ -906,16 +906,9 @@ ShellRoot {
                                             modelData.path === "/" ? "root"
                                             : modelData.path.replace(/.*\//, "")
 
-                                        // What can still be written, not what
-                                        // is used. "877" under "root 947"
-                                        // reads as seventy left, and ext4's 5%
-                                        // root reserve meant it was really
-                                        // under twenty with writes failing. The
-                                        // middle is df's Avail, the caption
-                                        // says so, and the size is a click
-                                        // away in the monitor panel.
-                                        text: short(modelData.freeGb)
-                                        label: mount + " free"
+                                        text: short(modelData.usedGb)
+                                        label: mount + " " + short(modelData.sizeGb)
+                                             + (modelData.sizeGb >= 1000 ? "T" : "")
                                         value: modelData.pct
                                         warnAt: 90
                                         critAt: 95

@@ -262,6 +262,19 @@ Singleton {
             root.history = root.prune([s].concat(root.history));
             root.popups = [s].concat(root.popups).slice(0, 4);
 
+            // A sender may update its notification in place (replaces_id, e.g.
+            // `notify-send --replace-id`). Quickshell then changes this same
+            // object and emits no new notification, so the snapshot is taken
+            // again. The card pops back up if it had already gone: an update is
+            // news (speak's "waiting" turning into "said at").
+            const refresh = () => {
+                const u = Object.assign(root.snapshot(n), { key: s.key });
+                root.history = root.history.map(h => h.key === s.key ? u : h);
+                root.popups = [u].concat(root.popups.filter(p => p.key !== s.key)).slice(0, 4);
+            };
+            n.summaryChanged.connect(refresh);
+            n.bodyChanged.connect(refresh);
+
             // Hold the D-Bus close back while the notification has actions, so
             // it stays answerable from history after the popup is gone.
             n.closed.connect(() => {

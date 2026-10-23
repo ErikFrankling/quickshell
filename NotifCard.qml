@@ -13,6 +13,8 @@ Rectangle {
     property bool saved: false
     property bool savedList: false
     property bool popup: false
+    // A popup shows four lines of the body; a click on it shows the rest.
+    property bool expanded: false
 
     implicitHeight: col.implicitHeight + 22
     radius: Theme.radiusS + 2
@@ -78,8 +80,9 @@ Rectangle {
             font.pixelSize: 13
             wrapMode: Text.Wrap
             Layout.fillWidth: true
-            maximumLineCount: root.popup ? 4 : 12
+            maximumLineCount: root.popup && !root.expanded ? 4 : 12
             elide: Text.ElideRight
+            TapHandler { onTapped: root.expanded = !root.expanded }
         }
 
         RowLayout {

@@ -24,6 +24,7 @@ KeysWindow 1.0 KeysWindow.qml
 LauncherWindow 1.0 LauncherWindow.qml
 LooksWindow 1.0 LooksWindow.qml
 NotifCard 1.0 NotifCard.qml
+PopupColumn 1.0 PopupColumn.qml
 OpenGround 1.0 OpenGround.qml
 Osd 1.0 Osd.qml
 RailClock 1.0 RailClock.qml

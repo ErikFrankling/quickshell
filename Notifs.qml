@@ -102,6 +102,8 @@ Singleton {
             app: n.appName || "unknown",
             summary: n.summary || "",
             body: n.body || "",
+            // Where the popup stands: "top-left" or the default top-right.
+            corner: String((n.hints || {})["x-erikshell-corner"] || ""),
             icon: root.iconFor(n),
             // Milliseconds the sender asked to be left up. -1 is "the server
             // decides" and is what notify-send sends unless given -t; 0 is

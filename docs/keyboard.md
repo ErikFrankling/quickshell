@@ -35,11 +35,10 @@ correct, and is what `Keymap.qml` parses. `docs/surveys/keybind-cheatsheet.md`
 has the offending bytes, and notes that the one other shell in the wild reading
 `binds -j` has a `catch` that has been silently swallowing this.
 
-Two of the 61 binds now carry a description — the two `bindd` lines pointing at
-this shell's own `GlobalShortcut`s. The other 59 fall back to their dispatcher
-and argument, drawn dim and italic so the sheet is never read as claiming
-somebody wrote that label. Converting the rest to `bindd` is still the fix, and
-still belongs in the dotfiles rather than here.
+Every bind in the dotfiles carries a description since the move to Lua
+(Hyprland 0.57). A bind without one, added at runtime, falls back to its
+dispatcher and argument, drawn dim and italic so the sheet is never read as
+claiming somebody wrote that label.
 
 ## The keyboard — easier than expected
 
@@ -149,12 +148,10 @@ plugged in while the session is inactive, there is no ACL and the open fails.
 `hyprctl binds` returns all sixty in 0.8 ms, and `configreloaded` on socket2 is
 the refresh signal, so nothing has to poll.
 
-The trap is descriptions. None of the sixty binds have one today, and under a
-Lua config a bind reports `dispatcher: __lua` and an opaque integer — only the
-modifier mask, the key and the description survive. **Converting `bind` to
-`bindd` has to happen before the Lua migration, or the data the cheatsheet
-needs no longer exists.** That is roughly sixty lines in
-`modules/home-manager/hyprland/default.nix`.
+Descriptions are the data. Under a Lua config a bind reports `dispatcher: __lua`
+and an opaque integer: only the modifier mask, the key and the description
+survive. So every `bind` in `modules/home-manager/hyprland/default.nix` has to
+carry a description.
 
 ## Neovim — a dump, and the page for it
 

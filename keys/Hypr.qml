@@ -76,11 +76,9 @@ ColumnLayout {
             return {
                 mask: parseInt(b.modmask) || 0,
                 combo: root.mods(parseInt(b.modmask) || 0).concat([root.keyLabel(b.key ?? "")]).join(" + "),
-                // Honest degradation: 59 of his 61 binds carry no description,
-                // so the dispatcher and its argument stand in — and are marked
-                // as standing in, so a described bind still reads as the
-                // better-documented thing it is. Converting `bind` to `bindd`
-                // in his dotfiles is what fixes this, and belongs there.
+                // Every bind in his dotfiles has a description since the move to
+                // Lua, where `dispatcher` is only `__lua`. A bind added at runtime
+                // may not: the dispatcher and argument stand in, marked as such.
                 label: desc !== "" ? desc : (arg !== "" ? b.dispatcher + " " + arg : b.dispatcher ?? ""),
                 described: desc !== ""
             };
@@ -89,8 +87,7 @@ ColumnLayout {
 
     // By modifier, not by task. The Neovim sheet groups by what a mapping is
     // *for*, because `:help quickref` proves that is what a human scans for —
-    // but that only works when something in the data says what a bind does, and
-    // 59 of these 61 carry no description at all. The modifier is the one thing
+    // and descriptions are short labels, not tasks. The modifier is the one thing
     // every record honestly states, so it is the heading.
     readonly property var bindGroups: {
         const by = {};

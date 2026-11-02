@@ -120,11 +120,19 @@ ColumnLayout {
     // means the name — brought everything back. `name:` is the only selector
     // that says "the workspace called this", so say it. Special workspaces are
     // not reachable that way at all and have their own dispatcher.
+    //
+    // Hyprland 0.57 takes Lua here and refuses `name:` with a number, so numbered
+    // workspaces go by id there. Each form is an error the other compositor ignores;
+    // the legacy lines go once no session from before 0.57 is left.
     function goTo(w) {
-        if (w.name.startsWith("special:"))
+        if (w.name.startsWith("special:")) {
+            Hyprland.dispatch("hl.dsp.workspace.toggle_special('" + w.name.slice(8) + "')");
             Hyprland.dispatch("togglespecialworkspace " + w.name.slice(8));
-        else
+        } else {
+            const selector = /^\d+$/.test(w.name) ? w.name : "name:" + w.name;
+            Hyprland.dispatch("hl.dsp.focus({ workspace = '" + selector + "' })");
             Hyprland.dispatch("workspace name:" + w.name);
+        }
     }
 
     Repeater {

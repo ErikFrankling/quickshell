@@ -1311,7 +1311,7 @@ ShellRoot {
                                 id: powerBtn
                                 disc: true
                                 glyph: "󰐥"
-                                open: win.page === "power"
+                                open: powerWin.open && powerWin.screen === win.screen
                                 onClicked: powerWin.show(win.screen)
                             }
                             RailClock {

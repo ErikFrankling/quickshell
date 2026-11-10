@@ -93,7 +93,7 @@ ColumnLayout {
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: action.modelData.label === "Lock" ? "Super + L" : ""
+                        text: action.modelData.label === "Lock" ? "Super + Ctrl + L" : ""
                         color: Theme.dim
                         font.pixelSize: 10
                     }

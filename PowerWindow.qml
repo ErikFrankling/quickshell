@@ -10,6 +10,7 @@ PanelWindow {
     visible: open
     color: "transparent"
     exclusiveZone: 0
+    exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "power"
     WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -22,12 +23,13 @@ PanelWindow {
     }
     function hide() { root.open = false; }
 
+    Rectangle { anchors.fill: parent; color: Qt.alpha(Theme.bg, 0.78) }
     MouseArea { anchors.fill: parent; onClicked: root.hide() }
     Rectangle {
         id: card
         anchors.centerIn: parent
-        width: Math.min(460, parent.width - 40)
-        height: loader.implicitHeight + 36
+        width: Math.min(696, parent.width - 40)
+        height: loader.implicitHeight + 48
         color: Theme.bg
         radius: Theme.radius
         border.width: 1
@@ -36,7 +38,7 @@ PanelWindow {
         MouseArea { anchors.fill: parent }
         Loader {
             id: loader
-            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 18 }
+            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 24 }
             active: root.open
             sourceComponent: Panels.Power { onCloseRequested: root.hide() }
         }

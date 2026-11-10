@@ -13,3 +13,9 @@ hibernation. Disabled actions remain visible. Lock uses loginctl and the native
 hypridle/hyprlock integration; sleep uses logind's existing sleep/lock lifecycle.
 Logout/restart/shutdown require a separate confirmation. No disruptive power
 actions are executed during UI testing.
+
+The sidebar button opens a centered overlay, matching this shell's
+`KeysWindow.qml` and `LauncherWindow.qml` (full-screen transparent overlay,
+centered card, exclusive keyboard focus only while open, Escape/outside-click
+close). `PowerWindow.qml` reuses that existing pattern. It is not an anchored
+rail popover.

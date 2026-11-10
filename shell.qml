@@ -165,7 +165,6 @@ ShellRoot {
                     case "network": return networkBtn;
                     case "bluetooth": return btBtn;
                     case "control": return clockCol;
-                    case "power": return powerBtn;
                     }
                     return null;
                 }
@@ -179,7 +178,7 @@ ShellRoot {
                     function bluetooth(): void { win.openAt(null, "bluetooth"); }
                     function player(): void { win.openAt(null, "player"); }
                     function control(): void { win.openAt(null, "control"); }
-                    function power(): void { win.openAt(null, "power"); }
+                    function power(): void { powerWin.show(win.screen); }
                     function close(): void { win.page = ""; }
                 }
 
@@ -1313,7 +1312,7 @@ ShellRoot {
                                 disc: true
                                 glyph: "󰐥"
                                 open: win.page === "power"
-                                onClicked: win.openAt(powerBtn, "power")
+                                onClicked: powerWin.show(win.screen)
                             }
                             RailClock {
                                 id: clockCol
@@ -1519,7 +1518,6 @@ ShellRoot {
                                     : win.shown === "network" ? cNetwork
                                     : win.shown === "bluetooth" ? cBluetooth
                                     : win.shown === "player" ? cPlayer
-                                    : win.shown === "power" ? cPower
                                     : win.shown === "control" ? cControl : null
                             }
                         }
@@ -1552,7 +1550,6 @@ ShellRoot {
                     Component { id: cNetwork; Panels.Network {} }
                     Component { id: cBluetooth; Panels.Bluetooth {} }
                     Component { id: cPlayer; Panels.Player {} }
-                    Component { id: cPower; Panels.Power { onCloseRequested: win.page = "" } }
                     // The control centre's tray rows open the same menu the
                     // rail's icons do, and its Looks and Keys buttons open the
                     // overlay windows. None of them is reachable from a panel's
@@ -1625,6 +1622,7 @@ ShellRoot {
     // ---- keys ---------------------------------------------------------------
     // The keyboard and the binds on one sheet. Same shape as the launcher and
     // looks: a centred overlay on a keybind, and no rail button for it.
+    PowerWindow { id: powerWin }
     KeysWindow { id: keysWin }
 
     IpcHandler {

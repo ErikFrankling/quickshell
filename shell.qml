@@ -179,7 +179,7 @@ ShellRoot {
                     function player(): void { win.openAt(null, "player"); }
                     function control(): void { win.openAt(null, "control"); }
                     function power(): void { powerWin.show(win.screen); }
-                    function close(): void { win.page = ""; }
+                    function close(): void { win.page = ""; powerWin.hide(); }
                 }
 
                 // Which page the control centre opens on. The clock is its

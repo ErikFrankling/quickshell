@@ -19,3 +19,6 @@ The sidebar button opens a centered overlay, matching this shell's
 centered card, exclusive keyboard focus only while open, Escape/outside-click
 close). `PowerWindow.qml` reuses that existing pattern. It is not an anchored
 rail popover.
+
+Final user preference: five direct actions, no logout, confirmation pages or
+explanatory hints. Preserve capability gating, the Super+L label, and errors.

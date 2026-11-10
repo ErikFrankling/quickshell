@@ -165,6 +165,7 @@ ShellRoot {
                     case "network": return networkBtn;
                     case "bluetooth": return btBtn;
                     case "control": return clockCol;
+                    case "power": return powerBtn;
                     }
                     return null;
                 }
@@ -178,6 +179,7 @@ ShellRoot {
                     function bluetooth(): void { win.openAt(null, "bluetooth"); }
                     function player(): void { win.openAt(null, "player"); }
                     function control(): void { win.openAt(null, "control"); }
+                    function power(): void { win.openAt(null, "power"); }
                     function close(): void { win.page = ""; }
                 }
 
@@ -1299,6 +1301,13 @@ ShellRoot {
                         // that on the least.
                         Group {
                             id: clockGroup
+                            Btn {
+                                id: powerBtn
+                                disc: true
+                                glyph: "󰐥"
+                                open: win.page === "power"
+                                onClicked: win.openAt(powerBtn, "power")
+                            }
                             RailClock {
                                 id: clockCol
                                 active: win.page === "control"
@@ -1503,6 +1512,7 @@ ShellRoot {
                                     : win.shown === "network" ? cNetwork
                                     : win.shown === "bluetooth" ? cBluetooth
                                     : win.shown === "player" ? cPlayer
+                                    : win.shown === "power" ? cPower
                                     : win.shown === "control" ? cControl : null
                             }
                         }
@@ -1535,6 +1545,7 @@ ShellRoot {
                     Component { id: cNetwork; Panels.Network {} }
                     Component { id: cBluetooth; Panels.Bluetooth {} }
                     Component { id: cPlayer; Panels.Player {} }
+                    Component { id: cPower; Panels.Power { onCloseRequested: win.page = "" } }
                     // The control centre's tray rows open the same menu the
                     // rail's icons do, and its Looks and Keys buttons open the
                     // overlay windows. None of them is reachable from a panel's

@@ -846,7 +846,14 @@ ShellRoot {
                                     visible: Sys.hasGpu
                                 }
                                 Ring { label: "°c"; value: Sys.temp; text: Sys.temp; visible: Sys.hasTemp }
-                                Ring { label: "fan"; value: fan.pct; visible: Sys.hasFan }
+                                Ring {
+                                    label: Caps.fanSource === "fw" ? "fan %" : "fan rpm"
+                                    // hwmon gives RPM, not a percentage of a known maximum.
+                                    value: Caps.fanSource === "fw" ? Sys.fan : 0
+                                    text: Caps.fanSource !== "fw" && Sys.fan >= 1000
+                                        ? (Sys.fan / 1000).toFixed(1) + "k" : String(Sys.fan)
+                                    visible: Sys.hasFan
+                                }
                                 // Capacity, not throughput — the disk graphs in
                                 // the monitor panel already draw what is moving.
                                 // One ring per mount Caps found, so the machine
@@ -1569,45 +1576,6 @@ ShellRoot {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    // ---- fan ---------------------------------------------------------------
-    // A ring wants a fraction and rpm is not one. Under fw-fanctrl Sys.fan is
-    // already a percentage of maximum — that is what the waybar config prints
-    // and it is passed straight through. hwmon reports rpm instead, which only
-    // means something against a ceiling, in this order: fan1_max where the
-    // driver publishes one (amdgpu does, 3300 on the desktop), otherwise the
-    // fastest this fan has ever been seen to spin, starting from a figure low
-    // enough that a typical case fan at full tilt reads as full. The ceiling
-    // only ever grows, so an early guess corrects itself and never un-corrects,
-    // and it is never zero, so the division is always safe.
-    Scope {
-        id: fan
-
-        readonly property int pct: Caps.fanSource === "fw" ? Sys.fan
-            : Math.min(100, Math.round(100 * Sys.fan / ceiling))
-
-        property int ceiling: 2000
-
-        Process {
-            running: true
-            command: ["sh", "-c", "cat /sys/class/hwmon/hwmon*/fan1_max 2>/dev/null | sort -rn | head -1"]
-            stdout: StdioCollector {
-                onStreamFinished: {
-                    const max = parseInt(text) || 0;
-                    if (max > fan.ceiling)
-                        fan.ceiling = max;
-                }
-            }
-        }
-
-        Connections {
-            target: Sys
-            function onFanChanged() {
-                if (Caps.fanSource !== "fw" && Sys.fan > fan.ceiling)
-                    fan.ceiling = Sys.fan;
             }
         }
     }

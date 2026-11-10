@@ -40,3 +40,17 @@ injection. No new generic widget, service, or configuration abstraction.
 
 Visual proof is a real Quickshell render on the agent output, then the deployed
 Samsung overlay. No power actions are executed to test appearance.
+
+## Boot destinations and unsupported actions (2026-11-10)
+
+Re-read upstream WLogout.qml (quickshell-mirror/quickshell-examples) and
+Illogical Impulse SessionActionButton.qml before this revision. Keep their
+centered GridLayout and native focus/keyboard idioms: three columns make six
+supported actions fit on the laptop without tiny tiles. Hide logind `no`/`na`
+actions instead of showing an unusable Hibernate tile. Sleep retains RAM;
+hibernation requires a configured disk resume target, which Samsung lacks.
+
+Boot menu uses `systemctl reboot --boot-loader-menu=30s`; UEFI settings uses
+`systemctl reboot --firmware-setup`. Query logind CanRebootToBootLoaderMenu
+and CanRebootToFirmwareSetup. Samsung returns `challenge` for both, so normal
+polkit authorization applies. Never exercise reboot actions during UI tests.

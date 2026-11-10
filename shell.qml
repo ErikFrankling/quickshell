@@ -845,14 +845,7 @@ ShellRoot {
                                     visible: Sys.hasGpu
                                 }
                                 Ring { label: "°c"; value: Sys.temp; text: Sys.temp; visible: Sys.hasTemp }
-                                Ring {
-                                    label: Caps.fanSource === "fw" ? "fan %" : "fan rpm"
-                                    // hwmon gives RPM, not a percentage of a known maximum.
-                                    value: Caps.fanSource === "fw" ? Sys.fan : 0
-                                    text: Caps.fanSource !== "fw" && Sys.fan >= 1000
-                                        ? (Sys.fan / 1000).toFixed(1) + "k" : String(Sys.fan)
-                                    visible: Sys.hasFan
-                                }
+                                Ring { label: "fan"; value: fan.pct; visible: Sys.hasFan }
                                 // Capacity, not throughput — the disk graphs in
                                 // the monitor panel already draw what is moving.
                                 // One ring per mount Caps found, so the machine
@@ -1573,6 +1566,40 @@ ShellRoot {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // ---- fan ---------------------------------------------------------------
+    // Percentage is Erik's preferred display. With no published fan1_max,
+    // this remains an estimate against the observed peak (minimum 2000 RPM),
+    // not firmware PWM/duty cycle. Samsung ACPI only exposes RPM and binary
+    // cooling states; those 0/1 states must never be presented as fan speed.
+    Scope {
+        id: fan
+
+        readonly property int pct: Caps.fanSource === "fw" ? Sys.fan
+            : Math.min(100, Math.round(100 * Sys.fan / ceiling))
+
+        property int ceiling: 2000
+
+        Process {
+            running: true
+            command: ["sh", "-c", "cat /sys/class/hwmon/hwmon*/fan1_max 2>/dev/null | sort -rn | head -1"]
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    const max = parseInt(text) || 0;
+                    if (max > fan.ceiling)
+                        fan.ceiling = max;
+                }
+            }
+        }
+
+        Connections {
+            target: Sys
+            function onFanChanged() {
+                if (Caps.fanSource !== "fw" && Sys.fan > fan.ceiling)
+                    fan.ceiling = Sys.fan;
             }
         }
     }

@@ -13,6 +13,16 @@ import Quickshell.Services.SystemTray
 import "panels" as Panels
 
 ShellRoot {
+    // Notifs is a singleton, so it is created on first use, and every use of
+    // it is inside a per-screen window below. A shell that starts with the
+    // monitors off (the 06:00 update restarts it) has no screens, so the
+    // notification server never registered on D-Bus until a monitor woke:
+    // whatever was sent meanwhile was lost, and Thunderbird, which gives up on
+    // system notifications after one failure, stayed silent until restarted
+    // (2026-11-10 06:12 to 11-11 19:58). Touching it here starts the server
+    // with the shell, screens or not.
+    readonly property int unreadNotifs: Notifs.unread
+
     Variants {
         // The headless agent output has no human rail or reserved screen edge.
         model: Quickshell.screens.filter(screen => screen.name !== "AGENT-1")

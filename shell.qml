@@ -1563,6 +1563,10 @@ ShellRoot {
                                 win.page = "";
                                 keysWin.show();
                             }
+                            onDisplaysRequested: {
+                                win.page = "";
+                                displaysWin.show();
+                            }
                         }
                     }
                 }
@@ -1662,6 +1666,23 @@ ShellRoot {
         name: "keys"
         description: "Toggle the keyboard and keybind sheet"
         onPressed: keysWin.open ? keysWin.hide() : keysWin.show()
+    }
+
+    // ---- displays -----------------------------------------------------------
+    // Dragging the screens into place. Same shape again; the control centre
+    // has the button.
+    DisplaysWindow { id: displaysWin }
+
+    IpcHandler {
+        target: "displays"
+        function toggle(): void { displaysWin.open ? displaysWin.hide() : displaysWin.show(); }
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "displays"
+        description: "Toggle the screen arrangement overlay"
+        onPressed: displaysWin.open ? displaysWin.hide() : displaysWin.show()
     }
 
     // The volume and brightness card at the bottom of the screen.

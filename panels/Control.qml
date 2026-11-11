@@ -42,6 +42,7 @@ ColumnLayout {
     signal menuRequested(var item, real x, real y)
     signal looksRequested
     signal keysRequested
+    signal displaysRequested
 
     // Landing on the notifications page is reading them, which is what the
     // bell used to mean when it was still a button of its own.
@@ -95,6 +96,14 @@ ColumnLayout {
             glyph: "󰌌"
             tint: Theme.fg
             onClicked: root.keysRequested()
+        }
+
+        // Screen arrangement: a canvas to drag the screens on, which wants
+        // more room than this column too.
+        Btn {
+            glyph: "󰍹"
+            tint: Theme.fg
+            onClicked: root.displaysRequested()
         }
     }
 
